@@ -1,1 +1,4 @@
-<?php\n// SocialCore bootstrap file
+<?php
+
+// Start SocialCore
+require_once __DIR__ . '/../core/bootstrap.php';
