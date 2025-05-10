@@ -28,7 +28,7 @@ SocialCore ondersteunt volledig meertalige interfaces:
 - Eenvoudige `__('app.key')` syntax voor strings
 - Taalschakelaar component voor gebruikers
 - Uitbreidbaar met extra talen
-- Zie `docs/i18n.md` voor implementatiedetails
+- Zie [`docs/i18n.md`](docs/i18n.md) voor implementatiedetails
 
 ## 📁 Structuur
 
@@ -54,6 +54,9 @@ SocialCore ondersteunt volledig meertalige interfaces:
 - Vriendverzoeken
 - REST API (`/api/v1/`)
 - Meertalige interface
+- Thema-systeem
+- Plugin-systeem
+- Simpele chat (basisversie, uitbreidbaar via plugin)
 
 ## 🛠️ Ontwikkeling
 
@@ -61,12 +64,12 @@ Het project bevindt zich momenteel in vroege ontwikkeling. Bijdragen zijn welkom
 
 ```bash
 # Kloon de repository
-git clone https://github.com/jouwusernaam/socialcore.git
+git clone https://github.com/roedeltje/socialcore.git
 
 # Maak aanpassingen en test lokaal
 ```
 
-Bekijk ook ons [werkschema document](WERKSCHEMA.md) voor de ontwikkelingsplanning.
+Bekijk ook ons [`WERKSCHEMA.md`](WERKSCHEMA.md) voor de ontwikkelingsplanning.
 
 ## 📄 Licentie
 
