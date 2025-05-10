@@ -1,0 +1,25 @@
+# SocialCore .htaccess
+# Zorgt ervoor dat alle verzoeken naar index.php worden doorgestuurd
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect Trailing Slashes
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+    
+    # Stuur alle verzoeken naar index.php, behalve als het bestaande bestanden of mappen zijn
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Voorkom directory listings
+Options -Indexes
+
+# Verberg .htaccess bestand
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>

@@ -1,14 +1,55 @@
 <?php
-
-// ✅ Start sessie
+/**
+ * SocialCore Bootstrap Bestand
+ * 
+ * Dit bestand initialiseert de applicatie en routeert alle verzoeken.
+ */
 session_start();
-
-// ✅ Timezone en foutmeldingen voor development
 date_default_timezone_set('Europe/Amsterdam');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// ✅ Laad globale helpers
 require_once __DIR__ . '/helpers.php';
 
-// ❌ Geen router of output hier!
+// Laad de web en API routes
+$webRoutes = require __DIR__ . '/../routes/web.php';
+$apiRoutes = require __DIR__ . '/../routes/api.php';
+
+// Verwerk de huidige URL om de route te bepalen
+$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+$requestUri = parse_url($requestUri, PHP_URL_PATH);
+$requestUri = trim($requestUri, '/');
+
+// Controleer of dit een API-verzoek is
+if (strpos($requestUri, 'api/v1/') === 0) {
+    // Verwijder 'api/v1/' prefix om de daadwerkelijke API route te krijgen
+    $apiEndpoint = substr($requestUri, 7); // 'api/v1/' is 7 karakters
+    
+    if (array_key_exists($apiEndpoint, $apiRoutes)) {
+        // API route gevonden, voer de bijbehorende functie uit
+        $apiRoutes[$apiEndpoint]();
+    } else {
+        // API route niet gevonden
+        header('Content-Type: application/json');
+        http_response_code(404);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'API endpoint niet gevonden'
+        ]);
+    }
+} else {
+    // Dit is een reguliere webpagina-aanvraag
+    $route = empty($requestUri) ? 'home' : $requestUri;
+    
+    // Compatibiliteit met oude ?route= parameter behouden
+    if (isset($_GET['route'])) {
+        $route = $_GET['route'];
+    }
+    
+    if (array_key_exists($route, $webRoutes)) {
+        $webRoutes[$route]();
+    } else {
+        http_response_code(404);
+        echo "<h1>404 - Pagina niet gevonden</h1>";
+    }
+}
