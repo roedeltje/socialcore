@@ -15,19 +15,59 @@ Geïnspireerd op Sngine, maar helemaal opnieuw opgebouwd met:
 
 ## 🧩 Kernprincipes
 
-- Modulair: alles is uitbreidbaar via plugins en thema’s
+- Modulair: alles is uitbreidbaar via plugins en thema's
 - Eenvoudig: minimale afhankelijkheden
 - Developer-first: alles is leesbaar, documenteerbaar en makkelijk aanpasbaar
 - Meertalig met Nederlandse basis
+
+## 🌍 Meertaligheid
+
+SocialCore ondersteunt volledig meertalige interfaces:
+
+- Nederlandse en Engelse vertalingen ingebouwd
+- Eenvoudige `__('app.key')` syntax voor strings
+- Taalschakelaar component voor gebruikers
+- Uitbreidbaar met extra talen
+- Zie `docs/i18n.md` voor implementatiedetails
 
 ## 📁 Structuur
 
 ```plaintext
 /socialcore
+├── app/               # Applicatiecode (views, controllers)
 ├── core/              # Kerncode van het platform
+├── docs/              # Documentatie
+├── lang/              # Taalbestanden (NL, EN, ...)
 ├── plugins/           # Uitbreidbare plugins
-├── themes/default/    # Standaardthema
 ├── public/            # index.php + assets (frontend)
 ├── routes/            # Routedefinitie
+├── themes/default/    # Standaardthema
 ├── README.md
 └── LICENSE (MIT)
+```
+
+## 🚀 Functionaliteiten
+
+- Gebruikersregistratie & inloggen
+- Profielpagina's
+- Berichten plaatsen
+- Vriendverzoeken
+- REST API (`/api/v1/`)
+- Meertalige interface
+
+## 🛠️ Ontwikkeling
+
+Het project bevindt zich momenteel in vroege ontwikkeling. Bijdragen zijn welkom!
+
+```bash
+# Kloon de repository
+git clone https://github.com/jouwusernaam/socialcore.git
+
+# Maak aanpassingen en test lokaal
+```
+
+Bekijk ook ons [werkschema document](WERKSCHEMA.md) voor de ontwikkelingsplanning.
+
+## 📄 Licentie
+
+SocialCore is open source software onder de [MIT licentie](LICENSE).

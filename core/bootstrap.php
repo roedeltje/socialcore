@@ -9,7 +9,9 @@ date_default_timezone_set('Europe/Amsterdam');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Laad helpers
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/helpers/language.php';
 
 // Laad de web en API routes
 $webRoutes = require __DIR__ . '/../routes/web.php';
@@ -46,10 +48,23 @@ if (strpos($requestUri, 'api/v1/') === 0) {
         $route = $_GET['route'];
     }
     
+    // Speciale route voor het instellen van de taal
+    if ($route === 'set-language' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $locale = $_POST['locale'] ?? get_default_language();
+        $remember = isset($_POST['remember']) && $_POST['remember'] === '1';
+        
+        set_language($locale, $remember);
+        
+        // Redirect terug naar de vorige pagina of naar home
+        $referer = $_SERVER['HTTP_REFERER'] ?? base_url();
+        header('Location: ' . $referer);
+        exit;
+    }
+    
     if (array_key_exists($route, $webRoutes)) {
         $webRoutes[$route]();
     } else {
         http_response_code(404);
-        echo "<h1>404 - Pagina niet gevonden</h1>";
+        echo "<h1>404 - " . __('app.page_not_found') . "</h1>";
     }
 }
