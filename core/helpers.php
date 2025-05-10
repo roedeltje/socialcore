@@ -1,2 +1,12 @@
 <?php
-// Hier kunnen we later algemene functies plaatsen zoals url(), redirect(), etc.
+/**
+ * Redirect to a specified path
+ * 
+ * @param string $path Path to redirect to
+ * @return void
+ */
+function redirect($path) 
+{
+    header('Location: ' . base_url($path));
+    exit;
+}
