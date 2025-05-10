@@ -5,6 +5,7 @@
 return [
     // General labels
     'welcome' => 'Welcome to SocialCore',
+    'welcome_message' => 'Welcome to the SocialCore platform, an open source social network developed in the Netherlands.',
     'home' => 'Home',
     'profile' => 'Profile',
     'messages' => 'Messages',
@@ -18,6 +19,7 @@ return [
     'dashboard' => 'Dashboard',
     'explore' => 'Explore',
     'about' => 'About',
+    'about_text' => ':project is a modular, lightweight social networking platform, developed in the Netherlands.',
     'help' => 'Help',
     
     // Actions
@@ -36,6 +38,7 @@ return [
     'warning' => 'Warning!',
     'info' => 'Information',
     'confirm_delete' => 'Are you sure you want to delete this?',
+    'page_not_found' => 'Page not found',
     
     // Time formats
     'just_now' => 'Just now',
