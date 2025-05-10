@@ -29,8 +29,14 @@ return [
     },
 
     'dashboard' => function () {
-        require_once __DIR__ . '/../public/dashboard.php';
-    },
+    if (!Auth::check()) {
+        redirect('/login');
+    }
+
+    $user = Auth::user();
+
+    require_once __DIR__ . '/../core/views/auth/dashboard.php';
+},
 
     'logout' => function () {
         require_once __DIR__ . '/../public/logout.php';
