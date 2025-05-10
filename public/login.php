@@ -1,5 +1,5 @@
 <?php
-session_start();
+
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../core/helpers.php';
 
@@ -15,4 +15,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once __DIR__ . '/../views/auth/login.php';
+require_once __DIR__ . '/../core/views/auth/login.php';

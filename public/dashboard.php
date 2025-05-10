@@ -1,10 +1,10 @@
 <?php
-session_start();
+
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../core/helpers.php';
 
 if (!Auth::check()) {
-    redirect('/login.php');
+    redirect('/login'); // ✅ nette route
 }
 
 $user = Auth::user();
@@ -14,4 +14,4 @@ $user = Auth::user();
 
 <p>Je bent succesvol ingelogd op SocialCore 🎉</p>
 
-<p><a href="/logout.php">Uitloggen</a></p>
+<p><a href="/logout">Uitloggen</a></p>
