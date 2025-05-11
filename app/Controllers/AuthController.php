@@ -1,6 +1,9 @@
 <?php
-// app/Controllers/AuthController.php
-
+/**
+ * AuthController
+ * 
+ * Verantwoordelijk voor alle authenticatie-gerelateerde acties.
+ */
 class AuthController
 {
     public function showLoginForm()
@@ -11,28 +14,25 @@ class AuthController
 
     public function login()
     {
-        // Login logica uit je huidige login.php
-        $email = $_POST['email'] ?? '';
+        // Login logica
+        $username = $_POST['username'] ?? '';
         $password = $_POST['password'] ?? '';
         
         // Validatie
-        if (empty($email) || empty($password)) {
+        if (empty($username) || empty($password)) {
             $_SESSION['error'] = 'Vul alle velden in';
             header('Location: ' . base_url('login'));
             exit;
         }
         
-        // Controleer gebruiker in database (pseudocode)
-        $user = $this->getUserByEmail($email);
-        if (!$user || !password_verify($password, $user['password'])) {
+        // Controleer gebruiker in database via Auth helper
+        if (!Auth::attempt($username, $password)) {
             $_SESSION['error'] = 'Ongeldige inloggegevens';
             header('Location: ' . base_url('login'));
             exit;
         }
         
         // Login succesvol
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['name'];
         header('Location: ' . base_url('dashboard'));
         exit;
     }
@@ -45,69 +45,41 @@ class AuthController
     
     public function register()
     {
-        // Register logica uit je huidige register.php
-        $name = $_POST['name'] ?? '';
+        // Register logica
+        $username = $_POST['username'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
-        $password_confirm = $_POST['password_confirm'] ?? '';
         
         // Validatie
-        if (empty($name) || empty($email) || empty($password)) {
+        if (empty($username) || empty($email) || empty($password)) {
             $_SESSION['error'] = 'Vul alle velden in';
             header('Location: ' . base_url('register'));
             exit;
         }
         
-        if ($password !== $password_confirm) {
-            $_SESSION['error'] = 'Wachtwoorden komen niet overeen';
+        // Controleer of gebruikersnaam of email al bestaat
+        if (Auth::emailExists($email) || Auth::usernameExists($username)) {
+            $_SESSION['error'] = 'Gebruikersnaam of email is al in gebruik';
             header('Location: ' . base_url('register'));
             exit;
         }
         
-        // Controleer of email al bestaat (pseudocode)
-        if ($this->emailExists($email)) {
-            $_SESSION['error'] = 'Email is al in gebruik';
+        // Registreer gebruiker
+        if (Auth::register($username, $email, $password)) {
+            $_SESSION['success'] = 'Registratie succesvol, je kunt nu inloggen';
+            header('Location: ' . base_url('login'));
+        } else {
+            $_SESSION['error'] = 'Er is iets misgegaan bij de registratie';
             header('Location: ' . base_url('register'));
-            exit;
         }
-        
-        // Gebruiker aanmaken (pseudocode)
-        $user_id = $this->createUser([
-            'name' => $name,
-            'email' => $email,
-            'password' => password_hash($password, PASSWORD_DEFAULT)
-        ]);
-        
-        // Registratie succesvol
-        $_SESSION['success'] = 'Registratie succesvol, je kunt nu inloggen';
-        header('Location: ' . base_url('login'));
         exit;
     }
     
     public function logout()
     {
-        // Logout logica uit je huidige logout.php
-        session_unset();
-        session_destroy();
+        // Logout logica
+        Auth::logout();
         header('Location: ' . base_url('login'));
         exit;
-    }
-    
-    // Helper methodes (pseudocode)
-    private function getUserByEmail($email)
-    {
-        // Database query om gebruiker op te halen
-        // Hier zou je je database class kunnen gebruiken
-    }
-    
-    private function emailExists($email)
-    {
-        // Controleer of email al bestaat in database
-    }
-    
-    private function createUser($userData)
-    {
-        // Gebruiker aanmaken in database
-        // Return user_id
     }
 }

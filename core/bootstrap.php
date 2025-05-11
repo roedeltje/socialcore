@@ -14,6 +14,9 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/helpers/language.php';
 
+// Laad controllers
+require_once __DIR__ . '/../app/Controllers/AuthController.php';
+
 // Laad de web en API routes
 $webRoutes = require __DIR__ . '/../routes/web.php';
 $apiRoutes = require __DIR__ . '/../routes/api.php';

@@ -6,7 +6,31 @@ class Auth
 {
     public static function register($username, $email, $password)
     {
-        // ... bestaande code ...
+        $pdo = Database::connect();
+        
+        // Controleer eerst of de username of email al bestaat
+        if (self::emailExists($email) || self::usernameExists($username)) {
+            return false;
+        }
+        
+        // Hash het wachtwoord
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        
+        // Voeg de gebruiker toe
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password, created_at) VALUES (:username, :email, :password, NOW())");
+        $result = $stmt->execute([
+            'username' => $username,
+            'email' => $email,
+            'password' => $hashedPassword
+        ]);
+        
+        return $result;
+    }
+
+    public static function attempt($usernameOrEmail, $password)
+    {
+        $result = self::login($usernameOrEmail, $password);
+        return isset($result['success']) && $result['success'] === true;
     }
 
     public static function login($usernameOrEmail, $password)
@@ -25,6 +49,22 @@ class Auth
         }
         
         return ['error' => 'Ongeldige inloggegevens'];
+    }
+
+    public static function emailExists($email)
+    {
+        $pdo = Database::connect();
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
+        $stmt->execute(['email' => $email]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    public static function usernameExists($username)
+    {
+        $pdo = Database::connect();
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
+        $stmt->execute(['username' => $username]);
+        return (int)$stmt->fetchColumn() > 0;
     }
 
     public static function check()
