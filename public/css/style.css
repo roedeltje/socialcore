@@ -60,3 +60,18 @@ a:hover {
 p {
     margin: 1em 0;
 }
+
+.button {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 0.6em 1em;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-top: 1em;
+}
+
+.button:hover {
+    background-color: #218838;
+}
+

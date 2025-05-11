@@ -1,0 +1,13 @@
+<?php require_once __DIR__ . '/layout/header.php'; ?>
+
+<h1><?= __('app.welcome') ?></h1>
+<p><?= __('app.welcome_message', ['name' => 'SocialCore']) ?></p>
+
+<p>
+    <a href="/register" class="button">Gratis Registreren</a> of 
+    <a href="/login">Inloggen</a> als je al een account hebt.
+</p>
+
+<?php include __DIR__ . '/../../app/Views/components/language_switcher.php'; ?>
+
+<?php require_once __DIR__ . '/layout/footer.php'; ?>

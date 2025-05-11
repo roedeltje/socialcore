@@ -7,12 +7,8 @@
 
 return [
     'home' => function() {
-        echo "<h1>" . __('app.welcome') . "</h1>";
-        echo "<p>" . __('app.welcome_message', ['name' => 'SocialCore']) . "</p>";
-        
-        // Toon de taalschakelaar
-        include __DIR__ . '/../app/Views/components/language_switcher.php';
-    },
+         require_once __DIR__ . '/../core/views/home.php';
+},
     
     'over' => function() {
         echo "<h1>" . __('app.about') . "</h1>";
