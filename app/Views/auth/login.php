@@ -5,7 +5,7 @@
     <?php unset($_SESSION['error']); ?>
 <?php endif; ?>
 
-<form method="post" action="<?= base_url('auth/login') ?>">
+<form method="post" action="<?= base_url('login/process') ?>">
     <label>Gebruikersnaam of e-mail:</label><br>
     <input type="text" name="username" required><br><br>
     

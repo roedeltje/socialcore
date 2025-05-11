@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Auth\Auth;
+use App\Database\Database;
 
 class DashboardController extends Controller
 {
@@ -12,11 +13,30 @@ class DashboardController extends Controller
             exit;
         }
         
-        // Data voor het dashboard
+        // Auth::user() retourneert alleen het user_id
+        $userId = Auth::user();
+        
+        // Maak een gebruikersobject dat ook de username bevat
+        $userData = [
+            'id' => $userId,
+            'username' => $_SESSION['username'] ?? 'gebruiker'
+        ];
+        
+        // Als je database-gegevens wilt gebruiken:
+
+        try {
+            $db = Database::getInstance();
+            $userFromDb = $db->fetch("SELECT * FROM users WHERE id = ?", [$userId]);
+            if ($userFromDb) {
+                $userData = $userFromDb;
+            }
+        } catch (\Exception $e) {
+            // Log error en gebruik session data als fallback
+        }
+        
         $data = [
-            'title' => 'Dashboard',
-            'user' => Auth::user(),
-            'activities' => [] // Vul dit met echte data als die beschikbaar is
+            'user' => $userData,
+            'title' => 'Dashboard'
         ];
         
         $this->view('dashboard/index', $data);
