@@ -5,7 +5,9 @@
  * Verantwoordelijk voor alle authenticatie-gerelateerde acties.
  */
 namespace App\Controllers;
-class AuthController
+use App\Auth\Auth;
+
+class AuthController extends Controller
 {
     public function showLoginForm()
     {
