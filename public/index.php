@@ -1,5 +1,4 @@
 <?php
-
 // 🔍 Verwerk de URL vóór alles
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $requestUri = trim($requestUri, '/');
@@ -8,11 +7,25 @@ $isApi = str_starts_with($requestUri, 'api/');
 // ✅ Startplatform
 require_once __DIR__ . '/../core/bootstrap.php';
 
-// ✅ Laad juiste routebestand
-$routes = require __DIR__ . '/../routes/' . ($isApi ? 'api' : 'web') . '.php';
+// ✅ Zorg dat we de juiste routes gebruiken
+// Als bootstrap.php al $webRoutes laadt, gebruik die dan
+$routes = $isApi ? require __DIR__ . '/../routes/api.php' : $webRoutes;
 
 // 🧭 Verwerk pad
-$path = $isApi ? substr($requestUri, 4) : $requestUri;
+$path = $isApi ? substr($requestUri, 4) : ($requestUri ?: 'home');
+
+// Speciale route voor het instellen van de taal
+if ($path === 'set-language' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $locale = $_POST['locale'] ?? get_default_language();
+    $remember = isset($_POST['remember']) && $_POST['remember'] === '1';
+    
+    set_language($locale, $remember);
+    
+    // Redirect terug naar de vorige pagina of naar home
+    $referer = $_SERVER['HTTP_REFERER'] ?? base_url();
+    header('Location: ' . $referer);
+    exit;
+}
 
 // ✅ Debugmodus
 if ($isApi && isset($_GET['debug'])) {
