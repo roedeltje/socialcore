@@ -1,17 +1,24 @@
 <?php
 namespace App\Controllers;
 
+use App\Auth\Auth;
+
 class DashboardController extends Controller
 {
     public function index()
     {
         if (!Auth::check()) {
-            redirect('/login');
+            header('Location: /login');
+            exit;
         }
-
-        $user = Auth::user();
         
-        // Gebruik de view methode van de basiscontroller
-        $this->view('dashboard/index', ['user' => $user]);
+        // Data voor het dashboard
+        $data = [
+            'title' => 'Dashboard',
+            'user' => Auth::user(),
+            'activities' => [] // Vul dit met echte data als die beschikbaar is
+        ];
+        
+        $this->view('dashboard/index', $data);
     }
 }

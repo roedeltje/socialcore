@@ -11,16 +11,12 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        // Controleer of gebruiker al is ingelogd
         if (Auth::check()) {
-            header('Location: /');
+            header('Location: /dashboard');
             exit;
         }
         
-        // Zo niet, toon het login formulier
-        include __DIR__ . '/../../core/views/layout/header.php';
-        include __DIR__ . '/../../core/views/auth/login.php';
-        include __DIR__ . '/../../core/views/layout/footer.php';
+        $this->view('auth/login');
     }
 
     public function login()
@@ -50,16 +46,12 @@ class AuthController extends Controller
     
     public function showRegisterForm()
     {
-        // Controleer of gebruiker al is ingelogd
         if (Auth::check()) {
-            header('Location: /');
+            header('Location: /dashboard');
             exit;
         }
         
-        // Zo niet, toon het registratieformulier
-        include __DIR__ . '/../../core/views/layout/header.php';
-        include __DIR__ . '/../../core/views/auth/register.php';
-        include __DIR__ . '/../../core/views/layout/footer.php';
+        $this->view('auth/register');
     }
     
     public function register()

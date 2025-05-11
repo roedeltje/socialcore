@@ -1,30 +1,24 @@
 <?php
-/**
- * Web Routes voor SocialCore
- * 
- * Dit bestand definieert alle web routes voor het SocialCore platform.
- */
+// Bovenaan het bestand
+use App\Auth\Auth;
 use App\Controllers\HomeController;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
-// Importeer Controller alleen als je deze direct gebruikt in je routes
-// use App\Controllers\Controller;
 
 return [
-    'home' => function() {
-         $homeController = new HomeController();
-         $homeController->index();
-},
-    
-    'over' => function() {
-        echo "<h1>" . __('app.about') . "</h1>";
-        echo "<p>" . __('app.about_text', ['project' => 'SocialCore']) . "</p>";
+    'home' => function () {
+        $homeController = new HomeController();
+        $homeController->index();
     },
-
-    // ✅ Bijgewerkte routes voor authenticatie (controller-based)
+    
     'login' => function () {
         $authController = new AuthController();
         $authController->showLoginForm();
+    },
+    
+    'login/process' => function () {
+        $authController = new AuthController();
+        $authController->login();
     },
     
     'register' => function () {
@@ -32,42 +26,26 @@ return [
         $authController->showRegisterForm();
     },
     
-    // Auth routes - POST requests (via speciale route)
-    'auth/login' => function () {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $authController = new AuthController();
-            $authController->login();
-        } else {
-            redirect('/login');
-        }
-    },
-    
-    'auth/register' => function () {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $authController = new AuthController();
-            $authController->register();
-        } else {
-            redirect('/register');
-        }
-    },
-    
-    'dashboard' => function () {
-        if (!Auth::check()) {
-            redirect('/login');
-        }
-
-        $user = Auth::user();
-        require_once __DIR__ . '/../core/views/auth/dashboard.php';
+    'register/process' => function () {
+        $authController = new AuthController();
+        $authController->register();
     },
     
     'logout' => function () {
-        $authController = new AuthController();
-        $authController->logout();
+        Auth::logout(); // Hier wordt Auth gebruikt
+        header('Location: /');
+        exit;
     },
-
-    // Deze route wordt automatisch afgehandeld in bootstrap.php
-    'set-language' => function() {
-        echo "<h1>" . __('app.error') . "</h1>";
-        echo "<p>Direct access not allowed</p>";
-    }
+    
+    'dashboard' => function () {
+        if (!Auth::check()) { // Hier wordt Auth ook gebruikt
+            header('Location: /login');
+            exit;
+        }
+        
+        $dashboardController = new DashboardController();
+        $dashboardController->index();
+    },
+    
+    // Eventuele andere routes...
 ];

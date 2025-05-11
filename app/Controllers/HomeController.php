@@ -1,21 +1,18 @@
 <?php
 namespace App\Controllers;
 
+use App\Auth\Auth;
+
 class HomeController extends Controller
 {
     public function index()
     {
-        // Voeg hier eventuele logica toe voor de homepage
-        // Misschien wil je recente posts ophalen of statistieken tonen
+        // Je kunt hier data toevoegen voor de view
+        $data = [
+            'title' => 'Welkom bij SocialCore',
+            // Extra data indien nodig
+        ];
         
-        // Gebruik de view methode van de basiscontroller
-        $this->view('home');
-        
-        // Of als je nog geen basiscontroller hebt:
-        /*
-        include __DIR__ . '/../../core/views/layout/header.php';
-        include __DIR__ . '/../../core/views/home.php';
-        include __DIR__ . '/../../core/views/layout/footer.php';
-        */
+        $this->view('home/index', $data);
     }
 }
