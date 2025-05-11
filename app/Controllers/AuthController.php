@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function showLoginForm()
     {
         // Controleer of gebruiker al is ingelogd
-        if (is_logged_in()) {
+        if (Auth::check()) {
             header('Location: /');
             exit;
         }
@@ -51,7 +51,7 @@ class AuthController extends Controller
     public function showRegisterForm()
     {
         // Controleer of gebruiker al is ingelogd
-        if (is_logged_in()) {
+        if (Auth::check()) {
             header('Location: /');
             exit;
         }
