@@ -19,27 +19,48 @@ return [
         echo "<p>" . __('app.about_text', ['project' => 'SocialCore']) . "</p>";
     },
 
-    // ✅ Toegevoegde routes voor authenticatie
+    // ✅ Bijgewerkte routes voor authenticatie (controller-based)
     'login' => function () {
-        require_once __DIR__ . '/../public/login.php';
+        $authController = new AuthController();
+        $authController->showLoginForm();
     },
-
+    
     'register' => function () {
-        require_once __DIR__ . '/../public/register.php';
+        $authController = new AuthController();
+        $authController->showRegisterForm();
     },
-
+    
+    // Auth routes - POST requests (via speciale route)
+    'auth/login' => function () {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $authController = new AuthController();
+            $authController->login();
+        } else {
+            redirect('/login');
+        }
+    },
+    
+    'auth/register' => function () {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $authController = new AuthController();
+            $authController->register();
+        } else {
+            redirect('/register');
+        }
+    },
+    
     'dashboard' => function () {
-    if (!Auth::check()) {
-        redirect('/login');
-    }
+        if (!Auth::check()) {
+            redirect('/login');
+        }
 
-    $user = Auth::user();
-
-    require_once __DIR__ . '/../core/views/auth/dashboard.php';
-},
-
+        $user = Auth::user();
+        require_once __DIR__ . '/../core/views/auth/dashboard.php';
+    },
+    
     'logout' => function () {
-        require_once __DIR__ . '/../public/logout.php';
+        $authController = new AuthController();
+        $authController->logout();
     },
 
     // Deze route wordt automatisch afgehandeld in bootstrap.php
