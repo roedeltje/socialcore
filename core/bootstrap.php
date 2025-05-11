@@ -11,22 +11,37 @@ ini_set('display_errors', 1);
 
 // Autoloader registreren
 spl_autoload_register(function ($className) {
+    // Debug: Toon welke klasse wordt gezocht
+    echo "Looking for class: $className<br>";
+    
     // Vervang backslashes door directory separators
     $className = str_replace('\\', DIRECTORY_SEPARATOR, $className);
     
     // Zoek eerst in app directory
     $appFile = __DIR__ . '/../app/' . $className . '.php';
+    
+    // Debug: Toon wat bestandspad wordt geprobeerd
+    echo "Checking file: $appFile<br>";
+    
     if (file_exists($appFile)) {
         require_once $appFile;
+        echo "Found and loaded: $appFile<br>";
         return;
     }
     
     // Zoek daarna in core directory
     $coreFile = __DIR__ . '/' . $className . '.php';
+    
+    // Debug: Toon wat bestandspad wordt geprobeerd
+    echo "Checking file: $coreFile<br>";
+    
     if (file_exists($coreFile)) {
         require_once $coreFile;
+        echo "Found and loaded: $coreFile<br>";
         return;
     }
+    
+    echo "Could not find class: $className<br>";
 });
 
 // Laad helpers
