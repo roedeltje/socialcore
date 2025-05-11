@@ -4,6 +4,11 @@
  * 
  * Dit bestand definieert alle web routes voor het SocialCore platform.
  */
+use App\Controllers\HomeController;
+use App\Controllers\AuthController;
+use App\Controllers\DashboardController;
+// Importeer Controller alleen als je deze direct gebruikt in je routes
+// use App\Controllers\Controller;
 
 return [
     'home' => function() {

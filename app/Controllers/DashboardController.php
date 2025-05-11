@@ -1,5 +1,5 @@
 <?php
-// app/Controllers/DashboardController.php
+namespace App\Controllers;
 
 class DashboardController extends Controller
 {
