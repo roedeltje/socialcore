@@ -38,6 +38,12 @@ return [
     },
     
     'dashboard' => function () {
+
+        echo "Dashboard route aangeroepen...<br>";
+        echo "Auth::check() resultaat: " . (Auth::check() ? 'true' : 'false') . "<br>";
+        echo "Session user_id: " . ($_SESSION['user_id'] ?? 'niet gevonden') . "<br>";
+
+
         if (!Auth::check()) { // Hier wordt Auth ook gebruikt
             header('Location: /login');
             exit;

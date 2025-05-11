@@ -20,30 +20,31 @@ class AuthController extends Controller
     }
 
     public function login()
-    {
-        // Login logica
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
-        
-        // Validatie
-        if (empty($username) || empty($password)) {
-            $_SESSION['error'] = 'Vul alle velden in';
-            header('Location: ' . base_url('login'));
-            exit;
-        }
-        
-        // Controleer gebruiker in database via Auth helper
-        if (!Auth::attempt($username, $password)) {
-            $_SESSION['error'] = 'Ongeldige inloggegevens';
-            header('Location: ' . base_url('login'));
-            exit;
-        }
-        
-        // Login succesvol
-        header('Location: ' . base_url('dashboard'));
+{
+    echo "Login methode aangeroepen...<br>";
+    
+    // Haal inloggegevens op
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    echo "Attempt login voor gebruiker: " . htmlspecialchars($username) . "<br>";
+    
+    // Probeer in te loggen
+    $result = Auth::attempt($username, $password);
+    echo "Auth::attempt resultaat: " . ($result ? 'true' : 'false') . "<br>";
+    // exit; // Uncomment om hier te stoppen
+    
+    if ($result) {
+        echo "Redirecting naar /dashboard...<br>";
+        header('Location: /dashboard');
+        exit;
+    } else {
+        echo "Redirecting naar /login?error=invalid_credentials...<br>";
+        header('Location: /login?error=invalid_credentials');
         exit;
     }
-    
+}
+  
     public function showRegisterForm()
     {
         if (Auth::check()) {
