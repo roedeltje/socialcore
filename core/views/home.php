@@ -1,5 +1,3 @@
-<?php require_once __DIR__ . '/layout/header.php'; ?>
-
 <h1><?= __('app.welcome') ?></h1>
 <p><?= __('app.welcome_message', ['name' => 'SocialCore']) ?></p>
 
@@ -10,4 +8,4 @@
 
 <?php include __DIR__ . '/../../app/Views/components/language_switcher.php'; ?>
 
-<?php require_once __DIR__ . '/layout/footer.php'; ?>
+

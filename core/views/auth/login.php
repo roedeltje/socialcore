@@ -1,5 +1,3 @@
-<?php require_once __DIR__ . '/../layout/header.php'; ?>
-
 <h2>Inloggen</h2>
 
 <?php if (isset($_SESSION['error'])): ?>
@@ -18,5 +16,3 @@
 </form>
 
 <p>Nog geen account? <a href="<?= base_url('register') ?>">Registreer hier</a></p>
-
-<?php require_once __DIR__ . '/../layout/footer.php'; ?>

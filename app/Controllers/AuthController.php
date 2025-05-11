@@ -8,8 +8,16 @@ class AuthController
 {
     public function showLoginForm()
     {
-        // Laad de login view
-        require_once __DIR__ . '/../../core/views/auth/login.php';
+        // Controleer of gebruiker al is ingelogd
+        if (is_logged_in()) {
+            header('Location: /');
+            exit;
+        }
+        
+        // Zo niet, toon het login formulier
+        include __DIR__ . '/../../core/views/layout/header.php';
+        include __DIR__ . '/../../core/views/auth/login.php';
+        include __DIR__ . '/../../core/views/layout/footer.php';
     }
 
     public function login()
@@ -39,8 +47,16 @@ class AuthController
     
     public function showRegisterForm()
     {
-        // Laad de register view
-        require_once __DIR__ . '/../../core/views/auth/register.php';
+        // Controleer of gebruiker al is ingelogd
+        if (is_logged_in()) {
+            header('Location: /');
+            exit;
+        }
+        
+        // Zo niet, toon het registratieformulier
+        include __DIR__ . '/../../core/views/layout/header.php';
+        include __DIR__ . '/../../core/views/auth/register.php';
+        include __DIR__ . '/../../core/views/layout/footer.php';
     }
     
     public function register()

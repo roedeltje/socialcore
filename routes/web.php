@@ -7,7 +7,8 @@
 
 return [
     'home' => function() {
-         require_once __DIR__ . '/../core/views/home.php';
+         $homeController = new HomeController();
+         $homeController->index();
 },
     
     'over' => function() {

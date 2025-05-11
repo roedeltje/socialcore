@@ -9,6 +9,26 @@ date_default_timezone_set('Europe/Amsterdam');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Autoloader registreren
+spl_autoload_register(function ($className) {
+    // Vervang backslashes door directory separators
+    $className = str_replace('\\', DIRECTORY_SEPARATOR, $className);
+    
+    // Zoek eerst in app directory
+    $appFile = __DIR__ . '/../app/' . $className . '.php';
+    if (file_exists($appFile)) {
+        require_once $appFile;
+        return;
+    }
+    
+    // Zoek daarna in core directory
+    $coreFile = __DIR__ . '/' . $className . '.php';
+    if (file_exists($coreFile)) {
+        require_once $coreFile;
+        return;
+    }
+});
+
 // Laad helpers
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/Auth.php';
