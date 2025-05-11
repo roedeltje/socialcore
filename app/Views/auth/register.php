@@ -5,7 +5,7 @@
     <?php unset($_SESSION['error']); ?>
 <?php endif; ?>
 
-<form method="post" action="<?= base_url('auth/register') ?>">
+<form method="post" action="<?= base_url('register/process') ?>">
     <label>Gebruikersnaam:</label><br>
     <input type="text" name="username" required><br><br>
 
