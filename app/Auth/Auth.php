@@ -1,6 +1,8 @@
 <?php
 namespace App\Auth;
 
+use App\Database\Database;
+
 class Auth
 {
     public static function check()
@@ -8,38 +10,44 @@ class Auth
         return isset($_SESSION['user_id']);
     }
     
-    public static function user() {
+    public static function user()
+    {
         return isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     }
-
-    /**
- * Probeert de gebruiker in te loggen met gebruikersnaam en wachtwoord
- */
+    
     public static function attempt($username, $password)
     {
-    $db = \App\Database::getInstance(); // Of hoe je je database singleton ook benadert
-    
-    try {
-        $stmt = $db->prepare("SELECT id, username, password FROM users WHERE username = ?");
-        $stmt->execute([$username]);
-        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
-        // Controleer of de gebruiker bestaat en het wachtwoord correct is
-        if ($user && password_verify($password, $user['password'])) {
-            // Sla gebruikersgegevens op in de sessie
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
+        try {
+            $db = Database::getInstance();
             
-            // Je kunt hier optioneel meer gebruikersgegevens opslaan
+            // Zoek de gebruiker op basis van gebruikersnaam
+            $user = $db->fetch(
+                "SELECT id, username, password FROM users WHERE username = ?", 
+                [$username]
+            );
             
-            return true;
+            // Controleer of de gebruiker bestaat en het wachtwoord correct is
+            if ($user && password_verify($password, $user['password'])) {
+                // Sla gebruikersgegevens op in de sessie
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                return true;
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            // Log de fout, maar laat het inloggen mislukken
+            error_log("Database error in Auth::attempt(): " . $e->getMessage());
+            return false;
         }
-        
-        return false;
-    } catch (\PDOException $e) {
-        // Log de fout, maar laat het inloggen mislukken
-        error_log("Database error in Auth::attempt(): " . $e->getMessage());
-        return false;
     }
-}
+    
+    public static function logout()
+    {
+        if (isset($_SESSION['user_id'])) {
+            unset($_SESSION['user_id']);
+            unset($_SESSION['username']);
+            // Eventuele andere sessievariabelen
+        }
+    }
 }

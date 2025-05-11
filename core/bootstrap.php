@@ -49,7 +49,6 @@ spl_autoload_register(function ($className) {
 
 // Laad helpers
 require_once __DIR__ . '/helpers.php';
-require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/helpers/language.php';
 
 // Laad controllers
