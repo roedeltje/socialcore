@@ -13,7 +13,7 @@ return [
             $homeController = new HomeController();
             $homeController->index();
         },
-        'middleware' => []  // Geen middleware nodig, toegankelijk voor iedereen
+        'middleware' => [GuestMiddleware::class]  // Geen middleware nodig, toegankelijk voor iedereen
     ],
     
     'login' => [
@@ -21,7 +21,7 @@ return [
             $authController = new AuthController();
             $authController->showLoginForm();
         },
-        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+        'middleware' => [GuestMiddleware::class]  // Alleen voor niet-ingelogde gebruikers
     ],
     
     'login/process' => [
@@ -29,7 +29,7 @@ return [
             $authController = new AuthController();
             $authController->login();
         },
-        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+        'middleware' => [GuestMiddleware::class]  // Alleen voor niet-ingelogde gebruikers
     ],
     
     'register' => [
@@ -37,7 +37,7 @@ return [
             $authController = new AuthController();
             $authController->showRegisterForm();
         },
-        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+        'middleware' => [GuestMiddleware::class]  // Alleen voor niet-ingelogde gebruikers
     ],
     
     'register/process' => [
@@ -45,7 +45,7 @@ return [
             $authController = new AuthController();
             $authController->register();
         },
-        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+        'middleware' => [GuestMiddleware::class]  // Alleen voor niet-ingelogde gebruikers
     ],
     
     'logout' => [
@@ -54,7 +54,7 @@ return [
             header('Location: /');
             exit;
         },
-        'middleware' => ['App\Middleware\AuthMiddleware']  // Alleen voor ingelogde gebruikers
+        'middleware' => [AuthMiddleware::class]  // Alleen voor ingelogde gebruikers
     ],
     
     'dashboard' => [
@@ -62,7 +62,7 @@ return [
             $dashboardController = new DashboardController();
             $dashboardController->index();
         },
-        'middleware' => ['App\Middleware\AuthMiddleware']  // Alleen voor ingelogde gebruikers
+        'middleware' => [AuthMiddleware::class]  // Alleen voor ingelogde gebruikers
     ],
     
     // Eventuele andere routes...
