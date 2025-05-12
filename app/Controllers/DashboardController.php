@@ -9,9 +9,9 @@ class DashboardController extends Controller
     public function index()
     {
         if (!Auth::check()) {
-            header('Location: /login');
-            exit;
-        }
+        header('Location: ' . base_url('?route=login'));
+        exit;
+    }
         
         // Auth::user() retourneert alleen het user_id
         $userId = Auth::user();

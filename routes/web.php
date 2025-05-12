@@ -49,13 +49,13 @@ return [
     ],
     
     'logout' => [
-        'callback' => function () {
-            Auth::logout(); // Hier wordt Auth gebruikt
-            header('Location: /');
-            exit;
-        },
-        'middleware' => [AuthMiddleware::class]  // Alleen voor ingelogde gebruikers
-    ],
+    'callback' => function () {
+        Auth::logout();
+        header('Location: ' . base_url('?route=home'));
+        exit;
+    },
+    'middleware' => [AuthMiddleware::class]
+],
     
     'dashboard' => [
         'callback' => function () {
