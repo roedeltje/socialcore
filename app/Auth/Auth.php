@@ -41,6 +41,88 @@ class Auth
             return false;
         }
     }
+
+    /**
+     * Controleert of een e-mailadres al bestaat in de database
+     *
+     * @param string $email Het te controleren e-mailadres
+     * @return bool True als het e-mailadres bestaat, anders false
+     */
+    public static function emailExists($email)
+    {
+        try {
+            $db = Database::getInstance();
+            
+            // Controleer of er een gebruiker is met dit e-mailadres
+            $user = $db->fetch("SELECT id FROM users WHERE email = ?", [$email]);
+            
+            // Als er een gebruiker is gevonden, bestaat het e-mailadres al
+            return !empty($user);
+        } catch (\Exception $e) {
+            // Log de fout
+            error_log("Database error in Auth::emailExists(): " . $e->getMessage());
+            // Bij twijfel, zeg dat het e-mailadres bestaat om fouten te voorkomen
+            return true;
+        }
+    }
+    
+    /**
+     * Controleert of een gebruikersnaam al bestaat in de database
+     *
+     * @param string $username De te controleren gebruikersnaam
+     * @return bool True als de gebruikersnaam bestaat, anders false
+     */
+    public static function usernameExists($username)
+    {
+        try {
+            $db = Database::getInstance();
+            
+            // Controleer of er een gebruiker is met deze gebruikersnaam
+            $user = $db->fetch("SELECT id FROM users WHERE username = ?", [$username]);
+            
+            // Als er een gebruiker is gevonden, bestaat de gebruikersnaam al
+            return !empty($user);
+        } catch (\Exception $e) {
+            // Log de fout
+            error_log("Database error in Auth::usernameExists(): " . $e->getMessage());
+            // Bij twijfel, zeg dat de gebruikersnaam bestaat om fouten te voorkomen
+            return true;
+        }
+    }
+    
+    /**
+     * Registreert een nieuwe gebruiker in het systeem
+     *
+     * @param string $username De gebruikersnaam
+     * @param string $email Het e-mailadres
+     * @param string $password Het wachtwoord (ongehashed)
+     * @return bool True bij succes, false bij falen
+     */
+    public static function register($username, $email, $password)
+    {
+        try {
+            $db = Database::getInstance();
+            
+            // Hash het wachtwoord
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            
+            // Maak een timestamp voor created_at
+            $createdAt = date('Y-m-d H:i:s');
+            
+            // Voeg de gebruiker toe
+            // Pas deze query aan op basis van de structuur van je users tabel
+            $result = $db->query(
+                "INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, ?)",
+                [$username, $email, $hashedPassword, $createdAt]
+            );
+            
+            return $result !== false;
+        } catch (\Exception $e) {
+            // Log de fout
+            error_log("Database error in Auth::register(): " . $e->getMessage());
+            return false;
+        }
+    }
     
     public static function logout()
     {
