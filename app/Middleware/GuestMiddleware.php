@@ -14,7 +14,8 @@ class GuestMiddleware implements Middleware
     {
         // Als de gebruiker al is ingelogd, redirect naar dashboard
         if (Auth::check()) {
-            header('Location: /dashboard');
+            // Gebruik de juiste URL-formaat voor je site
+            header('Location: ' . base_url('?route=dashboard'));
             return false;
         }
         

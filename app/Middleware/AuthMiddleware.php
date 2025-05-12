@@ -12,10 +12,10 @@ class AuthMiddleware implements Middleware
      */
     public function handle(): bool
     {
-        // Gebruik je bestaande Auth class om te controleren of de gebruiker is ingelogd
+        // Controleer of gebruiker is ingelogd
         if (!Auth::check()) {
             // Gebruiker is niet ingelogd, redirect naar login pagina
-            header('Location: /login');
+            header('Location: ' . base_url('?route=login'));
             return false;
         }
         

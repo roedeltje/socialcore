@@ -8,8 +8,11 @@
 
 function base_url(string $path = ''): string
 {
-    $base = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'];
-    return rtrim($base, '/') . '/' . ltrim($path, '/');
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'];
+    $baseUrl = $protocol . $host;
+    
+    return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
 }
 
 /**
