@@ -37,9 +37,11 @@ class Database
     }
     
     public function fetch($query, $params = [])
-    {
-        return $this->query($query, $params)->fetch();
-    }
+{
+    $stmt = $this->query($query, $params);
+    $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+    return $result === false ? false : $result;
+}
     
     public function fetchAll($query, $params = [])
     {

@@ -52,18 +52,24 @@ class Auth
     {
         try {
             $db = Database::getInstance();
+
+            // Debug info
+            error_log("Checking if email exists: " . $email);
             
             // Controleer of er een gebruiker is met dit e-mailadres
             $user = $db->fetch("SELECT id FROM users WHERE email = ?", [$email]);
+
+            // Debug info
+            error_log("Result for email check: " . ($user ? 'Found' : 'Not found'));
             
-            // Als er een gebruiker is gevonden, bestaat het e-mailadres al
-            return !empty($user);
-        } catch (\Exception $e) {
-            // Log de fout
-            error_log("Database error in Auth::emailExists(): " . $e->getMessage());
-            // Bij twijfel, zeg dat het e-mailadres bestaat om fouten te voorkomen
-            return true;
-        }
+            // In deze fetch() implementatie, retourneert het false als er niets gevonden is
+        return $user !== false;
+    }   catch (\Exception $e) {
+        // Log de fout
+        error_log("Database error in Auth::emailExists(): " . $e->getMessage());
+        // Bij twijfel, zeg dat het e-mailadres bestaat om fouten te voorkomen
+        return true;
+    }
     }
     
     /**
@@ -76,18 +82,24 @@ class Auth
     {
         try {
             $db = Database::getInstance();
+
+            // Debug info
+            error_log("Checking if username exists: " . $username);
             
             // Controleer of er een gebruiker is met deze gebruikersnaam
             $user = $db->fetch("SELECT id FROM users WHERE username = ?", [$username]);
+
+            // Debug info
+            error_log("Result for username check: " . ($user ? 'Found' : 'Not found'));
             
-            // Als er een gebruiker is gevonden, bestaat de gebruikersnaam al
-            return !empty($user);
-        } catch (\Exception $e) {
+            // In deze fetch() implementatie, retourneert het false als er niets gevonden is
+            return $user !== false;
+    }   catch (\Exception $e) {
             // Log de fout
             error_log("Database error in Auth::usernameExists(): " . $e->getMessage());
             // Bij twijfel, zeg dat de gebruikersnaam bestaat om fouten te voorkomen
             return true;
-        }
+    }
     }
     
     /**

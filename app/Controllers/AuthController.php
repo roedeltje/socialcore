@@ -61,6 +61,20 @@ class AuthController extends Controller
         $username = $_POST['username'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+
+        // Debug info
+        echo "Registratie poging:<br>";
+        echo "Username: " . htmlspecialchars($username) . "<br>";
+        echo "Email: " . htmlspecialchars($email) . "<br>";
+        echo "Password length: " . strlen($password) . "<br>";
+    
+    // Check email en username
+    $emailExists = Auth::emailExists($email);
+    $usernameExists = Auth::usernameExists($username);
+    
+    echo "Email bestaat: " . ($emailExists ? 'Ja' : 'Nee') . "<br>";
+    echo "Username bestaat: " . ($usernameExists ? 'Ja' : 'Nee') . "<br>";
+    exit; // Stop hier om de debug info te zien
         
         // Validatie
         if (empty($username) || empty($email) || empty($password)) {
