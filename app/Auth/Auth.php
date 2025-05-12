@@ -16,31 +16,38 @@ class Auth
     }
     
     public static function attempt($username, $password)
-    {
-        try {
-            $db = Database::getInstance();
-            
-            // Zoek de gebruiker op basis van gebruikersnaam
-            $user = $db->fetch(
-                "SELECT id, username, password FROM users WHERE username = ?", 
-                [$username]
-            );
-            
-            // Controleer of de gebruiker bestaat en het wachtwoord correct is
-            if ($user && password_verify($password, $user['password'])) {
-                // Sla gebruikersgegevens op in de sessie
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                return true;
-            }
-            
-            return false;
-        } catch (\Exception $e) {
-            // Log de fout, maar laat het inloggen mislukken
-            error_log("Database error in Auth::attempt(): " . $e->getMessage());
-            return false;
+{
+    try {
+        $db = Database::getInstance();
+        
+        // Debug info
+        error_log("Login attempt for user: $username");
+        
+        // Zoek de gebruiker op basis van gebruikersnaam
+        $user = $db->fetch(
+            "SELECT id, username, password FROM users WHERE username = ?", 
+            [$username]
+        );
+        
+        error_log("User found: " . ($user ? 'Yes' : 'No'));
+        
+        // Controleer of de gebruiker bestaat en het wachtwoord correct is
+        if ($user && password_verify($password, $user['password'])) {
+            // Sla gebruikersgegevens op in de sessie
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            error_log("Password verified, login successful");
+            return true;
         }
+        
+        error_log("Login failed for user: $username");
+        return false;
+    } catch (\Exception $e) {
+        // Log de fout, maar laat het inloggen mislukken
+        error_log("Database error in Auth::attempt(): " . $e->getMessage());
+        return false;
     }
+}
 
     /**
      * Controleert of een e-mailadres al bestaat in de database
@@ -49,28 +56,23 @@ class Auth
      * @return bool True als het e-mailadres bestaat, anders false
      */
     public static function emailExists($email)
-    {
-        try {
-            $db = Database::getInstance();
-
-            // Debug info
-            error_log("Checking if email exists: " . $email);
-            
-            // Controleer of er een gebruiker is met dit e-mailadres
-            $user = $db->fetch("SELECT id FROM users WHERE email = ?", [$email]);
-
-            // Debug info
-            error_log("Result for email check: " . ($user ? 'Found' : 'Not found'));
-            
-            // In deze fetch() implementatie, retourneert het false als er niets gevonden is
+{
+    try {
+        $db = Database::getInstance();
+        
+        // Controleer of er een gebruiker is met dit e-mailadres
+        $user = $db->fetch("SELECT id FROM users WHERE email = ?", [$email]);
+        
+        // Als de gebruiker false is, bestaat het e-mailadres niet
         return $user !== false;
-    }   catch (\Exception $e) {
+    } catch (\Exception $e) {
         // Log de fout
         error_log("Database error in Auth::emailExists(): " . $e->getMessage());
-        // Bij twijfel, zeg dat het e-mailadres bestaat om fouten te voorkomen
-        return true;
+        // Als er een exception is, retourneer false om registratie toe te staan
+        // Dit is veiliger dan altijd 'true' retourneren
+        return false;
     }
-    }
+}
     
     /**
      * Controleert of een gebruikersnaam al bestaat in de database
@@ -79,28 +81,22 @@ class Auth
      * @return bool True als de gebruikersnaam bestaat, anders false
      */
     public static function usernameExists($username)
-    {
-        try {
-            $db = Database::getInstance();
-
-            // Debug info
-            error_log("Checking if username exists: " . $username);
-            
-            // Controleer of er een gebruiker is met deze gebruikersnaam
-            $user = $db->fetch("SELECT id FROM users WHERE username = ?", [$username]);
-
-            // Debug info
-            error_log("Result for username check: " . ($user ? 'Found' : 'Not found'));
-            
-            // In deze fetch() implementatie, retourneert het false als er niets gevonden is
-            return $user !== false;
-    }   catch (\Exception $e) {
-            // Log de fout
-            error_log("Database error in Auth::usernameExists(): " . $e->getMessage());
-            // Bij twijfel, zeg dat de gebruikersnaam bestaat om fouten te voorkomen
-            return true;
+{
+    try {
+        $db = Database::getInstance();
+        
+        // Controleer of er een gebruiker is met deze gebruikersnaam
+        $user = $db->fetch("SELECT id FROM users WHERE username = ?", [$username]);
+        
+        // Als de gebruiker false is, bestaat de gebruikersnaam niet
+        return $user !== false;
+    } catch (\Exception $e) {
+        // Log de fout
+        error_log("Database error in Auth::usernameExists(): " . $e->getMessage());
+        // Als er een exception is, retourneer false om registratie toe te staan
+        return false;
     }
-    }
+}
     
     /**
      * Registreert een nieuwe gebruiker in het systeem

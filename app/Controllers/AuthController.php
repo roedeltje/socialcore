@@ -74,7 +74,7 @@ class AuthController extends Controller
     
     echo "Email bestaat: " . ($emailExists ? 'Ja' : 'Nee') . "<br>";
     echo "Username bestaat: " . ($usernameExists ? 'Ja' : 'Nee') . "<br>";
-    exit; // Stop hier om de debug info te zien
+    //exit; Stop hier om de debug info te zien
         
         // Validatie
         if (empty($username) || empty($email) || empty($password)) {
