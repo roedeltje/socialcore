@@ -44,6 +44,9 @@ spl_autoload_register(function ($className) {
             require_once $coreFile;
             return;
         }
+        
+        // We verwijderen deze check omdat middleware nu in app/Middleware zit
+        // en al via de App namespace check wordt geladen
     }
 });
 
@@ -51,8 +54,63 @@ spl_autoload_register(function ($className) {
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/helpers/language.php';
 
-// Laad controllers
-
 // Laad de web en API routes
 $webRoutes = require __DIR__ . '/../routes/web.php';
 $apiRoutes = require __DIR__ . '/../routes/api.php';
+
+// Bepaal de route
+$route = $_GET['route'] ?? 'home';
+$isApiRoute = strpos($route, 'api/') === 0;
+
+// Kies de juiste routes op basis van API of web request
+if ($isApiRoute) {
+    // Verwijder 'api/' prefix voor het zoeken in de routes array
+    $apiRouteName = substr($route, 4); // 'api/' is 4 tekens
+    $routes = $apiRoutes;
+    $routeKey = $apiRouteName;
+} else {
+    $routes = $webRoutes;
+    $routeKey = $route;
+}
+
+// Controleer of de route bestaat
+if (array_key_exists($routeKey, $routes)) {
+    $routeInfo = $routes[$routeKey];
+    
+    // Bepaal de callback en middleware
+    $callback = $routeInfo;
+    $middlewares = [];
+    
+    // Check of de route een array is met middleware
+    if (is_array($routeInfo) && isset($routeInfo['callback'])) {
+        $callback = $routeInfo['callback'];
+        $middlewares = $routeInfo['middleware'] ?? [];
+    }
+    
+    // Middleware verwerken
+    $continueRequest = true;
+    foreach ($middlewares as $middlewareClass) {
+        // Instantieer middleware class
+        // We hoeven geen extra checks meer te doen omdat de autoloader die nu regelt
+        $middleware = new $middlewareClass();
+        $continueRequest = $middleware->handle();
+        
+        // Stop verwerking als middleware returnt false
+        if (!$continueRequest) {
+            break;
+        }
+    }
+    
+    // Voer de route callback uit als middleware het toestaat
+    if ($continueRequest) {
+        if (is_callable($callback)) {
+            call_user_func($callback);
+        } else {
+            // Hier kun je later controllers ondersteunen zoals 'UserController@profile'
+            echo "<h1>Error: Route callback is not callable</h1>";
+        }
+    }
+} else {
+    http_response_code(404);
+    echo "<h1>404 - Pagina niet gevonden</h1>";
+}

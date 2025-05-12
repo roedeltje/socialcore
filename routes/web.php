@@ -4,48 +4,66 @@ use App\Auth\Auth;
 use App\Controllers\HomeController;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
+use App\Middleware\AuthMiddleware;
+use App\Middleware\GuestMiddleware;
 
 return [
-    'home' => function () {
-        $homeController = new HomeController();
-        $homeController->index();
-    },
+    'home' => [
+        'callback' => function () {
+            $homeController = new HomeController();
+            $homeController->index();
+        },
+        'middleware' => []  // Geen middleware nodig, toegankelijk voor iedereen
+    ],
     
-    'login' => function () {
-        $authController = new AuthController();
-        $authController->showLoginForm();
-    },
+    'login' => [
+        'callback' => function () {
+            $authController = new AuthController();
+            $authController->showLoginForm();
+        },
+        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+    ],
     
-    'login/process' => function () {
-        $authController = new AuthController();
-        $authController->login();
-    },
+    'login/process' => [
+        'callback' => function () {
+            $authController = new AuthController();
+            $authController->login();
+        },
+        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+    ],
     
-    'register' => function () {
-        $authController = new AuthController();
-        $authController->showRegisterForm();
-    },
+    'register' => [
+        'callback' => function () {
+            $authController = new AuthController();
+            $authController->showRegisterForm();
+        },
+        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+    ],
     
-    'register/process' => function () {
-        $authController = new AuthController();
-        $authController->register();
-    },
+    'register/process' => [
+        'callback' => function () {
+            $authController = new AuthController();
+            $authController->register();
+        },
+        'middleware' => ['App\Middleware\GuestMiddleware']  // Alleen voor niet-ingelogde gebruikers
+    ],
     
-    'logout' => function () {
-        Auth::logout(); // Hier wordt Auth gebruikt
-        header('Location: /');
-        exit;
-    },
+    'logout' => [
+        'callback' => function () {
+            Auth::logout(); // Hier wordt Auth gebruikt
+            header('Location: /');
+            exit;
+        },
+        'middleware' => ['App\Middleware\AuthMiddleware']  // Alleen voor ingelogde gebruikers
+    ],
     
-    'dashboard' => function () {
-    if (!Auth::check()) {
-        header('Location: /login');
-        exit;
-    }
-    
-    $dashboardController = new DashboardController();
-    $dashboardController->index();
-},
+    'dashboard' => [
+        'callback' => function () {
+            $dashboardController = new DashboardController();
+            $dashboardController->index();
+        },
+        'middleware' => ['App\Middleware\AuthMiddleware']  // Alleen voor ingelogde gebruikers
+    ],
     
     // Eventuele andere routes...
 ];
