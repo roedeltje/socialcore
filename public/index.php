@@ -38,7 +38,41 @@ if ($isApi && isset($_GET['debug'])) {
 
 // ✅ Router uitvoer
 if (isset($routes[$path])) {
-    $routes[$path]();
+    $routeInfo = $routes[$path];
+    
+    // Bepaal de callback en middleware
+    $callback = $routeInfo;
+    $middlewares = [];
+    
+    // Check of de route een array is met middleware
+    if (is_array($routeInfo) && isset($routeInfo['callback'])) {
+        $callback = $routeInfo['callback'];
+        $middlewares = $routeInfo['middleware'] ?? [];
+    }
+    
+    // Middleware verwerken
+    $continueRequest = true;
+    foreach ($middlewares as $middlewareClass) {
+        $middleware = new $middlewareClass();
+        $continueRequest = $middleware->handle();
+        
+        // Stop verwerking als middleware returnt false
+        if (!$continueRequest) {
+            break;
+        }
+    }
+    
+    // Voer de route callback uit als middleware het toestaat
+    if ($continueRequest) {
+        if (is_callable($callback)) {
+            call_user_func($callback);
+        } else {
+            http_response_code(500);
+            echo $isApi
+                ? json_encode(['error' => 'Invalid route callback'])
+                : 'Error: Route callback is not callable';
+        }
+    }
 } else {
     http_response_code(404);
     echo $isApi
