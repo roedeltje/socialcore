@@ -5,10 +5,13 @@ use App\Database\Database;
 
 class Auth
 {
-    public static function check()
-    {
-        return isset($_SESSION['user_id']);
-    }
+    public static function check(): bool
+{
+    $isLoggedIn = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+    error_log('Auth::check() - User ID in session: ' . ($_SESSION['user_id'] ?? 'not set'));
+    error_log('Auth::check() - Is logged in: ' . ($isLoggedIn ? 'Yes' : 'No'));
+    return $isLoggedIn;
+}
     
     public static function user()
     {
@@ -133,11 +136,24 @@ class Auth
     }
     
     public static function logout()
-    {
-        if (isset($_SESSION['user_id'])) {
-            unset($_SESSION['user_id']);
-            unset($_SESSION['username']);
-            // Eventuele andere sessievariabelen
-        }
+{
+    // Sessie volledig leegmaken
+    $_SESSION = [];
+    
+    // Sessie cookie verwijderen
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(), '', time() - 42000,
+            $params['path'], $params['domain'],
+            $params['secure'], $params['httponly']
+        );
+    }
+    
+    // Sessie vernietigen
+    session_destroy();
+    
+    // Start een nieuwe, lege sessie voor consistentie
+    session_start();
     }
 }

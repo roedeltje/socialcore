@@ -31,7 +31,18 @@ class Controller
     // Extract opnieuw zodat $content beschikbaar is
     extract($data);
     
-    // Laad het layout bestand dat de header/footer insluit
-    include __DIR__ . '/../Views/layout.php';
+    // Controleer of layout.php bestaat
+    $layoutPath = __DIR__ . '/../Views/layout.php';
+    if (!file_exists($layoutPath)) {
+        echo "<div style='color: red; padding: 20px; border: 1px solid red;'>";
+        echo "Layout bestand niet gevonden: layout.php";
+        echo "<br>Volledig pad: " . htmlspecialchars($layoutPath);
+        echo "</div>";
+        echo $content; // Toon tenminste de content zonder layout
+        return;
+    }
+    
+    // Laad het layout bestand dat de content insluit
+    include $layoutPath;
 }
 }

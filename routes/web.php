@@ -13,7 +13,7 @@ return [
             $homeController = new HomeController();
             $homeController->index();
         },
-        'middleware' => [GuestMiddleware::class]  // Geen middleware nodig, toegankelijk voor iedereen
+        'middleware' => []  // Geen middleware nodig, toegankelijk voor iedereen
     ],
     
     'login' => [
