@@ -37,3 +37,8 @@ function is_logged_in(): bool
 {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
+
+function is_admin(): bool
+{
+    return \App\Auth\Auth::isAdmin();
+}

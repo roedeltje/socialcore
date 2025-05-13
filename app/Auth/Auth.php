@@ -52,6 +52,39 @@ class Auth
     }
 }
 
+    // Voeg deze statische methoden toe
+    public static function isAdmin(): bool
+{
+    if (!self::check()) {
+        return false;
+    }
+    
+    // Gebruik je Database singleton
+    $db = Database::getInstance();
+    $userId = $_SESSION['user_id'];
+    
+    // Gebruik de fetch methode zoals in je andere Auth methodes
+    $user = $db->fetch("SELECT role FROM users WHERE id = ?", [$userId]);
+    
+    return $user && $user['role'] === 'admin';
+}
+
+    public static function getRole(): ?string
+    {
+        if (!self::check()) {
+            return null;
+        }
+        
+        // Haal de rol op uit de database
+        global $db;
+        $userId = $_SESSION['user_id'];
+        $query = $db->prepare("SELECT role FROM users WHERE id = ?");
+        $query->execute([$userId]);
+        $user = $query->fetch();
+        
+        return $user ? $user['role'] : null;
+    }
+
     /**
      * Controleert of een e-mailadres al bestaat in de database
      *

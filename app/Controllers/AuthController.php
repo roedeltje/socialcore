@@ -19,30 +19,34 @@ class AuthController extends Controller
         $this->view('auth/login');
     }
 
-    public function login()
+public function login()
 {
-    echo "Login methode aangeroepen...<br>";
-    
-    // Haal inloggegevens op
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-    
-    echo "Attempt login voor gebruiker: " . htmlspecialchars($username) . "<br>";
-    
-    // Probeer in te loggen
-    $result = Auth::attempt($username, $password);
-    echo "Auth::attempt resultaat: " . ($result ? 'true' : 'false') . "<br>";
-    // exit; // Uncomment om hier te stoppen
-    
-    if ($result) {
-        echo "Redirecting naar /dashboard...<br>";
-        header('Location: /dashboard');
-        exit;
-    } else {
-        echo "Redirecting naar /login?error=invalid_credentials...<br>";
-        header('Location: /login?error=invalid_credentials');
-        exit;
+    // Controleer of het formulier is verzonden
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $username = $_POST['username'] ?? '';
+        $password = $_POST['password'] ?? '';
+        
+        // Probeer in te loggen
+        if (Auth::attempt($username, $password)) {
+            // Check de rol van de gebruiker
+            if (Auth::isAdmin()) {
+                // Stuur admins naar het dashboard
+                redirect('dashboard');
+            } else {
+                // Stuur gewone leden naar hun profiel
+                redirect('profile');
+            }
+            exit;
+        } else {
+            // Inloggen mislukt, sla een foutmelding op
+            $_SESSION['error'] = 'Ongeldige gebruikersnaam of wachtwoord';
+            redirect('login');
+            exit;
+        }
     }
+    
+    // Als het geen POST-verzoek is, toon het inlogformulier
+    $this->showLoginForm();
 }
   
     public function showRegisterForm()
