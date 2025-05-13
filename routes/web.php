@@ -4,6 +4,7 @@ use App\Auth\Auth;
 use App\Controllers\HomeController;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
+use App\Controllers\ProfileController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 
@@ -47,6 +48,14 @@ return [
         },
         'middleware' => [GuestMiddleware::class]  // Alleen voor niet-ingelogde gebruikers
     ],
+
+    'profile' => [
+    'callback' => function () {
+        $profileController = new ProfileController();
+        $profileController->index();
+    },
+    'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers toegang hebben
+],
     
     'logout' => [
     'callback' => function () {

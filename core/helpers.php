@@ -27,3 +27,13 @@ function redirect(string $path): void
     header('Location: ' . base_url($path));
     exit;
 }
+
+/**
+ * Controleert of een gebruiker is ingelogd
+ * 
+ * @return bool True als gebruiker is ingelogd, anders False
+ */
+function is_logged_in(): bool
+{
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
