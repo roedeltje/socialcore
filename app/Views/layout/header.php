@@ -18,7 +18,7 @@
         <?php else: ?>
             <a href="/dashboard">Dashboard</a> |
             <a href="/profile">Profiel</a> |
-            <a href="/logout">Uitloggen</a>
+            <a href="/logout">Loguit</a>
         <?php endif; ?>
     </nav>
     <hr>
