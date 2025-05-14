@@ -25,9 +25,10 @@ class AuthController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
+            $remember = isset($_POST['remember_me']);
             
             // Probeer in te loggen
-            if (Auth::attempt($username, $password)) {
+            if (Auth::attempt($username, $password, $remember)) {
                 // Check de rol van de gebruiker
                 if (Auth::isAdmin()) {
                     // Stuur admins naar het dashboard

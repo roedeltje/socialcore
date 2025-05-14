@@ -18,7 +18,7 @@ class Auth
         return isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     }
     
-    public static function attempt($username, $password)
+    public static function attempt($username, $password, $remember = false)
 {
     try {
         $db = Database::getInstance();
@@ -40,6 +40,24 @@ class Auth
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             error_log("Password verified, login successful");
+            
+            // Als "onthoud mij" is aangevinkt, genereer een remember token
+            if ($remember) {
+                // Genereer een unieke token
+                $token = bin2hex(random_bytes(32));
+                
+                // Sla de token op in de database, gekoppeld aan de gebruiker
+                $expires = date('Y-m-d H:i:s', strtotime('+30 days')); // Bijv. 30 dagen geldig
+                self::storeRememberToken($user['id'], $token, $expires);
+                
+                // Stel een cookie in met de token
+                $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'; // Cookie alleen via HTTPS
+                $httponly = true; // Cookie niet toegankelijk via JavaScript
+                setcookie('remember_token', $token, strtotime('+30 days'), '/', '', $secure, $httponly);
+                
+                error_log("Remember me token set for user: {$user['username']}");
+            }
+            
             return true;
         }
         
@@ -170,6 +188,17 @@ class Auth
     
     public static function logout()
 {
+    // Verwijder de remember token als die bestaat
+    if (isset($_COOKIE['remember_token'])) {
+        $token = $_COOKIE['remember_token'];
+        
+        // Verwijder uit database
+        self::removeRememberToken($token);
+        
+        // Verwijder cookie
+        setcookie('remember_token', '', time() - 3600, '/');
+    }
+    
     // Sessie volledig leegmaken
     $_SESSION = [];
     
@@ -188,5 +217,85 @@ class Auth
     
     // Start een nieuwe, lege sessie voor consistentie
     session_start();
+}
+
+    /**
+ * Slaat een remember token op in de database
+ * 
+ * @param int $userId ID van de gebruiker
+ * @param string $token De gegenereerde token
+ * @param string $expires Vervaldatum in Y-m-d H:i:s format
+ * @return bool True bij succes, false bij falen
+ */
+private static function storeRememberToken($userId, $token, $expires)
+{
+    try {
+        $db = Database::getInstance();
+        
+        // Eerst eventuele oude, verlopen tokens opschonen
+        $db->query("DELETE FROM remember_tokens WHERE expires_at < NOW()");
+        
+        // Dan nieuwe token opslaan
+        $result = $db->query(
+            "INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, ?)", 
+            [$userId, $token, $expires]
+        );
+        
+        return $result !== false;
+    } catch (\Exception $e) {
+        error_log("Database error in Auth::storeRememberToken(): " . $e->getMessage());
+        return false;
     }
+}
+
+/**
+ * Zoekt een gebruiker op basis van een remember token
+ * 
+ * @param string $token De token uit de cookie
+ * @return array|null Gebruikersgegevens of null als niet gevonden
+ */
+public static function getUserByRememberToken($token)
+{
+    try {
+        $db = Database::getInstance();
+        
+        // Zoek de token in de database
+        $tokenData = $db->fetch(
+            "SELECT user_id FROM remember_tokens WHERE token = ? AND expires_at > NOW()", 
+            [$token]
+        );
+        
+        if (!$tokenData) {
+            return null;
+        }
+        
+        // Haal de gebruikersgegevens op
+        $user = $db->fetch("SELECT id, username FROM users WHERE id = ?", [$tokenData['user_id']]);
+        
+        return $user;
+    } catch (\Exception $e) {
+        error_log("Database error in Auth::getUserByRememberToken(): " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Verwijdert een remember token uit de database
+ * 
+ * @param string $token De te verwijderen token
+ * @return bool True bij succes, false bij falen
+ */
+private static function removeRememberToken($token)
+{
+    try {
+        $db = Database::getInstance();
+        
+        $result = $db->query("DELETE FROM remember_tokens WHERE token = ?", [$token]);
+        
+        return $result !== false;
+    } catch (\Exception $e) {
+        error_log("Database error in Auth::removeRememberToken(): " . $e->getMessage());
+        return false;
+    }
+}
 }

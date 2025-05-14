@@ -58,6 +58,25 @@ require_once __DIR__ . '/helpers/language.php';
 $webRoutes = require __DIR__ . '/../routes/web.php';
 $apiRoutes = require __DIR__ . '/../routes/api.php';
 
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+    
+    // Zoek de token in de database
+    $user = \App\Auth\Auth::getUserByRememberToken($token);
+    
+    if ($user) {
+        // Geldig token gevonden, log de gebruiker automatisch in
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        
+        // Optioneel: vernieuw de token voor extra veiligheid
+        // Dit vereist een extra functie die je kunt toevoegen als je wilt
+    } else {
+        // Ongeldige of verlopen token, verwijder de cookie
+        setcookie('remember_token', '', time() - 3600, '/');
+    }
+}
+
 // Bepaal de route
 $route = $_GET['route'] ?? 'home';
 $isApiRoute = strpos($route, 'api/') === 0;
