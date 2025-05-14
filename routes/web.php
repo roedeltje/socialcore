@@ -5,9 +5,11 @@ use App\Controllers\HomeController;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\ProfileController;
+use App\Controllers\FeedController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\AdminMiddleware;
+use App\Middleware\FeedMiddleware;
 
 return [
     'home' => [
@@ -16,6 +18,18 @@ return [
             $homeController->index();
         },
         'middleware' => []  // Geen middleware nodig, toegankelijk voor iedereen
+    ],
+
+     'over' => function () {
+      echo "<h1>Over dit project</h1><p>SocialCore is modulair, open source en 100% Nederlands gestart.</p>";
+  },
+
+    'feed' => [
+        'callback' => function () {
+            $feedController = new feedController();
+            $feedController->index();
+        },
+        'middleware' => [FeedMiddleware::class]  
     ],
     
     'login' => [

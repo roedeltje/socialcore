@@ -42,3 +42,20 @@ function is_admin(): bool
 {
     return \App\Auth\Auth::isAdmin();
 }
+
+// Nieuwe view helper functie
+function view(string $path, array $data = []): void
+{
+    // Extracteer variabelen zodat ze beschikbaar zijn in de view
+    extract($data);
+    
+    // Volledig pad naar view bestand
+    $viewPath = __DIR__ . '/../app/Views/' . $path . '.php';
+    
+    // Controleer of het bestand bestaat
+    if (file_exists($viewPath)) {
+        require $viewPath;
+    } else {
+        die("View niet gevonden: {$path}");
+    }
+}
