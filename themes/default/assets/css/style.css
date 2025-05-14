@@ -1,0 +1,12 @@
+/* SocialCore Default Theme - Main Stylesheet */
+
+/* Custom styling beyond Tailwind */
+.social-button {
+  transition: all 0.3s ease;
+}
+
+.social-button:hover {
+  transform: translateY(-2px);
+}
+
+/* You can add additional custom styles here */

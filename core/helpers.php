@@ -59,3 +59,135 @@ function view(string $path, array $data = []): void
         die("View niet gevonden: {$path}");
     }
 }
+
+/**
+ * Theme Helper Functions
+ * Deze functies maken het werken met thema's eenvoudiger
+ */
+
+/**
+ * Laadt de header van het thema
+ * 
+ * @param array $data Optionele data voor het header template
+ * @return bool True als het laden is gelukt, anders false
+ */
+function get_header($data = []) {
+    return load_theme_part('header', $data);
+}
+
+/**
+ * Laadt de footer van het thema
+ * 
+ * @param array $data Optionele data voor het footer template
+ * @return bool True als het laden is gelukt, anders false
+ */
+function get_footer($data = []) {
+    return load_theme_part('footer', $data);
+}
+
+/**
+ * Laadt de sidebar van het thema
+ * 
+ * @param array $data Optionele data voor het sidebar template
+ * @return bool True als het laden is gelukt, anders false
+ */
+function get_sidebar($data = []) {
+    return load_theme_part('sidebar', $data);
+}
+
+/**
+ * Laadt de navigatie van het thema
+ * 
+ * @param array $data Optionele data voor het navigatie template
+ * @return bool True als het laden is gelukt, anders false
+ */
+function get_navigation($data = []) {
+    return load_theme_part('navigation', $data);
+}
+
+/**
+ * Laadt een component uit het thema
+ * 
+ * @param string $component Naam van het component
+ * @param array $data Data voor het component
+ * @return bool True als het laden is gelukt, anders false
+ */
+function get_component($component, $data = []) {
+    return load_theme_component($component, $data);
+}
+
+/**
+ * Genereert de URL voor een CSS bestand in het actieve thema
+ * 
+ * @param string $file Bestandsnaam of pad binnen de css map
+ * @return string URL naar het CSS bestand
+ */
+function theme_css_url($file) {
+    return get_theme_asset_url('css/' . $file);
+}
+
+/**
+ * Genereert de URL voor een JavaScript bestand in het actieve thema
+ * 
+ * @param string $file Bestandsnaam of pad binnen de js map
+ * @return string URL naar het JavaScript bestand
+ */
+function theme_js_url($file) {
+    return get_theme_asset_url('js/' . $file);
+}
+
+/**
+ * Genereert de URL voor een afbeelding in het actieve thema
+ * 
+ * @param string $file Bestandsnaam of pad binnen de images map
+ * @return string URL naar de afbeelding
+ */
+function theme_image_url($file) {
+    return get_theme_asset_url('images/' . $file);
+}
+
+/**
+ * Laadt een thema-pagina met header en footer
+ * 
+ * @param string $page Naam van de pagina
+ * @param array $data Data voor de pagina
+ * @param bool $with_header Of de header moet worden getoond
+ * @param bool $with_footer Of de footer moet worden getoond
+ * @return bool True als het laden is gelukt, anders false
+ */
+function render_theme_page($page, $data = [], $with_header = true, $with_footer = true) {
+    if ($with_header) {
+        get_header($data);
+    }
+    
+    $result = load_theme_page($page, $data);
+    
+    if ($with_footer) {
+        get_footer($data);
+    }
+    
+    return $result;
+}
+
+/**
+ * Laadt een thema-template met header en footer
+ * 
+ * @param string $template Naam van het template
+ * @param array $data Data voor het template
+ * @param bool $with_header Of de header moet worden getoond
+ * @param bool $with_footer Of de footer moet worden getoond
+ * @return bool True als het laden is gelukt, anders false
+ */
+function render_theme_template($template, $data = [], $with_header = true, $with_footer = true) {
+    if ($with_header) {
+        get_header($data);
+    }
+    
+    $result = load_theme_template($template, $data);
+    
+    if ($with_footer) {
+        get_footer($data);
+    }
+    
+    return $result;
+}

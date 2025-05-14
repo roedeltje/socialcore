@@ -1,0 +1,11 @@
+{
+    "name": "Default",
+    "version": "1.0.0",
+    "description": "Het standaardthema voor SocialCore",
+    "author": "Rudy Deelen",
+    "author_uri": "https://socialcore.nl",
+    "supports": {
+        "darkmode": true,
+        "responsive": true
+    }
+}
