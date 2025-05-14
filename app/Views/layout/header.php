@@ -20,7 +20,7 @@
                         
                         <?php if (isset($_SESSION['user_id'])): ?>
                             <!-- Links alleen zichtbaar voor ingelogde gebruikers -->
-                            <li><a href="<?= base_url('feed') ?>" class="hover:underline">Nieuwsfeed</a></li>
+                            <!-- Nieuwsfeed link verwijderd omdat deze nu onder Home valt -->
                             <li><a href="<?= base_url('profile') ?>" class="hover:underline">Profiel</a></li>
                             <li><a href="<?= base_url('messages') ?>" class="hover:underline">Berichten</a></li>
                             <li><a href="<?= base_url('logout') ?>" class="hover:underline">Uitloggen</a></li>
