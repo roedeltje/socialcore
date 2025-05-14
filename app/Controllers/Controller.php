@@ -9,10 +9,9 @@ class Controller
     extract($data);
     
     // Laad thema-configuratie
-    $themeConfig = get_theme_config();
+    $themeConfig = \get_theme_config(); // Let op de backslash
     $activeTheme = $themeConfig['active_theme'];
     $fallbackTheme = $themeConfig['fallback_theme'];
-    $themesDir = $themeConfig['themes_directory'] ?? 'themes';
     $rootDir = __DIR__ . '/../../'; // Ga naar de root directory van het project
     
     // Converteer de view path naar thema-structuur
