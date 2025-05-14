@@ -12,19 +12,22 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
                 <div>
-                    <a href="<?= base_url('index.php') ?>" class="text-xl font-bold">SocialCore</a>
+                    <a href="<?= base_url('/') ?>" class="text-xl font-bold">SocialCore</a>
                 </div>
                 <nav>
                     <ul class="flex space-x-6">
-                        <li><a href="<?= base_url('index.php') ?>" class="hover:underline">Home</a></li>
-                        <li><a href="<?= base_url('index.php?route=feed') ?>" class="hover:underline">Nieuwsfeed</a></li>
+                        <li><a href="<?= base_url('') ?>" class="hover:underline">Home</a></li>
+                        
                         <?php if (isset($_SESSION['user_id'])): ?>
-                            <li><a href="<?= base_url('index.php?route=profile') ?>" class="hover:underline">Profiel</a></li>
-                            <li><a href="<?= base_url('index.php?route=messages') ?>" class="hover:underline">Berichten</a></li>
-                            <li><a href="<?= base_url('index.php?route=auth/logout') ?>" class="hover:underline">Uitloggen</a></li>
+                            <!-- Links alleen zichtbaar voor ingelogde gebruikers -->
+                            <li><a href="<?= base_url('feed') ?>" class="hover:underline">Nieuwsfeed</a></li>
+                            <li><a href="<?= base_url('profile') ?>" class="hover:underline">Profiel</a></li>
+                            <li><a href="<?= base_url('messages') ?>" class="hover:underline">Berichten</a></li>
+                            <li><a href="<?= base_url('logout') ?>" class="hover:underline">Uitloggen</a></li>
                         <?php else: ?>
-                            <li><a href="<?= base_url('index.php?route=auth/login') ?>" class="hover:underline">Inloggen</a></li>
-                            <li><a href="<?= base_url('index.php?route=auth/register') ?>" class="hover:underline">Registreren</a></li>
+                            <!-- Links alleen zichtbaar voor niet-ingelogde gebruikers -->
+                            <li><a href="<?= base_url('login') ?>" class="hover:underline">Inloggen</a></li>
+                            <li><a href="<?= base_url('register') ?>" class="hover:underline">Registreren</a></li>
                         <?php endif; ?>
                     </ul>
                 </nav>

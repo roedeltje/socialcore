@@ -2,17 +2,14 @@
 
 namespace App\Controllers;
 
-class FeedController
+class FeedController extends Controller
 {
     /**
      * Toon de hoofdpagina van de nieuwsfeed
      */
     public function index()
     {
-        // Hier zou je later data kunnen ophalen, zoals posts van gebruikers
-        // Voor nu gebruiken we gewoon dummy data in de view
-        
-        view('feed/index');
+        $this->view('feed/index');
     }
     
     /**

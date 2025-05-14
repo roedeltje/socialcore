@@ -19,35 +19,35 @@ class AuthController extends Controller
         $this->view('auth/login');
     }
 
-public function login()
-{
-    // Controleer of het formulier is verzonden
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
-        
-        // Probeer in te loggen
-        if (Auth::attempt($username, $password)) {
-            // Check de rol van de gebruiker
-            if (Auth::isAdmin()) {
-                // Stuur admins naar het dashboard
-                redirect('dashboard');
+    public function login()
+    {
+        // Controleer of het formulier is verzonden
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $username = $_POST['username'] ?? '';
+            $password = $_POST['password'] ?? '';
+            
+            // Probeer in te loggen
+            if (Auth::attempt($username, $password)) {
+                // Check de rol van de gebruiker
+                if (Auth::isAdmin()) {
+                    // Stuur admins naar het dashboard
+                    redirect('dashboard');
+                } else {
+                    // Stuur gewone leden naar de nieuwsfeed (aangepast van 'profile' naar 'feed')
+                    redirect('feed');
+                }
+                exit;
             } else {
-                // Stuur gewone leden naar hun profiel
-                redirect('profile');
+                // Inloggen mislukt, sla een foutmelding op
+                $_SESSION['error'] = 'Ongeldige gebruikersnaam of wachtwoord';
+                redirect('login');
+                exit;
             }
-            exit;
-        } else {
-            // Inloggen mislukt, sla een foutmelding op
-            $_SESSION['error'] = 'Ongeldige gebruikersnaam of wachtwoord';
-            redirect('login');
-            exit;
         }
+        
+        // Als het geen POST-verzoek is, toon het inlogformulier
+        $this->showLoginForm();
     }
-    
-    // Als het geen POST-verzoek is, toon het inlogformulier
-    $this->showLoginForm();
-}
   
     public function showRegisterForm()
     {
