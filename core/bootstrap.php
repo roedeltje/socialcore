@@ -59,6 +59,7 @@ spl_autoload_register(function ($className) {
 // Laad helpers
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/helpers/language.php';
+require_once __DIR__ . '/helpers/upload.php';
 require_once __DIR__ . '/theme-loader.php';
 
 // Laad de web en API routes

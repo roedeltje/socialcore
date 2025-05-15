@@ -16,12 +16,21 @@ function base_url(string $path = ''): string
 }
 
 /**
+ * Zet een flash message in de sessie
+ * 
+ * @param string $type Type bericht (success, error, info, warning)
+ * @param string $message Het bericht
+ */
+function set_flash_message($type, $message) {
+    $_SESSION['flash_messages'][$type][] = $message;
+}
+
+/**
  * Redirect naar een andere URL
  *
  * @param string $path Pad om naartoe te redirecten
  * @return void
  */
-
 function redirect(string $path): void
 {
     header('Location: ' . base_url($path));
