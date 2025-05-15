@@ -9,10 +9,50 @@ date_default_timezone_set('Europe/Amsterdam');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Laad configuraties
+$config = [
+    'app' => require __DIR__ . '/../config/app.php',
+    'database' => require __DIR__ . '/../config/database.php',
+    'theme' => require __DIR__ . '/../config/theme.php',
+];
+
+// Maak config globaal beschikbaar als functie
+if (!function_exists('config')) {
+    function config($key, $default = null) {
+        global $config;
+        $parts = explode('.', $key);
+        
+        if (count($parts) === 1) {
+            return $config[$key] ?? $default;
+        }
+        
+        $category = $parts[0];
+        $setting = $parts[1];
+        
+        if (count($parts) > 2) {
+            $nestedSetting = array_slice($parts, 1);
+            $current = $config[$category];
+            foreach ($nestedSetting as $part) {
+                if (!isset($current[$part])) {
+                    return $default;
+                }
+                $current = $current[$part];
+            }
+            return $current;
+        }
+        
+        return $config[$category][$setting] ?? $default;
+    }
+}
+
+// Definieer constanten
+define('ENVIRONMENT', config('app.environment', 'development'));
+define('APP_DEBUG', config('app.debug', true));
+define('SITE_NAME', config('app.name', 'SocialCore'));
+
 // Thema instellingen
-define('SITE_NAME', 'SocialCore');
 define('BASE_PATH', dirname(__DIR__));
-define('THEME_NAME', 'default'); // Kan later uit de database komen
+define('THEME_NAME', config('theme.active_theme', 'default')); // Kan later uit de database komen
 define('THEME_PATH', BASE_PATH . '/themes/' . THEME_NAME);
 
 // Autoloader registreren
