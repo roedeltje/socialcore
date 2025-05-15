@@ -21,7 +21,7 @@
     // Alleen de header tonen als dit niet de homepagina is of als de gebruiker is ingelogd
     if (!$isHomePage || $isLoggedIn):
     ?>
-    <header class="bg-blue-600 text-white shadow-md">
+    <header class="text-white shadow-md" style="background-color: var(--primary-color);">
         <div class="container mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
                 <div>
