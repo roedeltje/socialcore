@@ -6,7 +6,7 @@
             <p>Het open source sociale platform gebouwd in Nederland</p>
             
             <div class="welcome-image">
-                <img src="<?= base_url('public/assets/images/friends-group.jpg') ?>" alt="Vrienden delen herinneringen">
+                <img src="<?= base_url('theme-assets/default/images/friends-group.jpg') ?>" alt="Vrienden delen herinneringen">
             </div>
             
             <div class="welcome-cta">

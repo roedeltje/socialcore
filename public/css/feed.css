@@ -1,0 +1,451 @@
+/* Feed Layout */
+.feed-container {
+    display: flex;
+    width: 100%;
+    gap: 20px;
+    position: relative;
+}
+
+/* Linker zijbalk */
+.left-sidebar {
+    width: 220px;
+    position: sticky;
+    top: 70px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+
+.sidebar-menu {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: #444;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.sidebar-item:hover {
+    background-color: #f5f5f5;
+}
+
+.sidebar-item.active {
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+.sidebar-item i {
+    margin-right: 12px;
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+/* Hoofdinhoud */
+.main-content {
+    flex: 1;
+    max-width: 700px;
+}
+
+/* Post composer */
+.post-composer {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.composer-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.composer-input {
+    flex: 1;
+}
+
+.composer-input textarea {
+    width: 100%;
+    border: none;
+    resize: none;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    min-height: 40px;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.composer-input textarea:focus {
+    outline: none;
+    background-color: #eef2ff;
+}
+
+.composer-actions {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.action-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 6px;
+    color: #444;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.action-button:hover {
+    background-color: #e5e7eb;
+}
+
+/* Welkom card */
+.welcome-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid #f59e0b;
+}
+
+.welcome-content h3 {
+    margin: 0 0 5px 0;
+    color: #333;
+}
+
+.welcome-content p {
+    margin: 0;
+    color: #666;
+}
+
+.welcome-icon img {
+    width: 60px;
+    height: auto;
+}
+
+/* Post card */
+.post-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.post-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.post-time {
+    font-size: 12px;
+    color: #777;
+}
+
+.post-options {
+    color: #777;
+    cursor: pointer;
+}
+
+.post-content {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.post-actions {
+    display: flex;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+}
+
+.action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px;
+    color: #666;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.action:hover {
+    background-color: #f5f5f5;
+}
+
+/* Rechter zijbalk */
+.right-sidebar {
+    width: 300px;
+    position: sticky;
+    top: 70px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+
+.sidebar-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.card-options {
+    color: #777;
+    cursor: pointer;
+}
+
+.card-content {
+    padding: 15px;
+}
+
+/* Online vrienden */
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.friend-name {
+    flex: 1;
+}
+
+.online-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #10b981;
+    border: 2px solid #fff;
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+}
+
+/* Trending */
+.trending-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.trend-icon {
+    color: #ef4444;
+}
+
+.trend-tag {
+    font-weight: 500;
+    color: #ef4444;
+}
+
+.trend-count {
+    font-size: 12px;
+    color: #777;
+}
+
+/* Suggesties */
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.suggestion-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.suggestion-item .avatar {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 8px;
+}
+
+.suggestion-name {
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.btn-follow {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 5px 15px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-follow:hover {
+    background-color: #dc2626;
+}
+
+/* Responsive aanpassingen */
+@media (max-width: 1200px) {
+    .feed-container {
+        gap: 15px;
+    }
+    
+    .left-sidebar {
+        width: 60px;
+    }
+    
+    .sidebar-item span {
+        display: none;
+    }
+    
+    .sidebar-item i {
+        margin-right: 0;
+    }
+    
+    .right-sidebar {
+        width: 250px;
+    }
+}
+
+@media (max-width: 992px) {
+    .feed-container {
+        flex-direction: column;
+    }
+    
+    .left-sidebar {
+        position: fixed;
+        bottom: 0;
+        top: unset;
+        left: 0;
+        width: 100%;
+        height: auto;
+        z-index: 100;
+        padding-bottom: 0;
+    }
+    
+    .sidebar-menu {
+        display: flex;
+        overflow-x: auto;
+        border-radius: 0;
+    }
+    
+    .sidebar-item {
+        padding: 10px;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .sidebar-item span {
+        display: block;
+        font-size: 10px;
+    }
+    
+    .sidebar-item i {
+        margin-right: 0;
+    }
+    
+    .right-sidebar {
+        width: 100%;
+        position: relative;
+        top: 0;
+        height: auto;
+    }
+}
+
+/* Icons using emoji as placeholders (later to be replaced with proper icons) */
+.icon-newspaper:before { content: "📰"; }
+.icon-photo:before { content: "🖼️"; }
+.icon-clock:before { content: "⏰"; }
+.icon-user-group:before { content: "👥"; }
+.icon-bookmark:before { content: "🔖"; }
+.icon-fire:before { content: "🔥"; }
+.icon-history:before { content: "🕒"; }
+.icon-smile:before { content: "😊"; }
+.icon-users:before { content: "👪"; }
+.icon-page:before { content: "📄"; }
+.icon-blog:before { content: "📝"; }
+.icon-shop:before { content: "🛒"; }
+.icon-directory:before { content: "📁"; }
+.icon-calendar:before { content: "📅"; }
+.icon-gamepad:before { content: "🎮"; }
+.icon-forum:before { content: "💬"; }
+.icon-heart:before { content: "❤️"; }
+.icon-message:before { content: "💬"; }
+.icon-share:before { content: "🔄"; }
+.icon-image:before { content: "🖼️"; }
+.icon-camera:before { content: "📷"; }
+.icon-edit:before { content: "✏️"; }
+.icon-more:before { content: "⚙️"; }
+.icon-more-vertical:before { content: "⋮"; }
+.icon-settings:before { content: "⚙️"; }
+.icon-refresh:before { content: "🔄"; }
+.icon-trend-up:before { content: "📈"; }

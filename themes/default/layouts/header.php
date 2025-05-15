@@ -10,6 +10,7 @@
     
     <!-- Custom CSS -->
 <link rel="stylesheet" href="<?= theme_css_url('style.css') ?>">
+<link rel="stylesheet" href="<?= theme_css_url('feed.css') ?>">
 </head>
 <body class="min-h-screen">
     <?php

@@ -12,11 +12,11 @@ class FeedMiddleware
     public function handle()
     {
         // Controleer of de gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            // Als de gebruiker niet is ingelogd, redirect naar login pagina
-            header("Location: " . base_url('login'));
-            exit; // Stop de verwerking
-        }
+        if (!\App\Auth\Auth::check()) {
+        // Als de gebruiker niet is ingelogd, redirect naar login pagina
+        header("Location: " . base_url('login'));
+        exit; // Stop de verwerking
+}
         
         // Gebruiker is ingelogd, ga door met de request
         return true;
