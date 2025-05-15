@@ -85,6 +85,8 @@ class FeedController extends Controller
             ]
         ];
         
+        $data['active_menu'] = 'feed';
+        
         $this->view('feed/index', $data);
     }
     

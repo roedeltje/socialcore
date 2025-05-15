@@ -5,8 +5,7 @@
             <li><a href="<?= base_url('') ?>" class="hover:underline <?= !isset($_GET['route']) || $_GET['route'] === 'home' ? 'font-bold' : '' ?>">Home</a></li>
             
             <?php if (isset($_SESSION['user_id'])): ?>
-                <!-- Links alleen zichtbaar voor ingelogde gebruikers -->
-                <li><a href="<?= base_url('profile') ?>" class="hover:underline <?= isset($_GET['route']) && $_GET['route'] === 'profile' ? 'font-bold' : '' ?>">Profiel</a></li>
+                <!-- Links alleen zichtbaar voor ingelogde gebruikers - Profiel link is verwijderd -->
                 <li><a href="<?= base_url('messages') ?>" class="hover:underline <?= isset($_GET['route']) && $_GET['route'] === 'messages' ? 'font-bold' : '' ?>">Berichten</a></li>
                 <li><a href="<?= base_url('notifications') ?>" class="hover:underline <?= isset($_GET['route']) && $_GET['route'] === 'notifications' ? 'font-bold' : '' ?>">Notificaties</a></li>
             <?php endif; ?>
@@ -31,7 +30,7 @@
                 
                 <div class="relative group">
                     <a href="<?= base_url('profile') ?>" class="flex items-center space-x-2">
-                        <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('public/uploads/' . $_SESSION['avatar']) : base_url('public/assets/images/default-avatar.png') ?>" 
+                        <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('public/uploads/' . $_SESSION['avatar']) : base_url('theme-assets/default/images/default-avatar.png') ?>" 
                              alt="Profielfoto" 
                              class="w-8 h-8 rounded-full">
                         <span>Mijn profiel</span>
