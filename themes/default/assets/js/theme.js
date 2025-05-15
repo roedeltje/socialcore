@@ -16,6 +16,28 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // Dropdown menu functionaliteit
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile dropdown
+    const profileDropdown = document.getElementById('profileDropdown');
+    const profileDropdownMenu = document.getElementById('profileDropdownMenu');
+    
+    if (profileDropdown && profileDropdownMenu) {
+        // Toggle menu bij klikken
+        profileDropdown.addEventListener('click', function(e) {
+            e.preventDefault(); // Voorkom navigatie
+            profileDropdownMenu.classList.toggle('hidden');
+        });
+        
+        // Sluit menu als ergens anders wordt geklikt
+        document.addEventListener('click', function(e) {
+            if (!profileDropdown.contains(e.target) && !profileDropdownMenu.contains(e.target)) {
+                profileDropdownMenu.classList.add('hidden');
+            }
+        });
+    }
+});
   
   // Add any other theme-specific JavaScript functionality here
 });

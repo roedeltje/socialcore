@@ -111,7 +111,10 @@ function get_sidebar($data = []) {
  * @return bool True als het laden is gelukt, anders false
  */
 function get_navigation($data = []) {
+    echo "<!-- Debug: Probeer navigatie te laden -->";
     return load_theme_part('navigation', $data);
+    echo "<!-- Debug: Resultaat van laden: " . ($result ? "Succes" : "Mislukt") . " -->";
+
 }
 
 /**

@@ -28,16 +28,17 @@
                     <a href="<?= base_url('dashboard') ?>" class="hover:underline">Dashboard</a>
                 <?php endif; ?>
                 
-                <div class="relative group">
-                    <a href="<?= base_url('profile') ?>" class="flex items-center space-x-2">
+                <div class="relative dropdown-container">
+                    <a href="#" class="flex items-center space-x-2 dropdown-toggle" id="profileDropdown">
                         <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('public/uploads/' . $_SESSION['avatar']) : base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                             alt="Profielfoto" 
-                             class="w-8 h-8 rounded-full">
+                            alt="Profielfoto" 
+                            class="w-8 h-8 rounded-full">
                         <span>Mijn profiel</span>
                     </a>
                     
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden group-hover:block z-10">
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden dropdown-menu z-10" id="profileDropdownMenu">
                         <div class="py-1">
+                            <a href="<?= base_url('profile') ?>" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">Profiel bekijken</a>
                             <a href="<?= base_url('settings') ?>" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">Instellingen</a>
                             <a href="<?= base_url('logout') ?>" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">Uitloggen</a>
                         </div>
