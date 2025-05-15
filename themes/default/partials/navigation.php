@@ -1,49 +1,54 @@
-<nav class="main-navigation">
-    <div class="nav-container">
-        <div class="nav-logo">
-            <a href="<?= base_url('home') ?>">
-                <img src="<?= base_url('public/assets/images/logo.png') ?>" alt="SocialCore">
-                <span>SocialCore</span>
-            </a>
-        </div>
-        
-        <div class="nav-search">
-            <form action="<?= base_url('?route=search') ?>" method="get">
-                <input type="text" name="q" placeholder="Zoeken...">
-                <button type="submit"><i class="icon-search"></i></button>
+<nav class="flex items-center justify-between w-full">
+    <!-- Linker deel (logo en hoofdnavigatie) -->
+    <div class="flex items-center space-x-6">
+        <ul class="flex space-x-6">
+            <li><a href="<?= base_url('') ?>" class="hover:underline <?= !isset($_GET['route']) || $_GET['route'] === 'home' ? 'font-bold' : '' ?>">Home</a></li>
+            
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <!-- Links alleen zichtbaar voor ingelogde gebruikers -->
+                <li><a href="<?= base_url('profile') ?>" class="hover:underline <?= isset($_GET['route']) && $_GET['route'] === 'profile' ? 'font-bold' : '' ?>">Profiel</a></li>
+                <li><a href="<?= base_url('messages') ?>" class="hover:underline <?= isset($_GET['route']) && $_GET['route'] === 'messages' ? 'font-bold' : '' ?>">Berichten</a></li>
+                <li><a href="<?= base_url('notifications') ?>" class="hover:underline <?= isset($_GET['route']) && $_GET['route'] === 'notifications' ? 'font-bold' : '' ?>">Notificaties</a></li>
+            <?php endif; ?>
+        </ul>
+    </div>
+    
+    <!-- Rechter deel (zoeken, inloggen/uitloggen) -->
+    <div class="flex items-center space-x-4">
+        <!-- Zoekbalk -->
+        <div class="relative">
+            <form action="<?= base_url('search') ?>" method="get">
+                <input type="text" name="q" placeholder="Zoeken..." class="px-4 py-1 rounded-full border border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </form>
         </div>
         
-        <div class="nav-links">
-            <a href="<?= base_url('home') ?>" class="nav-link <?= $route === 'home' ? 'active' : '' ?>">
-                <i class="icon-home"></i>
-                <span>Home</span>
-            </a>
-            <a href="<?= base_url('?route=profile') ?>" class="nav-link <?= $route === 'profile' ? 'active' : '' ?>">
-                <i class="icon-user"></i>
-                <span>Profiel</span>
-            </a>
-            <a href="<?= base_url('?route=messages') ?>" class="nav-link <?= $route === 'messages' ? 'active' : '' ?>">
-                <i class="icon-message"></i>
-                <span>Berichten</span>
-            </a>
-            <a href="<?= base_url('?route=notifications') ?>" class="nav-link <?= $route === 'notifications' ? 'active' : '' ?>">
-                <i class="icon-bell"></i>
-                <span>Notificaties</span>
-            </a>
-        </div>
-        
-        <div class="nav-user">
-            <div class="user-dropdown">
-                <div class="user-avatar">
-                    <img src="<?= base_url('public/uploads/avatars/' . ($_SESSION['avatar'] ?? 'default.png')) ?>" alt="<?= $_SESSION['username'] ?? 'Gebruiker' ?>">
-                </div>
-                <div class="dropdown-menu">
-                    <a href="<?= base_url('profile') ?>">Mijn profiel</a>
-                    <a href="<?= base_url('settings') ?>">Instellingen</a>
-                    <a href="<?= base_url('logout') ?>">Uitloggen</a>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <!-- Gebruikersmenu voor ingelogde gebruikers -->
+            <div class="flex items-center space-x-6">
+                <?php if (function_exists('is_admin') && is_admin()): ?>
+                    <a href="<?= base_url('dashboard') ?>" class="hover:underline">Dashboard</a>
+                <?php endif; ?>
+                
+                <div class="relative group">
+                    <a href="<?= base_url('profile') ?>" class="flex items-center space-x-2">
+                        <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('public/uploads/' . $_SESSION['avatar']) : base_url('public/assets/images/default-avatar.png') ?>" 
+                             alt="Profielfoto" 
+                             class="w-8 h-8 rounded-full">
+                        <span>Mijn profiel</span>
+                    </a>
+                    
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden group-hover:block z-10">
+                        <div class="py-1">
+                            <a href="<?= base_url('settings') ?>" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">Instellingen</a>
+                            <a href="<?= base_url('logout') ?>" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">Uitloggen</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        <?php else: ?>
+            <!-- Links alleen zichtbaar voor niet-ingelogde gebruikers -->
+            <a href="<?= base_url('login') ?>" class="hover:underline">Inloggen</a>
+            <a href="<?= base_url('register') ?>" class="hover:underline bg-white text-blue-600 px-4 py-1 rounded-full font-medium">Registreren</a>
+        <?php endif; ?>
     </div>
 </nav>

@@ -10,7 +10,7 @@
             </div>
             
             <div class="welcome-cta">
-                <a href="<?= base_url('?route=register') ?>" class="btn btn-primary">Registreer nu</a>
+                <a href="<?= base_url('register') ?>" class="btn btn-primary">Registreer nu</a>
                 <a href="#about" class="btn btn-outline">Meer informatie</a>
             </div>
         </div>
@@ -46,7 +46,7 @@
                 <div class="form-check">
                     <input type="checkbox" id="remember" name="remember">
                     <label for="remember">Onthouden</label>
-                    <a href="<?= base_url('?route=password/reset') ?>" class="forgot-link">Wachtwoord vergeten?</a>
+                    <a href="<?= base_url('password/reset') ?>" class="forgot-link">Wachtwoord vergeten?</a>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-block">Inloggen</button>

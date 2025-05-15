@@ -1,4 +1,8 @@
 /* SocialCore Default Theme - Main Stylesheet */
+/* Belangrijk! Deze regel voorkomt een groot deel van de Tailwind conflicten */
+html, body, div, span, h1, h2, h3, h4, h5, h6, p, a, button, input, select, textarea {
+    all: revert;
+}
 
 /* Custom styling beyond Tailwind */
 .social-button {
