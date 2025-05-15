@@ -9,6 +9,12 @@ date_default_timezone_set('Europe/Amsterdam');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Thema instellingen
+define('SITE_NAME', 'SocialCore');
+define('BASE_PATH', dirname(__DIR__));
+define('THEME_NAME', 'default'); // Kan later uit de database komen
+define('THEME_PATH', BASE_PATH . '/themes/' . THEME_NAME);
+
 // Autoloader registreren
 spl_autoload_register(function ($className) {
     // Vervang backslashes door directory separators
