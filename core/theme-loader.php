@@ -11,13 +11,26 @@
  * @return array De thema-configuratie
  */
 function get_theme_config() {
-    static $theme_config = null;
-    
-    if ($theme_config === null) {
-        $theme_config = require_once __DIR__ . '/../config/theme.php';
+    // Probeer eerst de thema configuratie te laden uit config
+    if (function_exists('config') && is_array(config('theme'))) {
+        return config('theme');
     }
     
-    return $theme_config;
+    // Als dat niet werkt, probeer het thema config bestand rechtstreeks te laden
+    $themeConfigFile = __DIR__ . '/../config/theme.php';
+    if (file_exists($themeConfigFile)) {
+        $themeConfig = require $themeConfigFile;
+        if (is_array($themeConfig)) {
+            return $themeConfig;
+        }
+    }
+    
+    // Als fallback, retourneer standaard configuratie
+    return [
+        'active_theme' => 'default',
+        'themes_directory' => 'themes',
+        'fallback_theme' => 'default'
+    ];
 }
 
 /**

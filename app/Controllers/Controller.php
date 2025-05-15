@@ -10,9 +10,19 @@ class Controller
     
     // Laad thema-configuratie
     $themeConfig = \get_theme_config(); // Let op de backslash
-    $activeTheme = $themeConfig['active_theme'];
-    $themesDir = $themeConfig['themes_directory']; // Definieer themesDir hier
-    $fallbackTheme = $themeConfig['fallback_theme'];
+    
+    // Zorg ervoor dat themeConfig een array is of maak een standaard array
+    if (!is_array($themeConfig)) {
+        $themeConfig = [
+            'active_theme' => 'default',
+            'themes_directory' => 'themes',
+            'fallback_theme' => 'default'
+        ];
+    }
+    
+    $activeTheme = $themeConfig['active_theme'] ?? 'default';
+    $themesDir = $themeConfig['themes_directory'] ?? 'themes'; 
+    $fallbackTheme = $themeConfig['fallback_theme'] ?? 'default';
     $rootDir = __DIR__ . '/../../'; // Ga naar de root directory van het project
     
     // Converteer de view path naar thema-structuur
@@ -97,13 +107,14 @@ class Controller
     extract($data);
 		
     // Zoek naar layout in verschillende locaties
-    $layoutPaths = [
+    // Zoek naar layout in verschillende locaties
+$layoutPaths = [
     // 1. Actief thema layout
-    $rootDir . $themeConfig['themes_directory'] . '/' . $activeTheme . '/layouts/header.php',
-    $rootDir . $themeConfig['themes_directory'] . '/' . $activeTheme . '/layouts/footer.php',
+    $rootDir . $themesDir . '/' . $activeTheme . '/layouts/header.php',
+    $rootDir . $themesDir . '/' . $activeTheme . '/layouts/footer.php',
     // 2. Fallback thema layout
-    $rootDir . $themeConfig['themes_directory'] . '/' . $fallbackTheme . '/layouts/header.php',
-    $rootDir . $themeConfig['themes_directory'] . '/' . $fallbackTheme . '/layouts/footer.php',
+    $rootDir . $themesDir . '/' . $fallbackTheme . '/layouts/header.php',
+    $rootDir . $themesDir . '/' . $fallbackTheme . '/layouts/footer.php',
     // 3. Standaard layout
     __DIR__ . '/../Views/layout.php'
 ];
