@@ -5,6 +5,7 @@ use App\Controllers\HomeController;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\ProfileController;
+use App\Controllers\SetupController;
 use App\Controllers\FeedController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;

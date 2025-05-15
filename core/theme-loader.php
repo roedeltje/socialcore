@@ -145,11 +145,11 @@ function load_theme_part($part, $data = []) {
 function get_theme_asset_url($file) {
     $config = get_theme_config();
     $theme = $config['active_theme'];
-    $themes_dir = $config['themes_directory'];
     
     $file = ltrim($file, '/');
     
-    return base_url($themes_dir . '/' . $theme . '/assets/' . $file);
+    // Gebruik de nieuwe 'theme-assets' map in public
+    return base_url('theme-assets/' . $theme . '/' . $file);
 }
 
 /**
