@@ -29,7 +29,8 @@
                 <?php endif; ?>
                 
                 <div class="relative dropdown-container">
-                    <a href="#" class="flex items-center space-x-2 dropdown-toggle" id="profileDropdown">
+                    <a href="#" class="flex items-center space-x-2 dropdown-toggle" id="profileDropdown" 
+                    onclick="console.log('Profiel klik vanuit HTML');">
                         <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('public/uploads/' . $_SESSION['avatar']) : base_url('theme-assets/default/images/default-avatar.png') ?>" 
                             alt="Profielfoto" 
                             class="w-8 h-8 rounded-full">

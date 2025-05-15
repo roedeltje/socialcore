@@ -22,6 +22,6 @@
         </div>
     </footer>
     <!-- Optioneel: voeg hier thema-specifieke JavaScript toe -->
-    <script src="<?= theme_js_url('theme.js') ?>"></script>
+    <script src="<?= base_url('theme-assets/default/js/theme.js') ?>"></script>
 </body>
 </html>
