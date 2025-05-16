@@ -14,6 +14,10 @@
 <link rel="stylesheet" href="<?= theme_css_url('feed.css') ?>">
     <!-- Profile CSS -->
 <link rel="stylesheet" href="<?= theme_css_url('profile.css') ?>">
+
+<!-- Font Awesome voor iconen -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
 </head>
 <body class="min-h-screen">
     <?php
