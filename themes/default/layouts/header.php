@@ -22,15 +22,19 @@
     if (!$isHomePage || $isLoggedIn):
     ?>
     <header class="text-white shadow-md" style="background-color: var(--primary-color);">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <a href="<?= base_url('/') ?>" class="text-xl font-bold">SocialCore</a>
-                </div>
-                <?php if (function_exists('get_navigation')) get_navigation(); ?>
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <a href="<?= base_url('/') ?>" class="flex items-center">
+                    <img src="<?= base_url('theme-assets/default/images/logo.png') ?>" alt="SocialCore" class="h-8 w-auto">
+                    <!-- Indien gewenst, kun je de tekst naast het logo behouden -->
+                    <!-- <span class="text-xl font-bold ml-2">SocialCore</span> -->
+                </a>
             </div>
+            <?php if (function_exists('get_navigation')) get_navigation(); ?>
         </div>
-    </header>
+    </div>
+</header>
     <?php endif; ?>
 
     <main class="<?= (!$isHomePage || $isLoggedIn) ? 'container mx-auto px-4 py-6' : '' ?>">

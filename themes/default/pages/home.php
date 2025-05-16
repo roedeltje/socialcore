@@ -6,7 +6,7 @@
             <p>Het open source sociale platform gebouwd in Nederland</p>
             
             <div class="welcome-image">
-                <img src="<?= base_url('theme-assets/default/images/logo-big.png') ?>" alt="SocialCore" style="max-width: 300px; height: auto;">
+                <img src="<?= base_url('theme-assets/default/images/logo-big.png') ?>" alt="SocialCore" style="max-width: 450; height: 350px;">
             </div>
             
             <div class="welcome-cta">

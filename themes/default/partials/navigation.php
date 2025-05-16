@@ -1,7 +1,7 @@
 <nav class="flex items-center justify-between w-full">
     <!-- Linker deel (logo en hoofdnavigatie) -->
     <div class="flex items-center space-x-6">
-        <ul class="flex space-x-6">
+        <ul class="flex space-x-6 ml-8"> <!-- Toegevoegd: ml-8 voor marge links -->
             <li><a href="<?= base_url('') ?>" class="hover:underline <?= !isset($_GET['route']) || $_GET['route'] === 'home' ? 'font-bold' : '' ?>">Home</a></li>
             
             <?php if (isset($_SESSION['user_id'])): ?>
