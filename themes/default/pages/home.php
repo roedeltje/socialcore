@@ -33,7 +33,7 @@
                     <label for="email">
                         <i class="icon-email"></i>
                     </label>
-                    <input type="text" id="username" name="emausernameil" placeholder="Gebruikersnaam" required>
+                    <input type="text" id="username" name="username" placeholder="Gebruikersnaam" required>
                 </div>
                 
                 <div class="form-group">
