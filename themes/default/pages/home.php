@@ -6,7 +6,7 @@
             <p>Het open source sociale platform gebouwd in Nederland</p>
             
             <div class="welcome-image">
-                <img src="<?= base_url('theme-assets/default/images/friends-group.jpg') ?>" alt="Vrienden delen herinneringen">
+                <img src="<?= base_url('theme-assets/default/images/logo-big.png') ?>" alt="SocialCore" style="max-width: 300px; height: auto;">
             </div>
             
             <div class="welcome-cta">
@@ -33,7 +33,7 @@
                     <label for="email">
                         <i class="icon-email"></i>
                     </label>
-                    <input type="text" id="email" name="email" placeholder="E-mailadres of Gebruikersnaam" required>
+                    <input type="text" id="username" name="emausernameil" placeholder="Gebruikersnaam" required>
                 </div>
                 
                 <div class="form-group">
