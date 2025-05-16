@@ -7,6 +7,7 @@ use App\Controllers\DashboardController;
 use App\Controllers\ProfileController;
 use App\Controllers\SetupController;
 use App\Controllers\FeedController;
+use App\Controllers\AboutController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\AdminMiddleware;
@@ -35,9 +36,13 @@ return [
         'middleware' => [FeedMiddleware::class]  
     ],
 
-     'over' => function () {
-      echo "<h1>Over dit project</h1><p>SocialCore is modulair, open source en 100% Nederlands gestart.</p>";
-  },
+    'about' => [
+        'callback' => function () {
+            $aboutController = new AboutController();
+            $aboutController->index();
+    }
+    // Geen middleware nodig aangezien dit een openbare pagina is
+],
     
     'login' => [
         'callback' => function () {

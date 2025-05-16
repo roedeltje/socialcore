@@ -48,6 +48,7 @@ class Controller
             'auth/login' => 'pages/login.php',
             'auth/register' => 'pages/register.php',
             'settings/index' => 'pages/settings.php',
+            'about/index' => 'pages/about.php'
             // Voeg hier meer mappings toe indien nodig
         ];
         
