@@ -64,10 +64,10 @@ a {
 /* Welcome Section (left side) */
 .home-welcome-section {
     flex: 1;
-    background-color: #3b3f54;
-    color: white;
+    background-color: #03142c;  /* Gewijzigd naar een donkere marineblauw */
+    color: white;  /* Wit blijft goed leesbaar op deze donkere achtergrond */
     padding: 4rem 2rem;
-    background-image: linear-gradient(rgba(59, 63, 84, 0.8), rgba(59, 63, 84, 0.9)), url('../../../public/assets/images/background-people.jpg');
+    background-image: linear-gradient(rgba(3, 20, 44, 0.8), rgba(3, 20, 44, 0.9)), url(../../../public/assets/images/background-people.jpg);  /* Gradient aangepast aan nieuwe kleur */
     background-size: cover;
     background-position: center;
     display: flex;

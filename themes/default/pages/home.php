@@ -1,9 +1,9 @@
 <div class="home-container">
     <div class="home-welcome-section">
         <div class="welcome-content">
-            <h2>Welkom bij SocialCore</h2>
-            <h1>Maak nieuwe vrienden, deel je herinneringen en ontdek content</h1>
-            <p>Het open source sociale platform gebouwd in Nederland</p>
+            <h2>Welkom bij het Social Core Project</h2>
+            <h1>We bouwen aan een nieuw open source sociaal netwerk.</h1>
+            <p>SocialCore wordt lichtgewicht, modulair en volledig zelf te hosten.</p>
             
             <div class="welcome-image">
                 <img src="<?= base_url('theme-assets/default/images/logo-big.png') ?>" alt="SocialCore" style="max-width: 450; height: 350px;">

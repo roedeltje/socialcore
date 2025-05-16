@@ -44,7 +44,7 @@ class Controller
             'home/index' => 'pages/home.php',
             'profile/index' => 'pages/profile.php',
             'profile/edit' => 'pages/edit-profile.php',
-            'feeds/index' => 'pages/timeline.php',
+            'feed/index' => 'pages/timeline.php',
             'auth/login' => 'pages/login.php',
             'auth/register' => 'pages/register.php',
             'settings/index' => 'pages/settings.php',
