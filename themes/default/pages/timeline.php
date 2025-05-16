@@ -1,65 +1,255 @@
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Nieuwsfeed</h1>
-    
-    <!-- Feed container -->
-    <div class="space-y-6">
-        <!-- Dummy bericht 1 -->
-        <div class="bg-white p-4 rounded-lg shadow">
-            <div class="flex items-center mb-3">
-                <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
-                <div>
-                    <h3 class="font-semibold">Jan Jansen</h3>
-                    <span class="text-gray-500 text-sm">3 uur geleden</span>
+<?php /* SocialCore nieuwsfeed in Hyves-stijl */ ?>
+
+<div class="feed-container">
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Linker zijbalk -->
+        <div class="w-full lg:w-1/4">
+            <!-- Gebruikerskaart -->
+            <div class="user-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+                <div class="bg-blue-100 p-4 border-b border-blue-200">
+                    <h2 class="text-xl font-bold text-blue-800"><?= htmlspecialchars($current_user['name']) ?></h2>
+                    <p class="text-sm text-blue-600">@<?= htmlspecialchars($current_user['username']) ?></p>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center space-x-4">
+                        <img src="<?= base_url('public/uploads/' . $current_user['avatar']) ?>" 
+                             alt="<?= htmlspecialchars($current_user['name']) ?>" 
+                             class="w-16 h-16 rounded-full border-2 border-blue-200">
+                        <div>
+                            <a href="<?= base_url('profile') ?>" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-3 py-1">
+                                Ga naar profiel
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-4 text-center">
+                        <div class="stats-item">
+                            <div class="font-bold text-blue-800"><?= $current_user['post_count'] ?></div>
+                            <div class="text-xs text-gray-500">Posts</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="font-bold text-blue-800"><?= $current_user['following'] ?></div>
+                            <div class="text-xs text-gray-500">Volgend</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="font-bold text-blue-800"><?= $current_user['followers'] ?></div>
+                            <div class="text-xs text-gray-500">Volgers</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <p class="mb-4">Dit is een voorbeeld van een bericht op SocialCore. Hier kunnen gebruikers hun gedachten delen!</p>
-            <div class="flex space-x-4 text-sm text-gray-500">
-                <button class="flex items-center">
-                    <span>❤️</span> <span class="ml-1">12 likes</span>
-                </button>
-                <button class="flex items-center">
-                    <span>💬</span> <span class="ml-1">4 reacties</span>
-                </button>
+            
+            <!-- Navigatie menu in Hyves-stijl -->
+            <div class="hyves-menu bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="hyves-menu-header bg-blue-100 p-3 border-b border-blue-200">
+                    <h3 class="font-bold text-blue-800">Menu</h3>
+                </div>
+                <div class="hyves-menu-items">
+                    <a href="<?= base_url('') ?>" class="hyves-menu-item active">
+                        <span class="icon">🏠</span>
+                        <span class="text">Nieuwsfeed</span>
+                    </a>
+                    <a href="<?= base_url('profile') ?>" class="hyves-menu-item">
+                        <span class="icon">👤</span>
+                        <span class="text">Mijn profiel</span>
+                    </a>
+                    <a href="<?= base_url('messages') ?>" class="hyves-menu-item">
+                        <span class="icon">✉️</span>
+                        <span class="text">Berichten</span>
+                    </a>
+                    <a href="<?= base_url('profile/photos') ?>" class="hyves-menu-item">
+                        <span class="icon">📷</span>
+                        <span class="text">Foto's</span>
+                    </a>
+                    <a href="<?= base_url('friends') ?>" class="hyves-menu-item">
+                        <span class="icon">👥</span>
+                        <span class="text">Vrienden</span>
+                    </a>
+                    <a href="<?= base_url('games') ?>" class="hyves-menu-item">
+                        <span class="icon">🎮</span>
+                        <span class="text">Games</span>
+                    </a>
+                </div>
             </div>
         </div>
         
-        <!-- Dummy bericht 2 -->
-        <div class="bg-white p-4 rounded-lg shadow">
-            <div class="flex items-center mb-3">
-                <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
-                <div>
-                    <h3 class="font-semibold">Petra de Vries</h3>
-                    <span class="text-gray-500 text-sm">5 uur geleden</span>
+        <!-- Midden gedeelte - Posts feed -->
+        <div class="w-full lg:w-2/4">
+            <!-- Post creator -->
+            <div class="post-composer bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+                <div class="bg-blue-100 p-3 border-b border-blue-200">
+                    <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
+                </div>
+                <div class="p-4">
+                    <form action="<?= base_url('posts/create') ?>" method="post" enctype="multipart/form-data">
+                        <div class="flex space-x-3">
+                            <img src="<?= base_url('public/uploads/' . $current_user['avatar']) ?>" 
+                                 alt="<?= htmlspecialchars($current_user['name']) ?>" 
+                                 class="w-10 h-10 rounded-full border-2 border-blue-200">
+                            <textarea name="content" rows="2" 
+                                      class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                      placeholder="Wat is er aan de hand, <?= htmlspecialchars($current_user['name']) ?>?"></textarea>
+                        </div>
+                        <div class="flex justify-between mt-3">
+                            <div class="flex space-x-2">
+                                <button type="button" class="hyves-tool-button" title="Voeg foto toe">
+                                    <span class="icon">📷</span>
+                                </button>
+                                <button type="button" class="hyves-tool-button" title="Voeg video toe">
+                                    <span class="icon">🎬</span>
+                                </button>
+                                <button type="button" class="hyves-tool-button" title="Voeg link toe">
+                                    <span class="icon">🔗</span>
+                                </button>
+                                <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
+                                    <span class="icon">😊</span>
+                                </button>
+                            </div>
+                            <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4">
+                                Plaatsen
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <p class="mb-4">Vandaag een prachtige wandeling gemaakt door het bos! De natuur is op haar mooist in deze tijd van het jaar. 🌳🍁</p>
-            <div class="flex space-x-4 text-sm text-gray-500">
-                <button class="flex items-center">
-                    <span>❤️</span> <span class="ml-1">24 likes</span>
-                </button>
-                <button class="flex items-center">
-                    <span>💬</span> <span class="ml-1">7 reacties</span>
-                </button>
-            </div>
+            
+            <!-- Posts feed -->
+            <?php foreach ($posts as $post): ?>
+                <div class="post-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+                    <div class="post-header flex justify-between items-center bg-blue-100 p-3 border-b border-blue-200">
+                        <div class="flex items-center space-x-3">
+                            <img src="<?= base_url('public/uploads/' . $post['user_avatar']) ?>" 
+                                 alt="<?= htmlspecialchars($post['user_name']) ?>" 
+                                 class="w-8 h-8 rounded-full border-2 border-blue-200">
+                            <div>
+                                <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="font-bold text-blue-800 hover:underline">
+                                    <?= htmlspecialchars($post['user_name']) ?>
+                                </a>
+                                <div class="text-xs text-blue-600"><?= $post['created_at'] ?></div>
+                            </div>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <span class="icon">⋯</span>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="post-content mb-4">
+                            <?= nl2br(htmlspecialchars($post['content'])) ?>
+                        </div>
+                        
+                        <!-- Post actions -->
+                        <div class="flex justify-between text-sm border-t border-blue-100 pt-3">
+                            <button class="hyves-action-button">
+                                <span class="icon">👍</span>
+                                <span class="text"><?= $post['likes'] ?> Respect!</span>
+                            </button>
+                            <button class="hyves-action-button">
+                                <span class="icon">💬</span>
+                                <span class="text"><?= $post['comments'] ?> Reacties</span>
+                            </button>
+                            <button class="hyves-action-button">
+                                <span class="icon">🔄</span>
+                                <span class="text">Delen</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            
+            <?php if (empty($posts)): ?>
+                <div class="empty-state bg-white rounded-lg shadow-md p-6 text-center">
+                    <div class="text-6xl mb-4">📭</div>
+                    <h3 class="text-xl font-bold text-blue-800 mb-2">Nog geen berichten</h3>
+                    <p class="text-gray-600">Begin met het volgen van vrienden of plaats je eerste bericht!</p>
+                </div>
+            <?php endif; ?>
         </div>
         
-        <!-- Dummy bericht 3 -->
-        <div class="bg-white p-4 rounded-lg shadow">
-            <div class="flex items-center mb-3">
-                <div class="w-10 h-10 bg-gray-300 rounded-full mr-3"></div>
-                <div>
-                    <h3 class="font-semibold">Thomas Bakker</h3>
-                    <span class="text-gray-500 text-sm">gisteren</span>
+        <!-- Rechter zijbalk -->
+        <div class="w-full lg:w-1/4">
+            <!-- Online vrienden -->
+            <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+                <div class="bg-blue-100 p-3 border-b border-blue-200 flex justify-between items-center">
+                    <h3 class="font-bold text-blue-800">Online vrienden</h3>
+                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                        <?= count($online_friends) ?>
+                    </span>
+                </div>
+                <div class="p-4">
+                    <?php if (empty($online_friends)): ?>
+                        <div class="text-center text-gray-500 py-2">
+                            Geen vrienden online
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3">
+                            <?php foreach ($online_friends as $friend): ?>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="relative">
+                                            <img src="<?= base_url('public/uploads/' . $friend['avatar']) ?>" 
+                                                 alt="<?= htmlspecialchars($friend['name']) ?>" 
+                                                 class="w-8 h-8 rounded-full border border-blue-200">
+                                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                                        </div>
+                                        <a href="<?= base_url('profile/' . $friend['id']) ?>" class="text-sm font-medium text-blue-800 hover:underline">
+                                            <?= htmlspecialchars($friend['name']) ?>
+                                        </a>
+                                    </div>
+                                    <a href="<?= base_url('messages/chat/' . $friend['id']) ?>" class="text-blue-600 hover:text-blue-800">
+                                        <span class="icon">✉️</span>
+                                    </a>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
-            <p class="mb-4">Heeft iemand tips voor goede programmeercursussen? Ik wil graag PHP leren! #codering #webontwikkeling</p>
-            <div class="flex space-x-4 text-sm text-gray-500">
-                <button class="flex items-center">
-                    <span>❤️</span> <span class="ml-1">8 likes</span>
-                </button>
-                <button class="flex items-center">
-                    <span>💬</span> <span class="ml-1">15 reacties</span>
-                </button>
+            
+            <!-- Trending hashtags -->
+            <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+                <div class="bg-blue-100 p-3 border-b border-blue-200">
+                    <h3 class="font-bold text-blue-800">Populair op SocialCore</h3>
+                </div>
+                <div class="p-4">
+                    <div class="space-y-3">
+                        <?php foreach ($trending_hashtags as $hashtag): ?>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-red-500 text-lg">📈</span>
+                                <div>
+                                    <a href="<?= base_url('search?q=%23' . $hashtag['tag']) ?>" class="text-sm font-medium text-blue-800 hover:underline">
+                                        #<?= htmlspecialchars($hashtag['tag']) ?>
+                                    </a>
+                                    <div class="text-xs text-gray-500"><?= number_format($hashtag['count']) ?> posts</div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Suggesties voor vrienden -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-blue-100 p-3 border-b border-blue-200">
+                    <h3 class="font-bold text-blue-800">Mensen die je misschien kent</h3>
+                </div>
+                <div class="p-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <?php foreach ($suggested_users as $user): ?>
+                            <div class="text-center">
+                                <a href="<?= base_url('profile/' . $user['id']) ?>" class="block">
+                                    <img src="<?= base_url('public/uploads/' . $user['avatar']) ?>" 
+                                         alt="<?= htmlspecialchars($user['name']) ?>" 
+                                         class="w-12 h-12 mx-auto rounded-full border-2 border-blue-200">
+                                    <div class="mt-1 text-sm font-medium text-blue-800 truncate">
+                                        <?= htmlspecialchars($user['name']) ?>
+                                    </div>
+                                </a>
+                                <button class="hyves-button bg-blue-500 hover:bg-blue-600 text-xs mt-1 py-1 px-2">
+                                    + Volgen
+                                </button>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
