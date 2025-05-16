@@ -1,0 +1,158 @@
+/* Hyves-geïnspireerde profielpagina styling */
+
+/* Knoppen in Hyves-stijl */
+.hyves-button {
+    display: block;
+    text-align: center;
+    padding: 0.5rem 1rem;
+    color: white;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.hyves-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Profiel tabs */
+.profile-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+}
+
+.profile-tabs::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+}
+
+.tab-item {
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    color: #4B5563;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab-item:hover {
+    color: #1D4ED8;
+    background-color: #EFF6FF;
+}
+
+.tab-item.active {
+    color: #1D4ED8;
+    border-bottom-color: #3B82F6;
+    background-color: #EFF6FF;
+}
+
+/* Responsieve aanpassingen */
+@media (max-width: 768px) {
+    .profile-content {
+        flex-direction: column;
+    }
+    
+    .profile-photo img {
+        max-width: 200px;
+    }
+}
+
+/* Hyves-stijl elementen */
+.about-block, .krabbel {
+    position: relative;
+}
+
+.about-block::before, .krabbel::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 15px;
+    height: 15px;
+    background: linear-gradient(135deg, transparent 0%, transparent 50%, #93C5FD 50%, #93C5FD 100%);
+    border-bottom-left-radius: 5px;
+}
+
+/* Krabbels styling */
+.krabbel {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.krabbel:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Vrienden grid */
+.friends-grid .friend-card {
+    transition: all 0.2s ease;
+}
+
+.friends-grid .friend-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Profielbewerking styling */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    display: block;
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Hyves-specifieke styling voor formulierelementen */
+.profile-edit-container .form-group input[type="file"] {
+    background-color: #EFF6FF;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px dashed #93C5FD;
+}
+
+.profile-edit-container input[type="checkbox"] {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid #93C5FD;
+    background-color: white;
+    cursor: pointer;
+    position: relative;
+}
+
+.profile-edit-container input[type="checkbox"]:checked {
+    background-color: #3B82F6;
+    border-color: #3B82F6;
+}
+
+.profile-edit-container input[type="checkbox"]:checked::before {
+    content: '✓';
+    font-size: 0.75rem;
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}

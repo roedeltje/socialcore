@@ -78,6 +78,22 @@ return [
     },
     'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers toegang hebben
 ],
+
+    'profile/edit' => [
+    'callback' => function () {
+        $profileController = new ProfileController();
+        $profileController->edit();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+    'profile/update' => [
+        'callback' => function () {
+            $profileController = new ProfileController();
+            $profileController->update();
+        },
+        'middleware' => [AuthMiddleware::class]
+],
     
     'logout' => [
     'callback' => function () {

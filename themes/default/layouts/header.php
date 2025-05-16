@@ -10,7 +10,10 @@
     
     <!-- Custom CSS -->
 <link rel="stylesheet" href="<?= theme_css_url('style.css') ?>">
+    <!-- Feed CSS -->
 <link rel="stylesheet" href="<?= theme_css_url('feed.css') ?>">
+    <!-- Profile CSS -->
+<link rel="stylesheet" href="<?= theme_css_url('profile.css') ?>">
 </head>
 <body class="min-h-screen">
     <?php

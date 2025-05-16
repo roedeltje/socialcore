@@ -9,9 +9,133 @@ class ProfileController extends Controller
      */
     public function index()
     {
-        // Later kun je hier de gebruikersgegevens ophalen op basis van ID
-        // Voor nu houden we het simpel
-        $this->view('profile/index');
+        // Controleer of er een specifieke gebruiker is opgevraagd
+        $requestedUsername = $_GET['username'] ?? null;
+        
+        if ($requestedUsername) {
+            // Haal het profiel op van de opgevraagde gebruiker
+            // Later: $user = User::findByUsername($requestedUsername);
+            $user = [
+                'id' => 2,
+                'username' => $requestedUsername,
+                'name' => 'Demo Gebruiker',
+                'bio' => 'Dit is een demonstratie profiel in Hyves-stijl voor SocialCore!',
+                'location' => 'Nederland',
+                'joined' => '10 mei 2025',
+                'avatar' => 'avatars/2025/05/default-avatar.png',
+                'interests' => ['Programmeren', 'Open Source', 'PHP', 'Webdesign', 'Nostalgie'],
+                'favorite_quote' => 'Code is poëzie in een digitaal universum.'
+            ];
+        } else {
+            // Geen gebruiker opgegeven, toon het profiel van de ingelogde gebruiker
+            if (!isset($_SESSION['user_id'])) {
+                redirect('login');
+                return;
+            }
+            
+            // Later: $user = User::find($_SESSION['user_id']);
+            $user = [
+                'id' => $_SESSION['user_id'],
+                'username' => $_SESSION['username'] ?? 'gebruiker',
+                'name' => 'Huidige Gebruiker',
+                'bio' => 'Welkom op mijn SocialCore profiel!',
+                'location' => 'Nederland',
+                'joined' => '16 mei 2025',
+                'avatar' => isset($_SESSION['avatar']) ? $_SESSION['avatar'] : 'avatars/2025/05/default-avatar.png',
+                'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
+                'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.'
+            ];
+        }
+        
+        // Dummy data voor vrienden
+        $friends = [
+            ['id' => 3, 'name' => 'Daan de Vries', 'username' => 'daanvr', 'avatar' => 'avatars/2025/05/default-avatar.png'],
+            ['id' => 4, 'name' => 'Sophie Bakker', 'username' => 'sophieb', 'avatar' => 'avatars/2025/05/default-avatar.png'],
+            ['id' => 5, 'name' => 'Tim Jansen', 'username' => 'timj', 'avatar' => 'avatars/2025/05/default-avatar.png'],
+            ['id' => 6, 'name' => 'Emma Visser', 'username' => 'emmav', 'avatar' => 'avatars/2025/05/default-avatar.png'],
+            ['id' => 7, 'name' => 'Luuk Smit', 'username' => 'luuks', 'avatar' => 'avatars/2025/05/default-avatar.png'],
+            ['id' => 8, 'name' => 'Isa van Dijk', 'username' => 'isad', 'avatar' => 'avatars/2025/05/default-avatar.png'],
+        ];
+        
+        // Dummy data voor recente posts
+        $posts = [
+            [
+                'id' => 101,
+                'content' => 'Zojuist SocialCore ontdekt, echt een geweldig nieuw platform!',
+                'created_at' => '2 uur geleden',
+                'likes' => 15,
+                'comments' => 3
+            ],
+            [
+                'id' => 102,
+                'content' => 'Bezig met het ontwerpen van mijn profiel. Wie herinnert zich de oude Hyves-stijl nog? 😊',
+                'created_at' => '1 dag geleden',
+                'likes' => 27,
+                'comments' => 8
+            ],
+            [
+                'id' => 103,
+                'content' => 'Open source projecten zijn de toekomst van software ontwikkeling. Wat vinden jullie?',
+                'created_at' => '3 dagen geleden',
+                'likes' => 42,
+                'comments' => 12
+            ]
+        ];
+        
+        $data = [
+            'title' => $user['name'] . ' - Profiel',
+            'user' => $user,
+            'friends' => $friends,
+            'posts' => $posts,
+            'viewer_is_owner' => isset($_SESSION['user_id']) && $_SESSION['user_id'] === $user['id'],
+            'active_tab' => $_GET['tab'] ?? 'over'
+        ];
+        
+        $this->view('profile/index', $data);
+    }
+
+    public function edit()
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
+        }
+        
+        // Later: $user = User::find($_SESSION['user_id']);
+        $user = [
+            'id' => $_SESSION['user_id'],
+            'username' => $_SESSION['username'] ?? 'gebruiker',
+            'name' => 'Huidige Gebruiker',
+            'bio' => 'Welkom op mijn SocialCore profiel!',
+            'location' => 'Nederland',
+            'email' => 'gebruiker@example.com',
+            'avatar' => isset($_SESSION['avatar']) ? $_SESSION['avatar'] : 'avatars/2025/05/default-avatar.png',
+            'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
+            'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.'
+        ];
+        
+        $data = [
+            'title' => 'Profiel bewerken',
+            'user' => $user
+        ];
+        
+        $this->view('profile/edit', $data);
+    }
+
+    public function update()
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
+        }
+        
+        // Valideer en verwerk het formulier
+        // Later: echte database implementatie
+        
+        set_flash_message('success', 'Je profiel is bijgewerkt!');
+        redirect('profile');
     }
 
     public function updateAvatar() {
