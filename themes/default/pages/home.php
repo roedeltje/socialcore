@@ -11,7 +11,7 @@
             
             <div class="welcome-cta">
                 <a href="<?= base_url('register') ?>" class="btn btn-primary">Registreer nu</a>
-                <a href="#about" class="btn btn-outline">Meer informatie</a>
+                <a href="<?= base_url('about') ?>" class="btn btn-outline">Meer informatie</a>
             </div>
         </div>
     </div>

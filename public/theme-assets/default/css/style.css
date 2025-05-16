@@ -710,3 +710,27 @@ a {
     background-color: #03142c;
     transform: translateY(-2px);
 }
+
+.attribution-section {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.attribution-section h3 {
+    font-size: 1.1rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.attribution-section a {
+    color: #0c2854;
+    text-decoration: none;
+}
+
+.attribution-section a:hover {
+    text-decoration: underline;
+}
