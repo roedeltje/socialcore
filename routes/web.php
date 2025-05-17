@@ -3,11 +3,12 @@
 use App\Auth\Auth;
 use App\Controllers\HomeController;
 use App\Controllers\AuthController;
-use App\Controllers\DashboardController;
 use App\Controllers\ProfileController;
 use App\Controllers\SetupController;
 use App\Controllers\FeedController;
 use App\Controllers\AboutController;
+use App\Controllers\Admin\UserController;
+use App\Controllers\Admin\DashboardController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\AdminMiddleware;
@@ -110,10 +111,10 @@ return [
 ],
 
     'dashboard' => [
-        'callback' => function () {
-            $dashboardController = new DashboardController();
-            $dashboardController->index();
-        },
+    'callback' => function () {
+        header('Location: ' . base_url('admin/dashboard'));
+        exit;
+    },
         'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
     ],
 
@@ -210,6 +211,14 @@ return [
     'callback' => function () {
         $setupController = new SetupController();
         $setupController->setupUploads();
+    },
+    'middleware' => [AdminMiddleware::class]
+],
+
+'admin/dashboard' => [
+    'callback' => function () {
+        $controller = new \App\Controllers\Admin\DashboardController();
+        $controller->index();
     },
     'middleware' => [AdminMiddleware::class]
 ],
