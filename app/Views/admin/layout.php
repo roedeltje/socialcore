@@ -31,7 +31,7 @@
         <aside class="admin-sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <a href="<?= base_url('?route=dashboard') ?>">
+                    <a href="<?= base_url('') ?>">
                         <span>SocialCore</span>
                     </a>
                 </div>
@@ -40,7 +40,7 @@
             <nav class="sidebar-nav">
                 <ul class="menu">
                     <li class="menu-item active">
-                        <a href="<?= base_url('?route=dashboard') ?>">
+                        <a href="<?= base_url('admin/dashboard') ?>">
                             <span class="icon"><i class="fas fa-tachometer-alt"></i></span>
                             <span class="menu-text">Dashboard</span>
                         </a>

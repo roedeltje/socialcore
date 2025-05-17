@@ -110,14 +110,6 @@ return [
     'middleware' => [AuthMiddleware::class]
 ],
 
-    'dashboard' => [
-    'callback' => function () {
-        header('Location: ' . base_url('admin/dashboard'));
-        exit;
-    },
-        'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
-    ],
-
     'setup_uploads' => [
     'callback' => function () {
         // Definieer base path

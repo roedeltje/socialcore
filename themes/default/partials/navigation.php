@@ -25,7 +25,7 @@
             <!-- Gebruikersmenu voor ingelogde gebruikers -->
             <div class="flex items-center space-x-6">
                 <?php if (function_exists('is_admin') && is_admin()): ?>
-                    <a href="<?= base_url('dashboard') ?>" class="hover:underline">Dashboard</a>
+                    <a href="<?= base_url('admin/dashboard') ?>" class="hover:underline">Dashboard</a>
                 <?php endif; ?>
                 
                 <div class="relative dropdown-container">
