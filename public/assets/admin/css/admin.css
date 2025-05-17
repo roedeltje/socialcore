@@ -23,6 +23,9 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 /* Dashboard grid layout */
@@ -37,4 +40,262 @@ body {
   min-height: 100vh;
 }
 
-/* Rest van de CSS voor header, sidebar, content, etc. */
+/* Header styling */
+.admin-header {
+  grid-area: header;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.header-title h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+}
+
+.user-dropdown {
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-dropdown:hover {
+  background-color: var(--bg-color);
+}
+
+.user-dropdown a {
+  display: block;
+  color: var(--primary-color);
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+.user-dropdown a:hover {
+  text-decoration: underline;
+}
+
+/* Sidebar styling */
+.admin-sidebar {
+  grid-area: sidebar;
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 20px 15px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+}
+
+.sidebar-logo a {
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-logo a:hover {
+  text-decoration: none;
+}
+
+.sidebar-nav {
+  padding: 0 0 20px 0;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  margin: 2px 0;
+}
+
+.menu-item a {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.menu-item a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.menu-item.active a {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 500;
+  border-left: 3px solid var(--accent-color);
+}
+
+.menu-item .icon {
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
+}
+
+.menu-item.separator {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 10px 15px;
+}
+
+/* Main content area */
+.admin-content {
+  grid-area: content;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: var(--bg-color);
+}
+
+/* Dashboard specific styling */
+.dashboard-wrapper {
+  display: grid;
+  gap: 20px;
+}
+
+.welcome-panel {
+  background-color: var(--card-bg);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.welcome-panel h2 {
+  margin-top: 0;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.dashboard-widgets {
+  display: grid;
+  gap: 20px;
+}
+
+.widget-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.widget {
+  background-color: var(--card-bg);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.widget-header {
+  background-color: var(--bg-color);
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.widget-content {
+  padding: 15px;
+}
+
+.widget-content ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.widget-content li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.widget-content li:last-child {
+  border-bottom: none;
+}
+
+.stat {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.button {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: var(--primary-light);
+  text-decoration: none;
+}
+
+/* Footer styling */
+.admin-footer {
+  grid-area: footer;
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  padding: 15px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-container {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "sidebar"
+      "content"
+      "footer";
+  }
+
+  .admin-sidebar {
+    min-height: auto;
+  }
+
+  .widget-row {
+    grid-template-columns: 1fr;
+  }
+}

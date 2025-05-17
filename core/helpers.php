@@ -203,3 +203,14 @@ function render_theme_template($template, $data = [], $with_header = true, $with
     
     return $result;
 }
+
+/**
+ * Genereert een URL naar een admin asset
+ * 
+ * @param string $file Pad naar het asset relatief aan de admin-assets-map
+ * @return string URL naar het admin asset
+ */
+function admin_asset_url($file) {
+    $file = ltrim($file, '/');
+    return base_url('assets/admin/' . $file);
+}

@@ -5,8 +5,31 @@ class Controller
 {
     protected function view($view, $data = [])
 {
-    // Maak variabelen beschikbaar in de view
+    // Detecteer of dit een admin view is
+    $isAdminView = strpos($view, 'admin/') === 0;
+    
+    // Extract data om variabelen beschikbaar te maken in de view
     extract($data);
+    
+    // Voor admin views, gebruik een directe aanpak zonder thema-mapping
+    if ($isAdminView) {
+        // Admin view pad
+        $viewPath = __DIR__ . '/../Views/' . $view . '.php';
+        
+        // Controleer of het bestaat
+        if (!file_exists($viewPath)) {
+            echo "<div style='color: red; padding: 20px; border: 1px solid red;'>";
+            echo "Admin view niet gevonden: " . htmlspecialchars($view) . ".php";
+            echo "</div>";
+            return;
+        }
+        
+        // Laad direct
+        include $viewPath;
+        return;
+    }
+    
+    // Vanaf hier: normale thema-logica voor niet-admin views
     
     // Laad thema-configuratie
     $themeConfig = \get_theme_config(); // Let op de backslash
@@ -106,19 +129,18 @@ class Controller
     
     // Extract opnieuw zodat $content beschikbaar is
     extract($data);
-		
+        
     // Zoek naar layout in verschillende locaties
-    // Zoek naar layout in verschillende locaties
-$layoutPaths = [
-    // 1. Actief thema layout
-    $rootDir . $themesDir . '/' . $activeTheme . '/layouts/header.php',
-    $rootDir . $themesDir . '/' . $activeTheme . '/layouts/footer.php',
-    // 2. Fallback thema layout
-    $rootDir . $themesDir . '/' . $fallbackTheme . '/layouts/header.php',
-    $rootDir . $themesDir . '/' . $fallbackTheme . '/layouts/footer.php',
-    // 3. Standaard layout
-    __DIR__ . '/../Views/layout.php'
-];
+    $layoutPaths = [
+        // 1. Actief thema layout
+        $rootDir . $themesDir . '/' . $activeTheme . '/layouts/header.php',
+        $rootDir . $themesDir . '/' . $activeTheme . '/layouts/footer.php',
+        // 2. Fallback thema layout
+        $rootDir . $themesDir . '/' . $fallbackTheme . '/layouts/header.php',
+        $rootDir . $themesDir . '/' . $fallbackTheme . '/layouts/footer.php',
+        // 3. Standaard layout
+        __DIR__ . '/../Views/layout.php'
+    ];
     
     // Bepaal welke layout bestanden bestaan
     $useThemeLayout = file_exists($layoutPaths[0]) && file_exists($layoutPaths[1]);
