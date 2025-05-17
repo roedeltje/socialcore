@@ -132,5 +132,6 @@
     
     <!-- Admin JavaScript -->
     <script src="/assets/admin/js/admin.js"></script>
+    <script src="<?= base_url('admin/assets/js/user-form.js') ?>"></script>
 </body>
 </html>
