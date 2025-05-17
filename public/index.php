@@ -5,7 +5,9 @@ $requestUri = trim($requestUri, '/');
 $isApi = str_starts_with($requestUri, 'api/');
 
 // Kies het pad op basis van URL
-$_GET['route'] = $isApi ? substr($requestUri, 4) : ($requestUri ?: 'home');
+if (!isset($_GET['route'])) {
+    $_GET['route'] = $isApi ? substr($requestUri, 4) : ($requestUri ?: 'home');
+}
 
 // Speciale route voor het instellen van de taal
 if ($_GET['route'] === 'set-language' && $_SERVER['REQUEST_METHOD'] === 'POST') {
