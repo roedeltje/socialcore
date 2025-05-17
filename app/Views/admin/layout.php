@@ -46,11 +46,32 @@
                         </a>
                     </li>
                     
-                    <li class="menu-item">
-                        <a href="<?= base_url('?route=admin/users') ?>">
+                    <li class="menu-item has-submenu">
+                        <a href="#" class="submenu-toggle">
                             <span class="icon"><i class="fas fa-users"></i></span>
                             <span class="menu-text">Gebruikers</span>
+                            <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
                         </a>
+                        <ul class="submenu">
+                            <li class="submenu-item">
+                                <a href="<?= base_url('admin/users') ?>">
+                                    <span class="icon"><i class="fas fa-list"></i></span>
+                                    <span class="menu-text">Gebruikers overzicht</span>
+                                </a>
+                            </li>
+                            <li class="submenu-item">
+                                <a href="<?= base_url('?route=admin/users&action=create') ?>">
+                                    <span class="icon"><i class="fas fa-user-plus"></i></span>
+                                    <span class="menu-text">Gebruiker toevoegen</span>
+                                </a>
+                            </li>
+                            <li class="submenu-item">
+                                <a href="<?= base_url('?route=admin/roles') ?>">
+                                    <span class="icon"><i class="fas fa-user-tag"></i></span>
+                                    <span class="menu-text">Rollen beheren</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     
                     <li class="menu-item">

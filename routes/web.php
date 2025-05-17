@@ -213,6 +213,26 @@ return [
     },
     'middleware' => [AdminMiddleware::class]
 ],
+
+'admin/users' => function() {
+    $controller = new \App\Controllers\Admin\UserController();
+    $action = $_GET['action'] ?? 'index';
+    
+    switch ($action) {
+        case 'create':
+            $controller->create();
+            break;
+        case 'edit':
+            $controller->edit();
+            break;
+        case 'delete':
+            $controller->delete();
+            break;
+        default:
+            $controller->index();
+            break;
+    }
+},
     
     // Eventuele andere routes...
 ];
