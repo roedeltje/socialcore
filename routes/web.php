@@ -214,25 +214,28 @@ return [
     'middleware' => [AdminMiddleware::class]
 ],
 
-'admin/users' => function() {
-    $controller = new \App\Controllers\Admin\UserController();
-    $action = $_GET['action'] ?? 'index';
-    
-    switch ($action) {
-        case 'create':
-            $controller->create();
-            break;
-        case 'edit':
-            $controller->edit();
-            break;
-        case 'delete':
-            $controller->delete();
-            break;
-        default:
-            $controller->index();
-            break;
-    }
-},
+'admin/users' => [
+    'callback' => function () {
+        $userController = new UserController();
+        $action = $_GET['action'] ?? 'index';
+        
+        switch ($action) {
+            case 'create':
+                $userController->create();
+                break;
+            case 'edit':
+                $userController->edit();
+                break;
+            case 'delete':
+                $userController->delete();
+                break;
+            default:
+                $userController->index();
+                break;
+        }
+    },
+    'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
+],
     
     // Eventuele andere routes...
 ];
