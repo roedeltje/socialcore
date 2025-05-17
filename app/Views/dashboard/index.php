@@ -1,20 +1,10 @@
-<h1>Admin Dashboard</h1>
-<p>Welkom in het beheerderspaneel, <?= htmlspecialchars($_SESSION['username']) ?>!</p>
+<?php
+// We hoeven hier niets te doen, omdat de controller nu rechtstreeks naar de admin layout zal verwijzen
+// Dit bestand kan eigenlijk leeg blijven of je kunt een fallback toevoegen voor het geval de controller 
+// niet correct is aangepast
 
-<div class="admin-tools">
-    <h2>Sitebeheer</h2>
-    <ul>
-        <li><a href="<?= base_url('admin/users') ?>">Gebruikersbeheer</a></li>
-        <li><a href="<?= base_url('admin/settings') ?>">Site-instellingen</a></li>
-        <!-- Meer beheerderstools hier -->
-    </ul>
-</div>
+// Fallback content (optioneel)
+echo "<div class='admin-fallback'>Dashboard wordt geladen via de admin layout...</div>";
 
-<div class="site-stats">
-    <h2>Site Statistieken</h2>
-    <!-- Hier kun je later statistieken toevoegen over gebruikersaantallen, activiteit, etc. -->
-    <p>Statistieken worden hier binnenkort weergegeven.</p>
-</div>
-
-<!-- Link terug naar de site -->
-<p><a href="<?= base_url('home') ?>">Terug naar de site</a></p>
+// Optioneel: automatisch doorverwijzen naar de correcte route
+echo "<script>window.location.href = '" . base_url('?route=dashboard') . "';</script>";

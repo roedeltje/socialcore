@@ -1,0 +1,40 @@
+:root {
+  --primary-color: #0f3ea3;
+  --primary-light: #3f64d1;
+  --accent-color: #f59e0b;
+  --bg-color: #f9fafb;
+  --card-bg: #ffffff;
+  --text-color: #1f2937;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+}
+
+/* Basis reset en layout */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+/* Dashboard grid layout */
+.admin-container {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar content"
+    "sidebar footer";
+  min-height: 100vh;
+}
+
+/* Rest van de CSS voor header, sidebar, content, etc. */
