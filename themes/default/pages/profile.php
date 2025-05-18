@@ -45,21 +45,21 @@
             <div class="w-full md:w-2/3 p-4">
                 <!-- Profiel navigatietabs -->
                 <div class="profile-tabs flex border-b-2 border-blue-200 mb-4">
-                    <a href="<?= base_url('profile/' . $user['username'] . '?tab=over') ?>" 
-                       class="tab-item <?= $active_tab === 'over' ? 'active' : '' ?>">
-                        Over
+                    <a href="<?= base_url('?route=profile&username=' . urlencode($user['username']) . '&tab=over') ?>" 
+   						class="tab-item <?= $active_tab === 'over' ? 'active' : '' ?>">
+    					Over
+					</a>
+                    <a href="<?= base_url('?route=profile&username=' . urlencode($user['username']) . '&tab=krabbels') ?>" 
+   						class="tab-item <?= $active_tab === 'over' ? 'active' : '' ?>">
+    					Krabbels
+					</a>
+                    <a href="<?= base_url('?route=profile&username=' . urlencode($user['username']) . '&tab=vrienden') ?>" 
+   						class="tab-item <?= $active_tab === 'over' ? 'active' : '' ?>">
+    					Vrienden (<?= count($friends) ?>)
                     </a>
-                    <a href="<?= base_url('profile/' . $user['username'] . '?tab=krabbels') ?>" 
-                       class="tab-item <?= $active_tab === 'krabbels' ? 'active' : '' ?>">
-                        Krabbels
-                    </a>
-                    <a href="<?= base_url('profile/' . $user['username'] . '?tab=vrienden') ?>" 
-                       class="tab-item <?= $active_tab === 'vrienden' ? 'active' : '' ?>">
-                        Vrienden (<?= count($friends) ?>)
-                    </a>
-                    <a href="<?= base_url('profile/' . $user['username'] . '?tab=fotos') ?>" 
-                       class="tab-item <?= $active_tab === 'fotos' ? 'active' : '' ?>">
-                        Foto's
+                    <a href="<?= base_url('?route=profile&username=' . urlencode($user['username']) . '&tab=fotos') ?>" 
+   						class="tab-item <?= $active_tab === 'over' ? 'active' : '' ?>">
+    					Foto's
                     </a>
                 </div>
                 
@@ -99,7 +99,7 @@
                 <!-- Krabbels tab content -->
                 <div class="krabbels-container mt-4">
                     <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $user['id']): ?>
-                        <form action="<?= base_url('profile/post-krabbel') ?>" method="post" class="bg-blue-50 p-4 rounded-lg mb-4">
+                        <form action="<?= base_url('?route=profile/post-krabbel') ?>" method="post" class="bg-blue-50 p-4 rounded-lg mb-4">
                             <input type="hidden" name="receiver_id" value="<?= $user['id'] ?>">
                             <input type="hidden" name="receiver_username" value="<?= $user['username'] ?>">
                             <textarea name="message" placeholder="Schrijf een krabbel..." class="w-full p-2 border rounded mb-2" required></textarea>

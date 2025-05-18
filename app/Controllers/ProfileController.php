@@ -9,7 +9,7 @@ class ProfileController extends Controller
     /**
      * Toon de profielpagina
      */
-    public function index()
+    public function index($usernameFromUrl = null)
 {
     // Controleer of er een specifieke gebruiker is opgevraagd
     $requestedUsername = $_GET['username'] ?? null;
@@ -302,7 +302,7 @@ class ProfileController extends Controller
     }
     
     // Redirect terug naar het profiel met de krabbels-tab
-    redirect('profile/' . $receiverUsername . '?tab=krabbels');
+    redirect('?route=profile&username=' . urlencode($receiverUsername) . '&tab=krabbels');
 }
     
     /**
@@ -337,6 +337,6 @@ class ProfileController extends Controller
     }
     
     // Redirect terug naar het profiel met de foto's-tab
-    redirect('profile?tab=fotos');
+    redirect('?route=profile&username=' . urlencode($receiverUsername) . '&tab=krabbels');
 }
 }

@@ -79,10 +79,14 @@ return [
 
     'profile' => [
     'callback' => function () {
+        // Haal username uit URL als die er is
+        $segments = explode('/', $_SERVER['REQUEST_URI']);
+        $username = $segments[2] ?? null; // of een andere index afhankelijk van je URL-structuur
+        
         $profileController = new ProfileController();
-        $profileController->index();
+        $profileController->index($username);
     },
-    'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers toegang hebben
+    'middleware' => [AuthMiddleware::class]
 ],
 
     'profile/edit' => [
