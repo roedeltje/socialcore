@@ -145,29 +145,145 @@ class UserController extends Controller
         exit;
     }
     
-    // Haal gebruiker op uit de database (placeholder)
-    $user = [
-        'id' => $id,
-        'username' => 'user' . $id,
-        'email' => 'user' . $id . '@example.com',
-        'role' => 'member',
-        'status' => 'active',
-        'created_at' => '2025-01-01'
-    ];
+    $errors = [];
+    $success = false;
     
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Verwerk het formulier (placeholder)
-        // Later toevoegen met database operaties
+    try {
+        $db = \App\Database\Database::getInstance();
         
-        // Redirect naar gebruikersoverzicht na succesvol bewerken
-        header('Location: ' . base_url('admin/users'));
-        exit;
+        // Haal gebruiker op uit de database op basis van ID
+        $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
+        
+        if (!$user) {
+            $_SESSION['error_message'] = "Gebruiker niet gevonden.";
+            header('Location: ' . base_url('admin/users'));
+            exit;
+        }
+        
+        // Verwerk formulier als dit een POST verzoek is
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Gebruikersnaam validatie
+            $username = trim($_POST['username'] ?? '');
+            if (empty($username)) {
+                $errors[] = "Gebruikersnaam is verplicht.";
+            } elseif (strlen($username) < 3) {
+                $errors[] = "Gebruikersnaam moet minimaal 3 tekens bevatten.";
+            } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+                $errors[] = "Gebruikersnaam mag alleen letters, cijfers en underscores bevatten.";
+            } else {
+                // Controleer of gebruikersnaam al bestaat (bij een andere gebruiker)
+                $existingUser = $db->fetch(
+                    "SELECT id FROM users WHERE username = ? AND id != ?", 
+                    [$username, $id]
+                );
+                
+                if ($existingUser) {
+                    $errors[] = "Deze gebruikersnaam is al in gebruik.";
+                }
+            }
+            
+            // Email validatie
+            $email = trim($_POST['email'] ?? '');
+            if (empty($email)) {
+                $errors[] = "E-mailadres is verplicht.";
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Ongeldig e-mailadres.";
+            } else {
+                // Controleer of e-mail al bestaat (bij een andere gebruiker)
+                $existingUser = $db->fetch(
+                    "SELECT id FROM users WHERE email = ? AND id != ?", 
+                    [$email, $id]
+                );
+                
+                if ($existingUser) {
+                    $errors[] = "Dit e-mailadres is al in gebruik.";
+                }
+            }
+            
+            // Wachtwoord validatie (optioneel bij bewerken)
+            $password = $_POST['password'] ?? '';
+            $password_confirm = $_POST['password_confirm'] ?? '';
+            
+            $update_password = false;
+            if (!empty($password)) {
+                if (strlen($password) < 8) {
+                    $errors[] = "Wachtwoord moet minimaal 8 tekens bevatten.";
+                } elseif ($password !== $password_confirm) {
+                    $errors[] = "Wachtwoorden komen niet overeen.";
+                } else {
+                    $update_password = true;
+                }
+            }
+            
+            // Overige velden ophalen
+            $display_name = trim($_POST['display_name'] ?? $username);
+            $role = $_POST['role'] ?? 'member';
+            $status = $_POST['status'] ?? 'active';
+            
+            // Als er geen fouten zijn, gebruiker bijwerken
+            if (empty($errors)) {
+                // Bouw de updatequery
+                $query = "UPDATE users SET 
+                          username = ?,
+                          email = ?,
+                          display_name = ?,
+                          role = ?,
+                          status = ?,
+                          updated_at = NOW()";
+                
+                $params = [$username, $email, $display_name, $role, $status];
+                
+                // Als wachtwoord moet worden bijgewerkt, voeg het toe aan de query
+                if ($update_password) {
+                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                    $query .= ", password = ?";
+                    $params[] = $hashed_password;
+                }
+                
+                // Voeg WHERE-clausule toe
+                $query .= " WHERE id = ?";
+                $params[] = $id;
+                
+                // Voer query uit
+                $success = $db->execute($query, $params);
+                
+                if ($success) {
+                    // Succes bericht in sessie opslaan
+                    $_SESSION['success_message'] = "Gebruiker {$username} is succesvol bijgewerkt.";
+                    
+                    // Haal de bijgewerkte gebruiker op
+                    $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
+                    
+                    // Als de bewerking succesvol is, toon bericht in de huidige view
+                    $success = true;
+                } else {
+                    $errors[] = "Er is een fout opgetreden bij het bijwerken van de gebruiker.";
+                }
+            }
+        }
+    } catch (\Exception $e) {
+        $errors[] = "Database fout: " . $e->getMessage();
+        
+        // Als er een database fout is, gebruik placeholder data
+        if (!isset($user)) {
+            $user = [
+                'id' => $id,
+                'username' => 'user' . $id,
+                'email' => 'user' . $id . '@example.com',
+                'display_name' => 'User ' . $id,
+                'role' => 'member',
+                'status' => 'active',
+                'created_at' => '2025-01-01'
+            ];
+        }
     }
     
     $data = [
         'user' => $user,
         'title' => 'Gebruiker Bewerken',
-        'contentView' => BASE_PATH . '/app/Views/admin/users/edit.php'
+        'contentView' => BASE_PATH . '/app/Views/admin/users/edit.php',
+        'errors' => $errors,
+        'success' => $success
     ];
     
     return $this->view('admin/layout', $data);

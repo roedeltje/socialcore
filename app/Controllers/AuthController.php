@@ -32,7 +32,7 @@ class AuthController extends Controller
                 // Check de rol van de gebruiker
                 if (Auth::isAdmin()) {
                     // Stuur admins naar het dashboard
-                    redirect('dashboard');
+                    redirect('admin/dashboard');
                 } else {
                     // Stuur gewone leden naar de nieuwsfeed (aangepast van 'profile' naar 'feed')
                     redirect('feed');
