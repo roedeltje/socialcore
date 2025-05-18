@@ -100,7 +100,9 @@ spl_autoload_register(function ($className) {
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/helpers/language.php';
 require_once __DIR__ . '/helpers/upload.php';
+require_once __DIR__ . '/../app/Helpers/FormHelper.php';
 require_once __DIR__ . '/theme-loader.php';
+
 
 // Laad de web en API routes
 $webRoutes = require __DIR__ . '/../routes/web.php';

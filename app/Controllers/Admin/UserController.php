@@ -99,7 +99,7 @@ class UserController extends Controller
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                     
                     // Gebruiker toevoegen
-                    $success = $db->execute(
+                    $success = $db->query(
                         "INSERT INTO users (username, email, password, display_name, role, status, created_at) 
                          VALUES (?, ?, ?, ?, ?, ?, NOW())",
                         [$username, $email, $hashed_password, $display_name, $role, $status]
@@ -140,18 +140,14 @@ class UserController extends Controller
     $id = $_GET['id'] ?? null;
     
     if (!$id) {
-        // Redirect naar gebruikersoverzicht als geen ID is opgegeven
         header('Location: ' . base_url('admin/users'));
         exit;
     }
     
-    $errors = [];
-    $success = false;
-    
     try {
         $db = \App\Database\Database::getInstance();
         
-        // Haal gebruiker op uit de database op basis van ID
+        // Haal gebruiker op uit de database
         $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
         
         if (!$user) {
@@ -160,68 +156,29 @@ class UserController extends Controller
             exit;
         }
         
-        // Verwerk formulier als dit een POST verzoek is
+        // Maak een nieuwe FormHelper met de gebruikersgegevens
+        $form = new \App\Helpers\FormHelper($user);
+        
+        // Stel validatieregels in
+        $form->addRule('username', 'required')
+             ->addRule('username', 'min', 3)
+             ->addRule('username', 'regex', '/^[a-zA-Z0-9_]+$/', "Gebruikersnaam mag alleen letters, cijfers en underscores bevatten.")
+             ->addRule('username', 'unique', [$db, 'users', 'username', $id], "Deze gebruikersnaam is al in gebruik.")
+             ->addRule('email', 'required')
+             ->addRule('email', 'email')
+             ->addRule('email', 'unique', [$db, 'users', 'email', $id], "Dit e-mailadres is al in gebruik.");
+        
+        // Als wachtwoord is ingevuld, valideer het
+        if (!empty($_POST['password'])) {
+            $form->addRule('password', 'min', 8, "Wachtwoord moet minimaal 8 tekens bevatten.")
+                 ->addRule('password', 'matches', 'password_confirm', "Wachtwoorden komen niet overeen.");
+        }
+        
+        $success = false;
+        
+        // Verwerk het formulier als dit een POST verzoek is
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Gebruikersnaam validatie
-            $username = trim($_POST['username'] ?? '');
-            if (empty($username)) {
-                $errors[] = "Gebruikersnaam is verplicht.";
-            } elseif (strlen($username) < 3) {
-                $errors[] = "Gebruikersnaam moet minimaal 3 tekens bevatten.";
-            } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-                $errors[] = "Gebruikersnaam mag alleen letters, cijfers en underscores bevatten.";
-            } else {
-                // Controleer of gebruikersnaam al bestaat (bij een andere gebruiker)
-                $existingUser = $db->fetch(
-                    "SELECT id FROM users WHERE username = ? AND id != ?", 
-                    [$username, $id]
-                );
-                
-                if ($existingUser) {
-                    $errors[] = "Deze gebruikersnaam is al in gebruik.";
-                }
-            }
-            
-            // Email validatie
-            $email = trim($_POST['email'] ?? '');
-            if (empty($email)) {
-                $errors[] = "E-mailadres is verplicht.";
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = "Ongeldig e-mailadres.";
-            } else {
-                // Controleer of e-mail al bestaat (bij een andere gebruiker)
-                $existingUser = $db->fetch(
-                    "SELECT id FROM users WHERE email = ? AND id != ?", 
-                    [$email, $id]
-                );
-                
-                if ($existingUser) {
-                    $errors[] = "Dit e-mailadres is al in gebruik.";
-                }
-            }
-            
-            // Wachtwoord validatie (optioneel bij bewerken)
-            $password = $_POST['password'] ?? '';
-            $password_confirm = $_POST['password_confirm'] ?? '';
-            
-            $update_password = false;
-            if (!empty($password)) {
-                if (strlen($password) < 8) {
-                    $errors[] = "Wachtwoord moet minimaal 8 tekens bevatten.";
-                } elseif ($password !== $password_confirm) {
-                    $errors[] = "Wachtwoorden komen niet overeen.";
-                } else {
-                    $update_password = true;
-                }
-            }
-            
-            // Overige velden ophalen
-            $display_name = trim($_POST['display_name'] ?? $username);
-            $role = $_POST['role'] ?? 'member';
-            $status = $_POST['status'] ?? 'active';
-            
-            // Als er geen fouten zijn, gebruiker bijwerken
-            if (empty($errors)) {
+            if ($form->validate($_POST)) {
                 // Bouw de updatequery
                 $query = "UPDATE users SET 
                           username = ?,
@@ -231,11 +188,18 @@ class UserController extends Controller
                           status = ?,
                           updated_at = NOW()";
                 
-                $params = [$username, $email, $display_name, $role, $status];
+                $formValues = $form->getValues();
+                $params = [
+                    $formValues['username'], 
+                    $formValues['email'], 
+                    $formValues['display_name'] ?? $formValues['username'], 
+                    $formValues['role'], 
+                    $formValues['status']
+                ];
                 
                 // Als wachtwoord moet worden bijgewerkt, voeg het toe aan de query
-                if ($update_password) {
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                if (!empty($formValues['password'])) {
+                    $hashed_password = password_hash($formValues['password'], PASSWORD_DEFAULT);
                     $query .= ", password = ?";
                     $params[] = $hashed_password;
                 }
@@ -245,27 +209,25 @@ class UserController extends Controller
                 $params[] = $id;
                 
                 // Voer query uit
-                $success = $db->execute($query, $params);
+                $success = $db->query($query, $params);
                 
                 if ($success) {
                     // Succes bericht in sessie opslaan
-                    $_SESSION['success_message'] = "Gebruiker {$username} is succesvol bijgewerkt.";
+                    $_SESSION['success_message'] = "Gebruiker {$formValues['username']} is succesvol bijgewerkt.";
                     
-                    // Haal de bijgewerkte gebruiker op
+                    // Haal de bijgewerkte gebruiker op en update de form values
                     $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
-                    
-                    // Als de bewerking succesvol is, toon bericht in de huidige view
-                    $success = true;
+                    $form->setValues($user);
                 } else {
-                    $errors[] = "Er is een fout opgetreden bij het bijwerken van de gebruiker.";
+                    $form->addError("Er is een fout opgetreden bij het bijwerken van de gebruiker.");
                 }
             }
         }
     } catch (\Exception $e) {
-        $errors[] = "Database fout: " . $e->getMessage();
-        
-        // Als er een database fout is, gebruik placeholder data
-        if (!isset($user)) {
+        if (isset($form)) {
+            $form->addError("Database fout: " . $e->getMessage());
+        } else {
+            // Als er een database fout is bij het ophalen van de gebruiker
             $user = [
                 'id' => $id,
                 'username' => 'user' . $id,
@@ -275,15 +237,17 @@ class UserController extends Controller
                 'status' => 'active',
                 'created_at' => '2025-01-01'
             ];
+            $form = new \App\Helpers\FormHelper($user);
+            $form->addError("Database fout: " . $e->getMessage());
         }
     }
     
     $data = [
         'user' => $user,
+        'form' => $form,
         'title' => 'Gebruiker Bewerken',
         'contentView' => BASE_PATH . '/app/Views/admin/users/edit.php',
-        'errors' => $errors,
-        'success' => $success
+        'success' => $success ?? false
     ];
     
     return $this->view('admin/layout', $data);

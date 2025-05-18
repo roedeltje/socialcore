@@ -7,16 +7,7 @@
     </div>
 </div>
 
-<?php if (!empty($errors)): ?>
-    <div class="alert alert-danger">
-        <strong>Fout!</strong> Controleer de volgende problemen:
-        <ul>
-            <?php foreach ($errors as $error): ?>
-                <li><?= $error ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-<?php endif; ?>
+<?= $form->showGeneralErrors() ?>
 
 <?php if ($success): ?>
     <div class="alert alert-success">
@@ -37,57 +28,68 @@
             <!-- Basisgegevens -->
             <div class="form-group">
                 <label for="username">Gebruikersnaam *</label>
-                <input type="text" id="username" name="username" value="<?= htmlspecialchars($user['username']) ?>" required
-                       class="form-control" placeholder="Voer gebruikersnaam in">
+                <?= $form->input('text', 'username', [
+                    'id' => 'username',
+                    'required' => 'required',
+                    'placeholder' => 'Voer gebruikersnaam in'
+                ]) ?>
                 <small class="form-text text-muted">Letters, cijfers en underscores toegestaan. Min. 3 tekens.</small>
             </div>
             
             <div class="form-group">
                 <label for="email">E-mailadres *</label>
-                <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required
-                       class="form-control" placeholder="Voer e-mailadres in">
+                <?= $form->input('email', 'email', [
+                    'id' => 'email',
+                    'required' => 'required',
+                    'placeholder' => 'Voer e-mailadres in'
+                ]) ?>
             </div>
             
             <div class="form-group">
                 <label for="display_name">Weergavenaam</label>
-                <input type="text" id="display_name" name="display_name" 
-                       value="<?= htmlspecialchars($user['display_name'] ?? $user['username']) ?>"
-                       class="form-control" placeholder="Voer weergavenaam in">
+                <?= $form->input('text', 'display_name', [
+                    'id' => 'display_name',
+                    'placeholder' => 'Voer weergavenaam in'
+                ]) ?>
                 <small class="form-text text-muted">Naam die wordt weergegeven in het systeem.</small>
             </div>
             
             <!-- Wachtwoord - optioneel bij bewerken -->
             <div class="form-group">
                 <label for="password">Wachtwoord</label>
-                <input type="password" id="password" name="password"
-                       class="form-control" placeholder="Laat leeg om ongewijzigd te laten">
+                <?= $form->input('password', 'password', [
+                    'id' => 'password',
+                    'placeholder' => 'Laat leeg om ongewijzigd te laten'
+                ]) ?>
                 <small class="form-text text-muted">Laat leeg om het wachtwoord niet te wijzigen.</small>
             </div>
             
             <div class="form-group">
                 <label for="password_confirm">Wachtwoord bevestigen</label>
-                <input type="password" id="password_confirm" name="password_confirm"
-                       class="form-control" placeholder="Bevestig nieuw wachtwoord">
+                <?= $form->input('password', 'password_confirm', [
+                    'id' => 'password_confirm',
+                    'placeholder' => 'Bevestig nieuw wachtwoord'
+                ]) ?>
             </div>
             
             <!-- Rol en status -->
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="role">Rol *</label>
-                    <select id="role" name="role" class="form-control" required>
-                        <option value="admin" <?= ($user['role'] === 'admin') ? 'selected' : '' ?>>Administrator</option>
-                        <option value="moderator" <?= ($user['role'] === 'moderator') ? 'selected' : '' ?>>Moderator</option>
-                        <option value="member" <?= ($user['role'] === 'member') ? 'selected' : '' ?>>Lid</option>
-                    </select>
+                    <?= $form->select('role', [
+                        'admin' => 'Administrator',
+                        'moderator' => 'Moderator',
+                        'member' => 'Lid'
+                    ], ['id' => 'role', 'required' => 'required']) ?>
                 </div>
                 
                 <div class="form-group col-md-6">
                     <label for="status">Status *</label>
-                    <select id="status" name="status" class="form-control" required>
-                        <option value="active" <?= ($user['status'] === 'active') ? 'selected' : '' ?>>Actief</option>
-                        <option value="inactive" <?= ($user['status'] === 'inactive') ? 'selected' : '' ?>>Inactief</option>
-                        <option value="banned" <?= ($user['status'] === 'banned') ? 'selected' : '' ?>>Geblokkeerd</option>
-                    </select>
+                    <?= $form->select('status', [
+                        'active' => 'Actief',
+                        'inactive' => 'Inactief',
+                        'banned' => 'Geblokkeerd'
+                    ], ['id' => 'status', 'required' => 'required']) ?>
                 </div>
             </div>
             
