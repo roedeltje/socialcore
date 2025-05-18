@@ -95,101 +95,95 @@
                         </div>
                     
                     <!-- Krabbels tab -->
-                    <?php elseif ($active_tab === 'krabbels'): ?>
-                        <div class="guestbook-section">
-                            <!-- Krabbel toevoegen -->
-                            <?php if (!$viewer_is_owner): ?>
-                                <div class="add-krabbel bg-blue-50 p-4 rounded-lg mb-6">
-                                    <h3 class="text-lg font-bold text-blue-700 mb-3">Plaats een krabbel</h3>
-                                    <form action="<?= base_url('profile/krabbel/add') ?>" method="post">
-                                        <input type="hidden" name="recipient_id" value="<?= $user['id'] ?>">
-                                        <textarea name="content" rows="3" class="w-full p-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                                  placeholder="Laat een berichtje achter..."></textarea>
-                                        <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 mt-2">
-                                            Plaatsen
-                                        </button>
-                                    </form>
+                    <?php elseif ($active_tab == 'krabbels'): ?>
+                <!-- Krabbels tab content -->
+                <div class="krabbels-container mt-4">
+                    <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $user['id']): ?>
+                        <form action="<?= base_url('profile/post-krabbel') ?>" method="post" class="bg-blue-50 p-4 rounded-lg mb-4">
+                            <input type="hidden" name="receiver_id" value="<?= $user['id'] ?>">
+                            <input type="hidden" name="receiver_username" value="<?= $user['username'] ?>">
+                            <textarea name="message" placeholder="Schrijf een krabbel..." class="w-full p-2 border rounded mb-2" required></textarea>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Plaatsen</button>
+                        </form>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($krabbels)): ?>
+                        <?php foreach ($krabbels as $krabbel): ?>
+                            <div class="krabbel-item bg-white p-4 rounded-lg shadow mb-4">
+                                <div class="flex items-center mb-2">
+                                    <img src="<?= base_url($krabbel['sender_avatar']) ?>" alt="<?= htmlspecialchars($krabbel['sender_name']) ?>" class="w-10 h-10 rounded-full mr-2">
+                                    <div>
+                                        <a href="<?= base_url('profile/' . $krabbel['sender_username']) ?>" class="font-bold text-blue-600"><?= htmlspecialchars($krabbel['sender_name']) ?></a>
+                                        <div class="text-gray-500 text-sm"><?= date('d-m-Y H:i', strtotime($krabbel['created_at'])) ?></div>
+                                    </div>
                                 </div>
-                            <?php endif; ?>
-                            
-                            <!-- Bestaande krabbels -->
-                            <div class="krabbels-list">
-                                <h3 class="text-lg font-bold text-blue-700 border-b border-blue-200 pb-2 mb-3">
-                                    Krabbels (<?= count($posts) ?>)
-                                </h3>
-                                
-                                <?php foreach ($posts as $post): ?>
-                                    <div class="krabbel bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-300">
-                                        <div class="krabbel-header flex justify-between mb-2">
-                                            <div class="text-sm text-blue-700">Door: <a href="#" class="font-bold hover:underline">Gebruiker</a></div>
-                                            <div class="text-xs text-gray-500"><?= $post['created_at'] ?></div>
-                                        </div>
-                                        <div class="krabbel-content mb-2">
-                                            <?= nl2br(htmlspecialchars($post['content'])) ?>
-                                        </div>
-                                        <div class="krabbel-footer flex justify-between text-xs text-gray-500">
-                                            <div>
-                                                <span class="mr-2">❤️ <?= $post['likes'] ?></span>
-                                                <span>💬 <?= $post['comments'] ?></span>
-                                            </div>
-                                            <div>
-                                                <a href="#" class="text-blue-600 hover:underline">Reageren</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                                
-                                <?php if (empty($posts)): ?>
-                                    <div class="empty-state text-center py-6 text-gray-500">
-                                        Nog geen krabbels. Wees de eerste die een bericht achterlaat!
-                                    </div>
-                                <?php endif; ?>
+                                <p class="text-gray-700"><?= nl2br(htmlspecialchars($krabbel['message'])) ?></p>
                             </div>
-                        </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p class="text-gray-500 italic text-center p-4">Er zijn nog geen krabbels geplaatst.</p>
+                    <?php endif; ?>
+                </div>
                     
                     <!-- Vrienden tab -->
-                    <?php elseif ($active_tab === 'vrienden'): ?>
-                        <div class="friends-section">
-                            <h3 class="text-lg font-bold text-blue-700 border-b border-blue-200 pb-2 mb-3">
-                                Vrienden (<?= count($friends) ?>)
-                            </h3>
-                            
-                            <div class="friends-grid grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <?php elseif ($active_tab == 'vrienden'): ?>
+                    <!-- Vrienden tab content -->
+                    <div class="friends-container mt-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            <?php if (!empty($friends)): ?>
                                 <?php foreach ($friends as $friend): ?>
-                                    <div class="friend-card bg-blue-50 rounded-lg p-3 border border-blue-200 hover:shadow-md transition-shadow">
-                                        <a href="<?= base_url('profile/' . $friend['username']) ?>" class="flex flex-col items-center">
-                                            <img src="<?= base_url('public/uploads/' . $friend['avatar']) ?>" 
-                                                 alt="<?= htmlspecialchars($friend['name']) ?>" 
-                                                 class="w-16 h-16 rounded-full border-2 border-blue-300">
-                                            <div class="font-medium text-blue-800 mt-2 text-center">
-                                                <?= htmlspecialchars($friend['name']) ?>
-                                            </div>
+                                    <div class="friend-card text-center">
+                                        <a href="<?= base_url('profile/' . $friend['username']) ?>" class="block">
+                                            <img src="<?= base_url($friend['avatar']) ?>" alt="<?= htmlspecialchars($friend['name']) ?>" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
+                                            <div class="font-medium"><?= htmlspecialchars($friend['name']) ?></div>
                                         </a>
                                     </div>
                                 <?php endforeach; ?>
-                            </div>
-                            
-                            <?php if (empty($friends)): ?>
-                                <div class="empty-state text-center py-6 text-gray-500">
-                                    Nog geen vrienden toegevoegd.
-                                </div>
+                            <?php else: ?>
+                                <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen vrienden.</p>
                             <?php endif; ?>
                         </div>
+                    </div>
                     
                     <!-- Foto's tab -->
-                    <?php elseif ($active_tab === 'fotos'): ?>
-                        <div class="photos-section">
-                            <h3 class="text-lg font-bold text-blue-700 border-b border-blue-200 pb-2 mb-3">
-                                Foto's
-                            </h3>
+                    <?php elseif ($active_tab == 'fotos'): ?>
+                        <!-- Foto's tab content -->
+                        <div class="photos-container mt-4">
+                            <?php if ($viewer_is_owner): ?>
+                                <form action="<?= base_url('profile/upload-foto') ?>" method="post" enctype="multipart/form-data" class="bg-blue-50 p-4 rounded-lg mb-4">
+                                    <div class="mb-3">
+                                        <label for="photo" class="block mb-1 font-medium">Foto uploaden:</label>
+                                        <input type="file" name="photo" id="photo" accept="image/*" required class="block w-full">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="description" class="block mb-1 font-medium">Beschrijving:</label>
+                                        <input type="text" name="description" id="description" class="w-full p-2 border rounded">
+                                    </div>
+                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Uploaden</button>
+                                </form>
+                            <?php endif; ?>
                             
-                            <div class="empty-state text-center py-6 text-gray-500">
-                                Nog geen foto's toegevoegd.
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                <?php if (!empty($fotos)): ?>
+                                    <?php foreach ($fotos as $foto): ?>
+                                        <div class="photo-card overflow-hidden rounded-lg shadow">
+                                            <div class="h-32 overflow-hidden">
+                                                <img src="<?= base_url('public/assets/images/' . $foto['filename']) ?>" alt="<?= htmlspecialchars($foto['description']) ?>" class="w-full h-full object-cover">
+                                            </div>
+                                            <div class="p-2 bg-white">
+                                                <p class="text-sm"><?= htmlspecialchars($foto['description']) ?></p>
+                                                <span class="text-xs text-gray-500"><?= date('d-m-Y', strtotime($foto['uploaded_at'])) ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen foto's geüpload.</p>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                </div> <!-- Sluit .tab-content -->
+            </div> <!-- Sluit .w-full md:w-2/3 p-4 -->
+        </div> <!-- Sluit .flex flex-col md:flex-row -->
+    </div> <!-- Sluit .profile-content -->
+</div> <!-- Sluit .profile-container -->

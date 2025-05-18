@@ -156,3 +156,94 @@
     left: 50%;
     transform: translate(-50%, -50%);
 }
+
+/* Krabbels styling */
+.krabbels-container {
+    margin-top: 1rem;
+}
+
+.krabbel-item {
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.krabbel-item::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 15px;
+    height: 15px;
+    background: linear-gradient(135deg, transparent 0%, transparent 50%, #93C5FD 50%, #93C5FD 100%);
+    border-bottom-left-radius: 5px;
+}
+
+.krabbel-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Foto's styling */
+.photos-container {
+    margin-top: 1rem;
+}
+
+.photo-card {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.photo-card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 15px;
+    height: 15px;
+    background: linear-gradient(135deg, transparent 0%, transparent 50%, #93C5FD 50%, #93C5FD 100%);
+    border-bottom-left-radius: 5px;
+    z-index: 10;
+}
+
+.photo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Upload formulieren in Hyves stijl */
+.krabbels-container form textarea,
+.photos-container form input[type="file"],
+.photos-container form input[type="text"] {
+    border: 1px solid #BFDBFE;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.krabbels-container form textarea:focus,
+.photos-container form input[type="text"]:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Knoppen in formulieren */
+.krabbels-container form button,
+.photos-container form button {
+    transition: all 0.2s;
+}
+
+.krabbels-container form button:hover,
+.photos-container form button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Empty state styling */
+.text-gray-500.italic.text-center {
+    padding: 2rem;
+    background-color: #F9FAFB;
+    border-radius: 0.5rem;
+    border: 1px dashed #D1D5DB;
+}

@@ -237,6 +237,22 @@ return [
     },
     'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
 ],
+
+'profile/post-krabbel' => [
+    'callback' => function () {
+        $profileController = new ProfileController();
+        $profileController->postKrabbel();
+    },
+    'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers krabbels kunnen plaatsen
+],
+
+'profile/upload-foto' => [
+    'callback' => function () {
+        $profileController = new ProfileController();
+        $profileController->uploadFoto();
+    },
+    'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers foto's kunnen uploaden
+],
     
     // Eventuele andere routes...
 ];
