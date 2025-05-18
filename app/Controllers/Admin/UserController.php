@@ -253,21 +253,54 @@ class UserController extends Controller
     return $this->view('admin/layout', $data);
 }
     
-    public function delete() 
+        /**
+     * Verwijder een gebruiker
+     */
+    public function delete()
 {
-    $id = $_GET['id'] ?? null;
+    // Haal gebruikers-ID op uit de query parameters
+    $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
-    if (!$id) {
-        // Redirect naar gebruikersoverzicht als geen ID is opgegeven
-        header('Location: ' . base_url('admin/users'));
+    // Controleer of het ID geldig is
+    if (empty($userId)) {
+        $_SESSION['error_message'] = 'Ongeldige gebruiker-ID';
+        header('Location: ' . base_url('?route=admin/users'));
         exit;
     }
     
-    // Verwijder gebruiker (placeholder)
-    // Later toevoegen met database operaties
+    // Controleer of de gebruiker niet zichzelf probeert te verwijderen
+    if ($userId == $_SESSION['user_id']) {
+        $_SESSION['error_message'] = 'Je kunt je eigen account niet verwijderen';
+        header('Location: ' . base_url('?route=admin/users'));
+        exit;
+    }
     
-    // Redirect naar gebruikersoverzicht na succesvol verwijderen
-    header('Location: ' . base_url('admin/users'));
+    // Haal de database verbinding
+    $db = Database::getInstance();
+    
+    // Controleer of de gebruiker bestaat
+    $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$userId]);
+    
+    if (!$user) {
+        $_SESSION['error_message'] = 'Gebruiker niet gevonden';
+        header('Location: ' . base_url('?route=admin/users'));
+        exit;
+    }
+    
+    // Verwijder de gebruiker
+    try {
+        // Als de user_profiles tabel een foreign key heeft met ON DELETE CASCADE,
+        // dan zal het profiel automatisch worden verwijderd
+        $db->query("DELETE FROM users WHERE id = ?", [$userId]);
+        $_SESSION['success_message'] = 'Gebruiker succesvol verwijderd';
+    } catch (\PDOException $e) {
+        // Log de fout (in een productie-omgeving)
+        // error_log($e->getMessage());
+        $_SESSION['error_message'] = 'Er is een fout opgetreden bij het verwijderen van de gebruiker';
+    }
+    
+    // Stuur terug naar gebruikersoverzicht
+    header('Location: ' . base_url('?route=admin/users'));
     exit;
 }
 }
