@@ -7,6 +7,7 @@ use App\Controllers\ProfileController;
 use App\Controllers\SetupController;
 use App\Controllers\FeedController;
 use App\Controllers\AboutController;
+use App\Controllers\SettinsController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Middleware\AuthMiddleware;
@@ -256,6 +257,56 @@ return [
         $profileController->uploadFoto();
     },
     'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers foto's kunnen uploaden
+],
+
+    // Settings routes voor updaten van het profiel van de gebruiker
+// Settings routes
+'settings' => [
+    'callback' => function () {
+        $settingsController = new SettingsController();
+        $settingsController->index();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+'settings/profile' => [
+    'callback' => function () {
+        $settingsController = new SettingsController();
+        $settingsController->profile();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+'settings/account' => [
+    'callback' => function () {
+        $settingsController = new SettingsController();
+        $settingsController->account();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+'settings/privacy' => [
+    'callback' => function () {
+        $settingsController = new SettingsController();
+        $settingsController->privacy();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+'settings/notifications' => [
+    'callback' => function () {
+        $settingsController = new SettingsController();
+        $settingsController->notifications();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+'settings/avatar' => [
+    'callback' => function () {
+        $settingsController = new SettingsController();
+        $settingsController->avatar();
+    },
+    'middleware' => [AuthMiddleware::class]
 ],
     
     // Eventuele andere routes...

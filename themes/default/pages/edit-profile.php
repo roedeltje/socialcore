@@ -1,144 +1,90 @@
-<?php /* SocialCore profiel bewerken pagina in Hyves-stijl */ ?>
+<?php include_once(THEME_PATH . '/layouts/header.php'); ?>
 
-<div class="profile-edit-container">
-    <!-- Pagina header -->
-    <div class="profile-header bg-blue-100 border-b-4 border-blue-400 rounded-t-lg p-4 mb-6">
-        <h1 class="text-2xl font-bold text-blue-800">Profiel bewerken</h1>
-        <p class="text-sm text-blue-600">Pas je profiel aan zodat anderen je beter kunnen leren kennen</p>
-    </div>
-    
-    <!-- Meldingen -->
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
-            <p><?= $_SESSION['error'] ?></p>
-            <?php unset($_SESSION['error']); ?>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Page header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900"><?= $title ?? __('settings.edit_profile') ?></h1>
+            <p class="text-gray-600 mt-2"><?= __('settings.profile_description') ?></p>
         </div>
-    <?php endif; ?>
-    
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
-            <p><?= $_SESSION['success'] ?></p>
-            <?php unset($_SESSION['success']); ?>
-        </div>
-    <?php endif; ?>
-    
-    <!-- Formulier -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <form action="<?= base_url('profile/update') ?>" method="post" enctype="multipart/form-data">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Linker kolom -->
-                <div class="space-y-6">
-                    <!-- Profielfoto sectie -->
-                    <div class="profile-photo-section">
-                        <h3 class="text-lg font-bold text-blue-700 border-b border-blue-200 pb-2 mb-3">Profielfoto</h3>
-                        <div class="flex items-center space-x-4">
-                            <img src="<?= base_url('public/uploads/' . $user['avatar']) ?>" 
-                                alt="Huidige profielfoto" 
-                                class="w-24 h-24 object-cover rounded-lg border-2 border-blue-200">
-                            <div class="flex-1">
-                                <label for="avatar" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Upload een nieuwe foto
-                                </label>
-                                <input type="file" id="avatar" name="avatar" 
-                                    class="block w-full text-sm text-gray-500
-                                    file:mr-4 file:py-2 file:px-4
-                                    file:rounded-full file:border-0
-                                    file:text-sm file:font-semibold
-                                    file:bg-blue-50 file:text-blue-700
-                                    hover:file:bg-blue-100">
-                                <p class="mt-1 text-xs text-gray-500">JPG, PNG of GIF. Max 2MB.</p>
-                            </div>
-                        </div>
+        
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+                <span class="block sm:inline"><?= $_SESSION['success_message'] ?></span>
+                <?php unset($_SESSION['success_message']); ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+                <span class="block sm:inline"><?= $_SESSION['error_message'] ?></span>
+                <?php unset($_SESSION['error_message']); ?>
+            </div>
+        <?php endif; ?>
+        
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Settings navigation sidebar -->
+            <div class="w-full md:w-1/4">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-4 bg-gray-50 border-b border-gray-200">
+                        <h3 class="font-medium text-gray-900"><?= __('settings.settings_menu') ?></h3>
                     </div>
-                    
-                    <!-- Basisgegevens sectie -->
-                    <div class="basic-info-section">
-                        <h3 class="text-lg font-bold text-blue-700 border-b border-blue-200 pb-2 mb-3">Basisgegevens</h3>
-                        
-                        <div class="form-group mb-4">
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Naam</label>
-                            <input type="text" id="name" name="name" value="<?= htmlspecialchars($user['name']) ?>"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        
-                        <div class="form-group mb-4">
-                            <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Locatie</label>
-                            <input type="text" id="location" name="location" value="<?= htmlspecialchars($user['location'] ?? '') ?>"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Bijv. Amsterdam, Nederland">
-                        </div>
-                        
-                        <div class="form-group mb-4">
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mailadres</label>
-                            <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
-                                readonly>
-                            <p class="mt-1 text-xs text-gray-500">E-mailadres kan niet worden gewijzigd.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Rechter kolom -->
-                <div class="space-y-6">
-                    <!-- Over mij sectie -->
-                    <div class="about-me-section">
-                        <h3 class="text-lg font-bold text-blue-700 border-b border-blue-200 pb-2 mb-3">Over mij</h3>
-                        
-                        <div class="form-group mb-4">
-                            <label for="bio" class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                            <textarea id="bio" name="bio" rows="4"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Vertel iets over jezelf..."><?= htmlspecialchars($user['bio'] ?? '') ?></textarea>
-                        </div>
-                        
-                        <div class="form-group mb-4">
-                            <label for="interests" class="block text-sm font-medium text-gray-700 mb-1">
-                                Interesses (gescheiden door komma's)
-                            </label>
-                            <input type="text" id="interests" name="interests" 
-                                value="<?= htmlspecialchars(implode(', ', $user['interests'] ?? [])) ?>"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Bijv. programmeren, muziek, films">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="favorite_quote" class="block text-sm font-medium text-gray-700 mb-1">Favoriete quote</label>
-                            <textarea id="favorite_quote" name="favorite_quote" rows="2"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Jouw favoriete quote..."><?= htmlspecialchars($user['favorite_quote'] ?? '') ?></textarea>
-                        </div>
-                    </div>
-                    
-                    <!-- Privacy sectie -->
-                    <div class="privacy-section">
-                        <h3 class="text-lg font-bold text-blue-700 border-b border-blue-200 pb-2 mb-3">Privacy instellingen</h3>
-                        
-                        <div class="form-group mb-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="privacy_profile" value="1" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Profiel zichtbaar voor iedereen</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="privacy_krabbels" value="1" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Alleen vrienden kunnen krabbels plaatsen</span>
-                            </label>
-                        </div>
-                    </div>
+                    <nav class="p-2">
+                        <ul class="divide-y divide-gray-200">
+                            <li>
+                                <a href="<?= base_url('settings/profile') ?>" 
+                                   class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'profile' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-user mr-2 text-gray-400"></i> <?= __('settings.profile') ?>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="<?= base_url('settings/account') ?>" 
+                                   class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'account' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-lock mr-2 text-gray-400"></i> <?= __('settings.account') ?>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="<?= base_url('settings/privacy') ?>" 
+                                   class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'privacy' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-shield-alt mr-2 text-gray-400"></i> <?= __('settings.privacy') ?>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="<?= base_url('settings/notifications') ?>" 
+                                   class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'notifications' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-bell mr-2 text-gray-400"></i> <?= __('settings.notifications') ?>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
             
-            <!-- Submit knoppen -->
-            <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end space-x-4">
-                <a href="<?= base_url('profile') ?>" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    Annuleren
-                </a>
-                <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 px-6">
-                    Opslaan
-                </button>
+            <!-- Main content area -->
+            <div class="w-full md:w-3/4">
+                <?php 
+                // Load the appropriate partial based on the active tab
+                switch ($activeTab ?? 'profile') {
+                    case 'profile':
+                        include_once(THEME_PATH . '/partials/settings/profile_basic.php');
+                        include_once(THEME_PATH . '/partials/settings/profile_avatar.php');
+                        break;
+                    case 'account':
+                        include_once(THEME_PATH . '/partials/settings/account_security.php');
+                        break;
+                    case 'privacy':
+                        include_once(THEME_PATH . '/partials/settings/privacy_settings.php');
+                        break;
+                    case 'notifications':
+                        include_once(THEME_PATH . '/partials/settings/notification_preferences.php');
+                        break;
+                    default:
+                        include_once(THEME_PATH . '/partials/settings/profile_basic.php');
+                }
+                ?>
             </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<?php include_once(THEME_PATH . '/layouts/footer.php'); ?>
