@@ -1,4 +1,4 @@
-<?php include_once(THEME_PATH . '/layouts/header.php'); ?>
+
 
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-4xl mx-auto">
@@ -86,5 +86,3 @@
         </div>
     </div>
 </div>
-
-<?php include_once(THEME_PATH . '/layouts/footer.php'); ?>

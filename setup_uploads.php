@@ -2,7 +2,7 @@
 // Dit script kan je één keer uitvoeren om de mapstructuur aan te maken
 
 // Definieer base path - pas dit aan naar jouw mapstructuur
-define('BASE_PATH', __DIR__);
+define('BASE_PATH', dirname(__DIR__)); // Ga één map omhoog
 $publicPath = BASE_PATH . '/public';
 $uploadsPath = $publicPath . '/uploads';
 

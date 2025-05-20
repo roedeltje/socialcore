@@ -7,7 +7,7 @@ use App\Controllers\ProfileController;
 use App\Controllers\SetupController;
 use App\Controllers\FeedController;
 use App\Controllers\AboutController;
-use App\Controllers\SettinsController;
+use App\Controllers\SettingsController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Middleware\AuthMiddleware;
@@ -91,6 +91,14 @@ return [
 ],
 
     'profile/edit' => [
+    'callback' => function () {
+        $profileController = new ProfileController();
+        $profileController->edit();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+	
+	'profile/account' => [
     'callback' => function () {
         $profileController = new ProfileController();
         $profileController->edit();
@@ -307,6 +315,12 @@ return [
         $settingsController->avatar();
     },
     'middleware' => [AuthMiddleware::class]
+],
+	'test-view' => [
+    'callback' => function () {
+        $controller = new \App\Controllers\TestController();
+        $controller->index();
+    },
 ],
     
     // Eventuele andere routes...

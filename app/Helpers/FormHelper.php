@@ -228,9 +228,14 @@ class FormHelper
      * @return bool
      */
     public function hasErrors()
-    {
-        return !empty($this->errors) || !empty($this->generalErrors);
-    }
+     {
+    return !empty($this->errors) || !empty($this->generalErrors);
+     }
+	
+	public function hasError($field)
+	{
+    return $this->hasFieldError($field);
+	}
     
     /**
      * Haal alle fouten op
@@ -238,12 +243,12 @@ class FormHelper
      * @return array
      */
     public function getErrors()
-    {
-        return [
-            'fields' => $this->errors,
-            'general' => $this->generalErrors
-        ];
-    }
+	{
+    return [
+        'fields' => $this->errors,
+        'general' => $this->generalErrors
+    ];
+	}
     
     /**
      * Haal alle fouten op voor een veld
@@ -256,6 +261,11 @@ class FormHelper
         return $this->errors[$field] ?? [];
     }
     
+	public function getError($field)
+	{
+    $errors = $this->errors[$field] ?? [];
+    return !empty($errors) ? $errors[0] : '';
+	}
     /**
      * Haal alle algemene fouten op
      * 

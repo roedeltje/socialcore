@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Database\Database;
 use App\Helpers\FormHelper;
+use App\Auth\Auth;
 
 class SettingsController extends Controller
 {
@@ -11,27 +12,74 @@ class SettingsController extends Controller
     protected $currentUser;
     
     public function __construct()
-    {
-        parent::__construct();
-        
-        // Database connectie via singleton pattern
-        $this->db = Database::getInstance();
-        
-        // Huidige gebruiker ophalen
-        $this->currentUser = $_SESSION['user'] ?? null;
+{
+    // Geen parent::__construct() omdat de base Controller geen constructor heeft
+    
+    // Database connectie via singleton pattern
+    $this->db = Database::getInstance();
+    
+    // Debug database object type
+    var_dump(get_class($this->db));
+    
+    // Debug een query en resultaat
+    $debugResult = $this->db->query("SELECT 1");
+    var_dump(get_class($debugResult));
+    
+    // Huidige gebruiker ophalen - aangepast aan de sessie structuur
+    if (isset($_SESSION['user_id'])) {
+        // Maak een basis gebruiker uit sessie
+        $this->currentUser = [
+            'id' => $_SESSION['user_id'],
+            'username' => $_SESSION['username'] ?? 'unknown'
+        ];
+    } else {
+        $this->currentUser = null;
     }
+}
     
     public function index()
-    {
-        // Redirect naar profielpagina als default
-        header('Location: ' . base_url('settings/profile'));
-        exit;
-    }
+{
+    // Debug in plaats van redirect
+    echo "<h1>SettingsController::index()</h1>";
+    echo "<p>currentUser: ";
+    var_dump($this->currentUser);
+    echo "</p>";
+    
+    // Sessie info
+    echo "<p>SESSION: ";
+    var_dump($_SESSION);
+    echo "</p>";
+    
+    // Link naar profile
+    echo "<p><a href='" . base_url('settings/profile') . "'>Ga naar profielpagina</a></p>";
+    exit;
+}
     
     public function profile()
     {
-        // Gebruikersprofiel ophalen
-        $userProfile = $this->getUserProfile($this->currentUser['id']);
+		// Debug sessie en currentUser
+    echo "<pre>DEBUG INFO:";
+    echo "\nSession data: ";
+    print_r($_SESSION);
+    echo "\nthis->currentUser: ";
+    print_r($this->currentUser);
+    echo "\nAuth::check() result: " . (\App\Auth\Auth::check() ? 'true' : 'false');
+    echo "</pre>";
+		
+		// Controleer of gebruiker is ingelogd
+    if (!$this->currentUser) {
+        echo "Je moet ingelogd zijn om deze pagina te bekijken.";
+        exit;
+    }
+		
+        $userId = $this->currentUser['id'] ?? 0; // Default naar 0 als id niet bestaat
+		
+		// Veilige versie van getUserProfile
+    try {
+        $userProfile = $this->getUserProfile($userId);
+    } catch (\Exception $e) {
+        $userProfile = []; // Default leeg profiel
+    }
         
         // Form helper voor validatie
         $form = new FormHelper();
@@ -147,28 +195,31 @@ class SettingsController extends Controller
     // Helper methods
     
     protected function getUserProfile($userId)
-    {
-        $query = "SELECT * FROM user_profiles WHERE user_id = ?";
-        $result = $this->db->query($query, [$userId]);
-        
-        if ($result && $result->num_rows > 0) {
-            return $result->fetch_assoc();
-        }
-        
-        // Als er geen profiel is, retourneer een leeg profiel
-        return [
-            'user_id' => $userId,
-            'display_name' => $this->currentUser['display_name'] ?? $this->currentUser['username'],
-            'avatar' => '',
-            'cover_photo' => '',
-            'bio' => '',
-            'location' => '',
-            'website' => '',
-            'date_of_birth' => null,
-            'gender' => '',
-            'phone' => ''
-        ];
+{
+    $query = "SELECT * FROM user_profiles WHERE user_id = ?";
+    $stmt = $this->db->query($query, [$userId]);
+    
+    // Voor PDO, fetch gebruiken om een rij op te halen
+    $profile = $stmt->fetch(\PDO::FETCH_ASSOC);
+    
+    if ($profile) {
+        return $profile;
     }
+    
+    // Als er geen profiel is, retourneer een leeg profiel
+    return [
+        'user_id' => $userId,
+        'display_name' => $this->currentUser['display_name'] ?? $this->currentUser['username'],
+        'avatar' => '',
+        'cover_photo' => '',
+        'bio' => '',
+        'location' => '',
+        'website' => '',
+        'date_of_birth' => null,
+        'gender' => '',
+        'phone' => ''
+    ];
+}
     
     protected function getPrivacySettings($userId)
     {
@@ -220,19 +271,19 @@ class SettingsController extends Controller
         
         // Controleren of er al een profiel bestaat
         $existingProfile = $this->getUserProfile($userId);
-        
-        if (isset($existingProfile['id'])) {
-            // Update bestaand profiel
-            $query = "UPDATE user_profiles SET 
-                display_name = ?, bio = ?, location = ?, website = ?, updated_at = NOW()
-                WHERE user_id = ?";
-            $this->db->query($query, [$displayName, $bio, $location, $website, $userId]);
-        } else {
-            // Nieuw profiel aanmaken
-            $query = "INSERT INTO user_profiles (user_id, display_name, bio, location, website, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
-            $this->db->query($query, [$userId, $displayName, $bio, $location, $website]);
-        }
+
+if (isset($existingProfile['id'])) {
+    // Update bestaand profiel
+    $query = "UPDATE user_profiles SET 
+        display_name = ?, bio = ?, location = ?, website = ?, updated_at = NOW()
+        WHERE user_id = ?";
+    $this->db->query($query, [$displayName, $bio, $location, $website, $userId]);
+} else {
+    // Nieuw profiel aanmaken
+    $query = "INSERT INTO user_profiles (user_id, display_name, bio, location, website, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+    $this->db->query($query, [$userId, $displayName, $bio, $location, $website]);
+}
         
         // Update ook display_name in users tabel
         $updateUserQuery = "UPDATE users SET display_name = ?, updated_at = NOW() WHERE id = ?";
@@ -262,29 +313,30 @@ class SettingsController extends Controller
         
         // Controleer huidige wachtwoord
         $userId = $this->currentUser['id'];
-        $currentPassword = $_POST['current_password'] ?? '';
-        
-        $query = "SELECT password FROM users WHERE id = ?";
-        $result = $this->db->query($query, [$userId]);
-        $user = $result->fetch_assoc();
-        
-        if (!$user || !password_verify($currentPassword, $user['password'])) {
-            $form->addError('current_password', __('settings.current_password_incorrect'));
-            return false;
-        }
+$currentPassword = $_POST['current_password'] ?? '';
+
+$query = "SELECT password FROM users WHERE id = ?";
+$stmt = $this->db->query($query, [$userId]);
+$user = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+if (!$user || !password_verify($currentPassword, $user['password'])) {
+    $form->addError('current_password', __('settings.current_password_incorrect'));
+    return false;
+}
         
         // Update e-mail
         $email = $_POST['email'] ?? '';
         
         // Controleer of e-mail beschikbaar is (als het is gewijzigd)
         if ($email !== $this->currentUser['email']) {
-            $query = "SELECT id FROM users WHERE email = ? AND id != ?";
-            $result = $this->db->query($query, [$email, $userId]);
-            
-            if ($result->num_rows > 0) {
-                $form->addError('email', __('settings.email_already_used'));
-                return false;
-            }
+    $query = "SELECT id FROM users WHERE email = ? AND id != ?";
+    $stmt = $this->db->query($query, [$email, $userId]);
+    $existingEmail = $stmt->fetch(\PDO::FETCH_ASSOC);
+    
+    if ($existingEmail) {
+        $form->addError('email', __('settings.email_already_used'));
+        return false;
+    }
             
             // Update e-mail
             $updateEmailQuery = "UPDATE users SET email = ?, updated_at = NOW() WHERE id = ?";

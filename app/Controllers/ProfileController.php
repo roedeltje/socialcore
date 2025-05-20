@@ -176,6 +176,8 @@ class ProfileController extends Controller
     // Rest van de methoden blijven ongewijzigd
     public function edit()
     {
+		$form = new \App\Helpers\FormHelper();
+		
         // Ongewijzigd laten
         // Controleer of de gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
@@ -201,7 +203,10 @@ class ProfileController extends Controller
             'user' => $user
         ];
         
-        $this->view('profile/edit', $data);
+        $this->view('profile/edit', [
+        // Andere variabelen...
+        'form' => $form
+    ]);
     }
 
     public function update()

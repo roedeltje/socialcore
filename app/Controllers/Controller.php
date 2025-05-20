@@ -71,7 +71,9 @@ class Controller
             'auth/login' => 'pages/login.php',
             'auth/register' => 'pages/register.php',
             'settings/index' => 'pages/settings.php',
-            'about/index' => 'pages/about.php'
+            'about/index' => 'pages/about.php',
+            'profile/edit-profile/index' => 'edit-profile.php',
+			'test/view' => 'pages/test-view.php',
             // Voeg hier meer mappings toe indien nodig
         ];
         
