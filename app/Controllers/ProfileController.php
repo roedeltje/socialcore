@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Database\Database;
+use App\Auth\Auth;
 
 class ProfileController extends Controller
 {
@@ -343,5 +344,136 @@ class ProfileController extends Controller
     
     // Redirect terug naar het profiel met de foto's-tab
     redirect('?route=profile&username=' . urlencode($receiverUsername) . '&tab=krabbels');
+}
+    public function viewProfile() {
+    $userId = $_GET['id'] ?? null;
+    
+    if (!$userId) {
+        // Redirect naar eigen profiel of toon een foutmelding
+        return redirect('profile');
+    }
+    
+    // Haal gebruikersgegevens op voor het opgegeven ID
+    $userProfile = $this->getUserProfile($userId);
+    
+    if (!$userProfile) {
+        // Gebruiker niet gevonden
+        return $this->view('profile/not_found');
+    }
+    
+    // Toon het profiel van de gebruiker
+    return $this->view('profile/view', ['user' => $userProfile]);
+}
+
+    /**
+     * Toont de privacy-instellingen pagina
+     */
+    public function privacy()
+{
+    $form = new \App\Helpers\FormHelper();
+    
+    // Controleer of de gebruiker is ingelogd
+    if (!isset($_SESSION['user_id'])) {
+        redirect('login');
+        return;
+    }
+    
+    // Later: $user = User::find($_SESSION['user_id']);
+    $user = [
+        'id' => $_SESSION['user_id'],
+        'username' => $_SESSION['username'] ?? 'gebruiker',
+        'name' => 'Huidige Gebruiker',
+        'bio' => 'Welkom op mijn SocialCore profiel!',
+        'location' => 'Nederland',
+        'email' => 'gebruiker@example.com',
+        'avatar' => isset($_SESSION['avatar']) ? $_SESSION['avatar'] : 'avatars/2025/05/default-avatar.png',
+        'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
+        'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.'
+    ];
+    
+    $data = [
+        'title' => __('settings.privacy'),
+        'user' => $user,
+        'activeTab' => 'privacy'
+    ];
+    
+    $this->view('profile/edit', array_merge($data, ['form' => $form]));
+}
+
+    /**
+     * Toont de notificatie-instellingen pagina
+     */
+    public function notifications()
+{
+    $form = new \App\Helpers\FormHelper();
+    
+    // Controleer of de gebruiker is ingelogd
+    if (!isset($_SESSION['user_id'])) {
+        redirect('login');
+        return;
+    }
+    
+    // Later: $user = User::find($_SESSION['user_id']);
+    $user = [
+        'id' => $_SESSION['user_id'],
+        'username' => $_SESSION['username'] ?? 'gebruiker',
+        'name' => 'Huidige Gebruiker',
+        'bio' => 'Welkom op mijn SocialCore profiel!',
+        'location' => 'Nederland',
+        'email' => 'gebruiker@example.com',
+        'avatar' => isset($_SESSION['avatar']) ? $_SESSION['avatar'] : 'avatars/2025/05/default-avatar.png',
+        'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
+        'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.'
+    ];
+    
+    $data = [
+        'title' => __('settings.notifications'),
+        'user' => $user,
+        'activeTab' => 'notifications'
+    ];
+    
+    $this->view('profile/edit', array_merge($data, ['form' => $form]));
+}
+
+        /**
+     * Toont de beveiligingsinstellingen pagina
+     */
+    public function security()
+{
+    $form = new \App\Helpers\FormHelper();
+    
+    // Debug output
+    //echo "<pre>";
+    //echo "Debug in security() method:";
+    //echo "\nactiveTab set to: 'security'";
+    //echo "</pre>";
+    
+    // Controleer of de gebruiker is ingelogd
+    if (!isset($_SESSION['user_id'])) {
+        redirect('login');
+        return;
+    }
+    
+    // Later: $user = User::find($_SESSION['user_id']);
+    $user = [
+        'id' => $_SESSION['user_id'],
+        'username' => $_SESSION['username'] ?? 'gebruiker',
+        'name' => 'Huidige Gebruiker',
+        'bio' => 'Welkom op mijn SocialCore profiel!',
+        'location' => 'Nederland',
+        'email' => 'gebruiker@example.com',
+        'avatar' => isset($_SESSION['avatar']) ? $_SESSION['avatar'] : 'avatars/2025/05/default-avatar.png',
+        'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
+        'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.'
+    ];
+    
+    $data = [
+        'title' => __('settings.account_security'),
+        'user' => $user,
+        'activeTab' => 'security',
+        'form' => $form
+    ];
+    
+    $this->view('profile/edit', $data);
 }
 }

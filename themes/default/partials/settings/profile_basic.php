@@ -1,7 +1,7 @@
 <div class="settings-card bg-white p-6 rounded-lg shadow-md mb-6">
     <h3 class="text-xl font-semibold mb-4"><?= __('settings.basic_information') ?></h3>
     
-    <form method="POST" action="<?= base_url('settings/profile') ?>" class="space-y-4">
+    <form method="POST" action="<?= base_url('profile/update') ?>" class="space-y-4">
         <!-- Display name -->
         <div class="form-group">
             <label for="display_name" class="block text-sm font-medium text-gray-700 mb-1">

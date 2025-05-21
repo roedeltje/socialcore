@@ -1,4 +1,10 @@
-
+<!--<div style="background: #f0f0f0; padding: 10px; margin-bottom: 20px;">
+    Debug info:<br>
+    activeTab: <?= $activeTab ?? 'niet ingesteld' ?><br>
+    Bestaat account_security.php: <?= file_exists(__DIR__ . '/../partials/settings/account_security.php') ? 'Ja' : 'Nee' ?><br>
+    Huidig pad: <?= __DIR__ ?><br>
+    Pad naar bestand: <?= __DIR__ . '/../partials/settings/account_security.php' ?><br>
+</div> -->
 
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-4xl mx-auto">
@@ -32,25 +38,25 @@
                     <nav class="p-2">
                         <ul class="divide-y divide-gray-200">
                             <li>
-                                <a href="<?= base_url('settings/profile') ?>" 
+                                <a href="<?= base_url('/profile') ?>" 
                                    class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'profile' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                                     <i class="fas fa-user mr-2 text-gray-400"></i> <?= __('settings.profile') ?>
                                 </a>
                             </li>
                             <li>
-                                <a href="<?= base_url('settings/account') ?>" 
-                                   class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'account' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
-                                    <i class="fas fa-lock mr-2 text-gray-400"></i> <?= __('settings.account') ?>
+                                <a href="<?= base_url('/profile/security') ?>" 
+                                   class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'security' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-lock mr-2 text-gray-400"></i> <?= __('settings.account_security') ?>
                                 </a>
                             </li>
                             <li>
-                                <a href="<?= base_url('settings/privacy') ?>" 
+                                <a href="<?= base_url('profile/privacy') ?>" 
                                    class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'privacy' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                                     <i class="fas fa-shield-alt mr-2 text-gray-400"></i> <?= __('settings.privacy') ?>
                                 </a>
                             </li>
                             <li>
-                                <a href="<?= base_url('settings/notifications') ?>" 
+                                <a href="<?= base_url('profile/notifications') ?>" 
                                    class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'notifications' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
                                     <i class="fas fa-bell mr-2 text-gray-400"></i> <?= __('settings.notifications') ?>
                                 </a>
@@ -69,7 +75,7 @@
                         include_once(THEME_PATH . '/partials/settings/profile_basic.php');
                         include_once(THEME_PATH . '/partials/settings/profile_avatar.php');
                         break;
-                    case 'account':
+                    case 'security':
                         include_once(THEME_PATH . '/partials/settings/account_security.php');
                         break;
                     case 'privacy':

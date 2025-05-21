@@ -65,15 +65,15 @@ class Controller
         // Eenvoudige mapping van controller/view naar themanamen
         $themePageMap = [
             'home/index' => 'pages/home.php',
-            'profile/index' => 'pages/profile.php',
+            'profile/index' => 'pages/profile.php', 
             'profile/edit' => 'pages/edit-profile.php',
+            'profile/avatar' => 'pages/edit-profile.php',
+            'profile/privacy' => 'pages/edit-profile.php',
+            'profile/notifications' => 'pages/edit-profile.php',
             'feed/index' => 'pages/timeline.php',
             'auth/login' => 'pages/login.php',
             'auth/register' => 'pages/register.php',
-            'settings/index' => 'pages/settings.php',
-            'about/index' => 'pages/about.php',
-            'profile/edit-profile/index' => 'edit-profile.php',
-			'test/view' => 'pages/test-view.php',
+            'about/index' => 'pages/about.php', //werkt niet
             // Voeg hier meer mappings toe indien nodig
         ];
         

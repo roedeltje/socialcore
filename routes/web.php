@@ -7,7 +7,6 @@ use App\Controllers\ProfileController;
 use App\Controllers\SetupController;
 use App\Controllers\FeedController;
 use App\Controllers\AboutController;
-use App\Controllers\SettingsController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Middleware\AuthMiddleware;
@@ -77,42 +76,6 @@ return [
         },
         'middleware' => [GuestMiddleware::class]  // Alleen voor niet-ingelogde gebruikers
     ],
-
-    'profile' => [
-    'callback' => function () {
-        // Haal username uit URL als die er is
-        $segments = explode('/', $_SERVER['REQUEST_URI']);
-        $username = $segments[2] ?? null; // of een andere index afhankelijk van je URL-structuur
-        
-        $profileController = new ProfileController();
-        $profileController->index($username);
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-
-    'profile/edit' => [
-    'callback' => function () {
-        $profileController = new ProfileController();
-        $profileController->edit();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-	
-	'profile/account' => [
-    'callback' => function () {
-        $profileController = new ProfileController();
-        $profileController->edit();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-
-    'profile/update' => [
-        'callback' => function () {
-            $profileController = new ProfileController();
-            $profileController->update();
-        },
-        'middleware' => [AuthMiddleware::class]
-],
     
     'logout' => [
     'callback' => function () {
@@ -121,6 +84,37 @@ return [
         exit;
     },
     'middleware' => [AuthMiddleware::class]
+],
+
+    'admin/dashboard' => [
+    'callback' => function () {
+        $controller = new \App\Controllers\Admin\DashboardController();
+        $controller->index();
+    },
+    'middleware' => [AdminMiddleware::class]
+],
+
+    'admin/users' => [
+    'callback' => function () {
+        $userController = new UserController();
+        $action = $_GET['action'] ?? 'index';
+        
+        switch ($action) {
+            case 'create':
+                $userController->create();
+                break;
+            case 'edit':
+                $userController->edit();
+                break;
+            case 'delete':
+                $userController->delete();
+                break;
+            default:
+                $userController->index();
+                break;
+        }
+    },
+    'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
 ],
 
     'setup_uploads' => [
@@ -220,38 +214,7 @@ return [
     'middleware' => [AdminMiddleware::class]
 ],
 
-'admin/dashboard' => [
-    'callback' => function () {
-        $controller = new \App\Controllers\Admin\DashboardController();
-        $controller->index();
-    },
-    'middleware' => [AdminMiddleware::class]
-],
-
-'admin/users' => [
-    'callback' => function () {
-        $userController = new UserController();
-        $action = $_GET['action'] ?? 'index';
-        
-        switch ($action) {
-            case 'create':
-                $userController->create();
-                break;
-            case 'edit':
-                $userController->edit();
-                break;
-            case 'delete':
-                $userController->delete();
-                break;
-            default:
-                $userController->index();
-                break;
-        }
-    },
-    'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
-],
-
-'profile/post-krabbel' => [
+    'profile/post-krabbel' => [
     'callback' => function () {
         $profileController = new ProfileController();
         $profileController->postKrabbel();
@@ -259,7 +222,7 @@ return [
     'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers krabbels kunnen plaatsen
 ],
 
-'profile/upload-foto' => [
+    'profile/upload-foto' => [
     'callback' => function () {
         $profileController = new ProfileController();
         $profileController->uploadFoto();
@@ -267,61 +230,65 @@ return [
     'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers foto's kunnen uploaden
 ],
 
-    // Settings routes voor updaten van het profiel van de gebruiker
-// Settings routes
-'settings' => [
+    'profile' => [
     'callback' => function () {
-        $settingsController = new SettingsController();
-        $settingsController->index();
+        // Haal username uit URL als die er is
+        $segments = explode('/', $_SERVER['REQUEST_URI']);
+        $username = $segments[2] ?? null; // of een andere index afhankelijk van je URL-structuur
+        
+        $profileController = new ProfileController();
+        $profileController->index($username);
     },
     'middleware' => [AuthMiddleware::class]
 ],
 
-'settings/profile' => [
+    'profile/edit' => [
     'callback' => function () {
-        $settingsController = new SettingsController();
-        $settingsController->profile();
+        $profileController = new ProfileController();
+        $profileController->edit();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+	
+	'profile/security' => [
+    'callback' => function () {
+        $profileController = new ProfileController();
+        $profileController->security();
     },
     'middleware' => [AuthMiddleware::class]
 ],
 
-'settings/account' => [
-    'callback' => function () {
-        $settingsController = new SettingsController();
-        $settingsController->account();
-    },
-    'middleware' => [AuthMiddleware::class]
+    'profile/update' => [
+        'callback' => function () {
+            $profileController = new ProfileController();
+            $profileController->update();
+        },
+        'middleware' => [AuthMiddleware::class]
 ],
 
-'settings/privacy' => [
-    'callback' => function () {
-        $settingsController = new SettingsController();
-        $settingsController->privacy();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
+    'profile/avatar' => [
+        'callback' => function () {
+            $profileController = new ProfileController();
+            $profileController->avatar(); // Nieuwe methode in ProfileController
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
 
-'settings/notifications' => [
-    'callback' => function () {
-        $settingsController = new SettingsController();
-        $settingsController->notifications();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
+    'profile/privacy' => [
+        'callback' => function () {
+            $profileController = new ProfileController();
+            $profileController->privacy(); // Nieuwe methode in ProfileController
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
 
-'settings/avatar' => [
-    'callback' => function () {
-        $settingsController = new SettingsController();
-        $settingsController->avatar();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-	'test-view' => [
-    'callback' => function () {
-        $controller = new \App\Controllers\TestController();
-        $controller->index();
-    },
-],
+    'profile/notifications' => [
+        'callback' => function () {
+            $profileController = new ProfileController();
+            $profileController->notifications(); // Nieuwe methode in ProfileController
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
     
     // Eventuele andere routes...
 ];
