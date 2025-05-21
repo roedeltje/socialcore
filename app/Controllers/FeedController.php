@@ -20,7 +20,7 @@ class FeedController extends Controller
             'id' => $_SESSION['user_id'],
             'name' => $_SESSION['username'] ?? 'Gebruiker',
             'username' => $_SESSION['username'] ?? 'gebruiker',
-            'avatar' => isset($_SESSION['avatar']) ? $_SESSION['avatar'] : 'avatars/2025/05/default-avatar.png',
+            'avatar' => isset($_SESSION['avatar']) ? $_SESSION['avatar'] : 'default-avatar.png',
             'post_count' => 18,
             'following' => 42,
             'followers' => 29
@@ -32,7 +32,7 @@ class FeedController extends Controller
                 'id' => 1,
                 'user_id' => 1,
                 'user_name' => 'Jan Jansen',
-                'user_avatar' => 'avatars/2025/05/default-avatar.png',
+                'user_avatar' => 'default-avatar.png',
                 'content' => 'Welkom bij de nieuwe SocialCore feed in Hyves-stijl! Dit doet me echt denken aan de goeie oude tijd. Wie herinnert zich nog de krabbels en gadgets?',
                 'created_at' => '2 uur geleden',
                 'likes' => 12,
@@ -43,7 +43,7 @@ class FeedController extends Controller
                 'id' => 2,
                 'user_id' => 2,
                 'user_name' => 'Petra de Vries',
-                'user_avatar' => 'avatars/2025/05/default-avatar.png',
+                'user_avatar' => 'default-avatar.png',
                 'content' => "Net helemaal nostalgisch geworden door de nieuwe Hyves-stijl interface! 😊\n\nWie herinnert zich nog: 'Wie heeft de langste naam?' en 'Wat is je favoriete kleur?'",
                 'created_at' => '4 uur geleden',
                 'likes' => 24,
@@ -54,7 +54,7 @@ class FeedController extends Controller
                 'id' => 3,
                 'user_id' => 3,
                 'user_name' => 'Thomas Bakker',
-                'user_avatar' => 'avatars/2025/05/default-avatar.png',
+                'user_avatar' => 'default-avatar.png',
                 'content' => 'SocialCore combineert het beste van Hyves met moderne technologie. Open source, privacy-vriendelijk en gemaakt in Nederland! #webdevelopment #opensource',
                 'created_at' => 'gisteren',
                 'likes' => 18,
@@ -74,17 +74,17 @@ class FeedController extends Controller
         
         // Online vrienden (dummy data)
         $online_friends = [
-            ['id' => 5, 'name' => 'Emma Visser', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 6, 'name' => 'Lucas de Jong', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 7, 'name' => 'Sophie Mulder', 'avatar' => 'avatars/2025/05/default-avatar.png']
+            ['id' => 5, 'name' => 'Emma Visser', 'avatar' => 'default-avatar.png'],
+            ['id' => 6, 'name' => 'Lucas de Jong', 'avatar' => 'default-avatar.png'],
+            ['id' => 7, 'name' => 'Sophie Mulder', 'avatar' => 'default-avatar.png']
         ];
         
         // Suggesties voor te volgen gebruikers
         $suggested_users = [
-            ['id' => 8, 'name' => 'Tim Vos', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 9, 'name' => 'Nina Smit', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 10, 'name' => 'Robin Kok', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 11, 'name' => 'Laura Hendriks', 'avatar' => 'avatars/2025/05/default-avatar.png']
+            ['id' => 8, 'name' => 'Tim Vos', 'avatar' => 'default-avatar.png'],
+            ['id' => 9, 'name' => 'Nina Smit', 'avatar' => 'default-avatar.png'],
+            ['id' => 10, 'name' => 'Robin Kok', 'avatar' => 'default-avatar.png'],
+            ['id' => 11, 'name' => 'Laura Hendriks', 'avatar' => 'default-avatar.png']
         ];
         
         // Data voor de view

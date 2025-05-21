@@ -10,8 +10,8 @@
     <div class="max-w-4xl mx-auto">
         <!-- Page header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900"><?= $title ?? __('settings.edit_profile') ?></h1>
-            <p class="text-gray-600 mt-2"><?= __('settings.profile_description') ?></p>
+            <h1 class="text-3xl font-bold text-gray-900"><?= __('profile.edit_profile') ?></h1>
+            <p class="text-gray-600 mt-2"><?= __('profile.profile_description') ?></p>
         </div>
         
         <?php if (isset($_SESSION['success_message'])): ?>
@@ -33,32 +33,32 @@
             <div class="w-full md:w-1/4">
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <div class="p-4 bg-gray-50 border-b border-gray-200">
-                        <h3 class="font-medium text-gray-900"><?= __('settings.settings_menu') ?></h3>
+                        <h3 class="font-medium text-gray-900"><?= __('profile.settings_menu') ?></h3>
                     </div>
                     <nav class="p-2">
                         <ul class="divide-y divide-gray-200">
                             <li>
                                 <a href="<?= base_url('/profile') ?>" 
                                    class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'profile' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
-                                    <i class="fas fa-user mr-2 text-gray-400"></i> <?= __('settings.profile') ?>
+                                    <i class="fas fa-user mr-2 text-gray-400"></i> <?= __('profile.profile') ?>
                                 </a>
                             </li>
                             <li>
                                 <a href="<?= base_url('/profile/security') ?>" 
                                    class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'security' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
-                                    <i class="fas fa-lock mr-2 text-gray-400"></i> <?= __('settings.account_security') ?>
+                                    <i class="fas fa-lock mr-2 text-gray-400"></i> <?= __('profile.account_security') ?>
                                 </a>
                             </li>
                             <li>
                                 <a href="<?= base_url('profile/privacy') ?>" 
                                    class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'privacy' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
-                                    <i class="fas fa-shield-alt mr-2 text-gray-400"></i> <?= __('settings.privacy') ?>
+                                    <i class="fas fa-shield-alt mr-2 text-gray-400"></i> <?= __('profile.privacy') ?>
                                 </a>
                             </li>
                             <li>
                                 <a href="<?= base_url('profile/notifications') ?>" 
                                    class="block px-3 py-2 rounded-md <?= ($activeTab ?? '') === 'notifications' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
-                                    <i class="fas fa-bell mr-2 text-gray-400"></i> <?= __('settings.notifications') ?>
+                                    <i class="fas fa-bell mr-2 text-gray-400"></i> <?= __('profile.notifications') ?>
                                 </a>
                             </li>
                         </ul>

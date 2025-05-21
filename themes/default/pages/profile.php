@@ -16,8 +16,8 @@
             <!-- Linker kolom - Profielfoto en acties -->
             <div class="w-full md:w-1/3 p-4 border-r border-blue-100">
                 <div class="profile-photo mb-4">
-                    <img src="<?= base_url('public/uploads/' . $user['avatar']) ?>" 
-                         alt="<?= htmlspecialchars($user['name']) ?>" 
+                    <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                         alt="<?= htmlspecialchars($user['name'] ?? 'Huidige Gebruiker') ?>" 
                          class="w-full max-w-xs mx-auto border-4 border-blue-200 rounded-lg">
                 </div>
                 
@@ -111,7 +111,20 @@
                         <?php foreach ($krabbels as $krabbel): ?>
                             <div class="krabbel-item bg-white p-4 rounded-lg shadow mb-4">
                                 <div class="flex items-center mb-2">
-                                    <img src="<?= base_url($krabbel['sender_avatar']) ?>" alt="<?= htmlspecialchars($krabbel['sender_name']) ?>" class="w-10 h-10 rounded-full mr-2">
+                                    <img src="<?= base_url('theme-assets/default/images/' . 
+                                              (strpos($krabbel['sender_name'], 'Jan') !== false || 
+                                               strpos($krabbel['sender_name'], 'Thomas') !== false || 
+                                               strpos($krabbel['sender_name'], 'Lucas') !== false || 
+                                               strpos($krabbel['sender_name'], 'Tim') !== false || 
+                                               strpos($krabbel['sender_name'], 'Robin') !== false ? 
+                                               'default-avatar-male.png' : 
+                                               (strpos($krabbel['sender_name'], 'Petra') !== false || 
+                                                strpos($krabbel['sender_name'], 'Emma') !== false || 
+                                                strpos($krabbel['sender_name'], 'Sophie') !== false || 
+                                                strpos($krabbel['sender_name'], 'Nina') !== false || 
+                                                strpos($krabbel['sender_name'], 'Laura') !== false ? 
+                                                'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
+                                       alt="<?= htmlspecialchars($krabbel['sender_name']) ?>" class="w-10 h-10 rounded-full mr-2">
                                     <div>
                                         <a href="<?= base_url('profile/' . $krabbel['sender_username']) ?>" class="font-bold text-blue-600"><?= htmlspecialchars($krabbel['sender_name']) ?></a>
                                         <div class="text-gray-500 text-sm"><?= date('d-m-Y H:i', strtotime($krabbel['created_at'])) ?></div>
@@ -125,25 +138,38 @@
                     <?php endif; ?>
                 </div>
                     
-                    <!-- Vrienden tab -->
-                    <?php elseif ($active_tab == 'vrienden'): ?>
-                    <!-- Vrienden tab content -->
-                    <div class="friends-container mt-4">
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            <?php if (!empty($friends)): ?>
-                                <?php foreach ($friends as $friend): ?>
-                                    <div class="friend-card text-center">
-                                        <a href="<?= base_url('profile/' . $friend['username']) ?>" class="block">
-                                            <img src="<?= base_url($friend['avatar']) ?>" alt="<?= htmlspecialchars($friend['name']) ?>" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
-                                            <div class="font-medium"><?= htmlspecialchars($friend['name']) ?></div>
-                                        </a>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen vrienden.</p>
-                            <?php endif; ?>
-                        </div>
+                <!-- Vrienden tab -->
+                <?php elseif ($active_tab == 'vrienden'): ?>
+                <!-- Vrienden tab content -->
+                <div class="friends-container mt-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        <?php if (!empty($friends)): ?>
+                            <?php foreach ($friends as $friend): ?>
+                                <div class="friend-card text-center">
+                                    <a href="<?= base_url('profile/' . $friend['username']) ?>" class="block">
+                                        <img src="<?= base_url('theme-assets/default/images/' . 
+                                                  (strpos($friend['name'], 'Jan') !== false || 
+                                                   strpos($friend['name'], 'Thomas') !== false || 
+                                                   strpos($friend['name'], 'Lucas') !== false || 
+                                                   strpos($friend['name'], 'Tim') !== false || 
+                                                   strpos($friend['name'], 'Robin') !== false ? 
+                                                   'default-avatar-male.png' : 
+                                                   (strpos($friend['name'], 'Petra') !== false || 
+                                                    strpos($friend['name'], 'Emma') !== false || 
+                                                    strpos($friend['name'], 'Sophie') !== false || 
+                                                    strpos($friend['name'], 'Nina') !== false || 
+                                                    strpos($friend['name'], 'Laura') !== false ? 
+                                                    'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
+                                           alt="<?= htmlspecialchars($friend['name']) ?>" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
+                                        <div class="font-medium"><?= htmlspecialchars($friend['name']) ?></div>
+                                    </a>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen vrienden.</p>
+                        <?php endif; ?>
                     </div>
+                </div>
                     
                     <!-- Foto's tab -->
                     <?php elseif ($active_tab == 'fotos'): ?>

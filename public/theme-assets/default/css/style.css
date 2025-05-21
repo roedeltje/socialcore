@@ -567,6 +567,28 @@ a {
     display: block;
 }
 
+.auth-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.login-button {
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+.register-button {
+    background-color: #3b82f6;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.register-button:hover {
+    background-color: #2563eb;
+}
+
 /* Icons (we gebruiken hier normale tekstplaatshouders, later kun je Font Awesome of materiële iconen toevoegen) */
 .icon-email:before { content: "✉"; }
 .icon-lock:before { content: "🔒"; }

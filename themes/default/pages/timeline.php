@@ -12,7 +12,7 @@
                 </div>
                 <div class="p-4">
                     <div class="flex items-center space-x-4">
-                        <img src="<?= base_url('public/uploads/' . $current_user['avatar']) ?>" 
+                        <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
                              alt="<?= htmlspecialchars($current_user['name']) ?>" 
                              class="w-16 h-16 rounded-full border-2 border-blue-200">
                         <div>
@@ -82,7 +82,7 @@
                 <div class="p-4">
                     <form action="<?= base_url('posts/create') ?>" method="post" enctype="multipart/form-data">
                         <div class="flex space-x-3">
-                            <img src="<?= base_url('public/uploads/' . $current_user['avatar']) ?>" 
+                            <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                  alt="<?= htmlspecialchars($current_user['name']) ?>" 
                                  class="w-10 h-10 rounded-full border-2 border-blue-200">
                             <textarea name="content" rows="2" 
@@ -117,7 +117,11 @@
                 <div class="post-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
                     <div class="post-header flex justify-between items-center bg-blue-100 p-3 border-b border-blue-200">
                         <div class="flex items-center space-x-3">
-                            <img src="<?= base_url('public/uploads/' . $post['user_avatar']) ?>" 
+                            <img src="<?= base_url('theme-assets/default/images/' . (strpos($post['user_name'], 'Jan') !== false || 
+                                                            strpos($post['user_name'], 'Thomas') !== false ? 
+                                                            'default-avatar-male.png' : 
+                                                            (strpos($post['user_name'], 'Petra') !== false ? 
+                                                             'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
                                  alt="<?= htmlspecialchars($post['user_name']) ?>" 
                                  class="w-8 h-8 rounded-full border-2 border-blue-200">
                             <div>
@@ -185,7 +189,10 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-2">
                                         <div class="relative">
-                                            <img src="<?= base_url('public/uploads/' . $friend['avatar']) ?>" 
+                                            <img src="<?= base_url('theme-assets/default/images/' . (strpos($friend['name'], 'Lucas') !== false ? 
+                                                                            'default-avatar-male.png' : 
+                                                                            (strpos($friend['name'], 'Emma') !== false || strpos($friend['name'], 'Sophie') !== false ? 
+                                                                             'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
                                                  alt="<?= htmlspecialchars($friend['name']) ?>" 
                                                  class="w-8 h-8 rounded-full border border-blue-200">
                                             <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
@@ -236,7 +243,11 @@
                         <?php foreach ($suggested_users as $user): ?>
                             <div class="text-center">
                                 <a href="<?= base_url('profile/' . $user['id']) ?>" class="block">
-                                    <img src="<?= base_url('public/uploads/' . $user['avatar']) ?>" 
+                                    <img src="<?= base_url('theme-assets/default/images/' . (strpos($user['name'], 'Tim') !== false || 
+                                                                    strpos($user['name'], 'Robin') !== false ? 
+                                                                    'default-avatar-male.png' : 
+                                                                    (strpos($user['name'], 'Nina') !== false || strpos($user['name'], 'Laura') !== false ? 
+                                                                     'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
                                          alt="<?= htmlspecialchars($user['name']) ?>" 
                                          class="w-12 h-12 mx-auto rounded-full border-2 border-blue-200">
                                     <div class="mt-1 text-sm font-medium text-blue-800 truncate">

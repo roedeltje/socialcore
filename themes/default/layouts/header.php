@@ -33,7 +33,7 @@
         <div class="flex justify-between items-center">
             <div>
                 <a href="<?= base_url('/') ?>" class="flex items-center">
-                    <img src="<?= base_url('theme-assets/default/images/logo.png') ?>" alt="SocialCore" class="h-8 w-auto">
+                    <img src="<?= base_url('theme-assets/default/images/logo.png') ?>" alt="SocialCore" class="h-16 w-auto">
                     <!-- Indien gewenst, kun je de tekst naast het logo behouden -->
                     <!-- <span class="text-xl font-bold ml-2">SocialCore</span> -->
                 </a>
