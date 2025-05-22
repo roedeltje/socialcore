@@ -4,9 +4,17 @@ namespace App\Controllers;
 
 use App\Database\Database;
 use App\Auth\Auth;
+use PDO;
 
 class ProfileController extends Controller
 {
+    private $db;
+    
+    public function __construct()
+    {
+        $this->db = Database::getInstance()->getPdo();
+    }
+
     /**
      * Toon de profielpagina
      */
@@ -21,9 +29,9 @@ class ProfileController extends Controller
         // Haal het profiel op van de opgevraagde gebruiker
         // Later: $user = User::findByUsername($requestedUsername);
         $user = [
-            'id' => 2,
-            'username' => $requestedUsername,
-            'name' => 'Demo Gebruiker',
+            'id' => $_SESSION['user_id'], // ← FIX: gebruik sessie user_id
+            'username' => $_SESSION['username'] ?? 'gebruiker',
+            'name' => 'Rudy',
             'bio' => 'Dit is een demonstratie profiel in Hyves-stijl voor SocialCore!',
             'location' => 'Nederland',
             'joined' => '10 mei 2025',
@@ -42,7 +50,7 @@ class ProfileController extends Controller
         $user = [
             'id' => $_SESSION['user_id'],
             'username' => $_SESSION['username'] ?? 'gebruiker',
-            'name' => 'Huidige Gebruiker',
+            'name' => 'Rudy',
             'bio' => 'Welkom op mijn SocialCore profiel!',
             'location' => 'Nederland',
             'joined' => '16 mei 2025',
@@ -63,29 +71,7 @@ class ProfileController extends Controller
     ];
     
     // Dummy data voor recente posts
-    $posts = [
-        [
-            'id' => 101,
-            'content' => 'Zojuist SocialCore ontdekt, echt een geweldig nieuw platform!',
-            'created_at' => '2 uur geleden',
-            'likes' => 15,
-            'comments' => 3
-        ],
-        [
-            'id' => 102,
-            'content' => 'Bezig met het ontwerpen van mijn profiel. Wie herinnert zich de oude Hyves-stijl nog? 😊',
-            'created_at' => '1 dag geleden',
-            'likes' => 27,
-            'comments' => 8
-        ],
-        [
-            'id' => 103,
-            'content' => 'Open source projecten zijn de toekomst van software ontwikkeling. Wat vinden jullie?',
-            'created_at' => '3 dagen geleden',
-            'likes' => 42,
-            'comments' => 12
-        ]
-    ];
+    $posts = $this->getUserPosts($user['id']);
     
     // Laad specifieke data op basis van de geselecteerde tab
     $krabbels = [];
@@ -433,6 +419,75 @@ class ProfileController extends Controller
     ];
     
     $this->view('profile/edit', array_merge($data, ['form' => $form]));
+}
+
+    /**
+ * Haal echte posts op van een specifieke gebruiker
+ */
+private function getUserPosts($userId, $limit = 10)
+{
+    try {
+        $query = "
+            SELECT 
+                p.id,
+                p.content,
+                p.type,
+                p.created_at,
+                p.likes_count,
+                p.comments_count,
+                u.id as user_id,
+                u.username,
+                COALESCE(up.display_name, u.username) as user_name
+            FROM posts p
+            JOIN users u ON p.user_id = u.id
+            LEFT JOIN user_profiles up ON u.id = up.user_id
+            WHERE p.user_id = ? AND p.is_deleted = 0
+            ORDER BY p.created_at DESC
+            LIMIT ?
+        ";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([$userId, $limit]);
+        $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Format de data voor de view (zoals in FeedController)
+        foreach ($posts as &$post) {
+            $post['likes'] = $post['likes_count'];
+            $post['comments'] = $post['comments_count'];
+            $post['created_at'] = $this->formatDate($post['created_at']);
+        }
+        
+        return $posts;
+        
+    } catch (Exception $e) {
+        // Als er een fout is, return lege array zodat de pagina niet crasht
+        error_log("Error getting user posts: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Format datetime voor weergave
+ */
+private function formatDate($datetime)
+{
+    $date = new \DateTime($datetime);
+    $now = new \DateTime();
+    $diff = $now->diff($date);
+    
+    if ($diff->days == 0) {
+        if ($diff->h > 0) {
+            return $diff->h . ' uur geleden';
+        } elseif ($diff->i > 0) {
+            return $diff->i . ' minuten geleden';
+        } else {
+            return 'Net nu';
+        }
+    } elseif ($diff->days == 1) {
+        return 'Gisteren om ' . $date->format('H:i');
+    } else {
+        return $date->format('d-m-Y H:i');
+    }
 }
 
         /**

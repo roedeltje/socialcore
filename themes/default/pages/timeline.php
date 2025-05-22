@@ -76,41 +76,70 @@
         <div class="w-full lg:w-2/4">
             <!-- Post creator -->
             <div class="post-composer bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-                <div class="bg-blue-100 p-3 border-b border-blue-200">
-                    <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
-                </div>
-                <div class="p-4">
-                    <form action="<?= base_url('posts/create') ?>" method="post" enctype="multipart/form-data">
-                        <div class="flex space-x-3">
-                            <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                 alt="<?= htmlspecialchars($current_user['name']) ?>" 
-                                 class="w-10 h-10 rounded-full border-2 border-blue-200">
-                            <textarea name="content" rows="2" 
-                                      class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                      placeholder="Wat is er aan de hand, <?= htmlspecialchars($current_user['name']) ?>?"></textarea>
-                        </div>
-                        <div class="flex justify-between mt-3">
-                            <div class="flex space-x-2">
-                                <button type="button" class="hyves-tool-button" title="Voeg foto toe">
-                                    <span class="icon">📷</span>
-                                </button>
-                                <button type="button" class="hyves-tool-button" title="Voeg video toe">
-                                    <span class="icon">🎬</span>
-                                </button>
-                                <button type="button" class="hyves-tool-button" title="Voeg link toe">
-                                    <span class="icon">🔗</span>
-                                </button>
-                                <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
-                                    <span class="icon">😊</span>
-                                </button>
-                            </div>
-                            <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4">
-                                Plaatsen
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    <div class="bg-blue-100 p-3 border-b border-blue-200">
+        <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
+    </div>
+    <div class="p-4">
+        <?php 
+        // Toon success/error berichten
+        if (isset($_SESSION['success_message'])): 
+        ?>
+            <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+                <?= htmlspecialchars($_SESSION['success_message']) ?>
             </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+        
+        <?php 
+        if (isset($_SESSION['error_message'])): 
+        ?>
+            <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+                <?= htmlspecialchars($_SESSION['error_message']) ?>
+            </div>
+            <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
+        
+        <!-- Formulier aangepast naar de juiste route -->
+        <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="postForm">
+            <div class="flex space-x-3">
+                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                     alt="<?= htmlspecialchars($current_user['name']) ?>" 
+                     class="w-10 h-10 rounded-full border-2 border-blue-200">
+                <textarea name="content" rows="2" 
+                          class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                          placeholder="Wat is er aan de hand, <?= htmlspecialchars($current_user['name']) ?>?"
+                          maxlength="1000"
+                          id="postContent"><?= isset($_SESSION['old_content']) ? htmlspecialchars($_SESSION['old_content']) : '' ?></textarea>
+            </div>
+            
+            <!-- Karakterteller -->
+            <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
+                <span></span>
+                <span id="charCounter">0/1000</span>
+            </div>
+            
+            <div class="flex justify-between mt-3">
+                <div class="flex space-x-2">
+                    <button type="button" class="hyves-tool-button" title="Voeg foto toe">
+                        <span class="icon">📷</span>
+                    </button>
+                    <button type="button" class="hyves-tool-button" title="Voeg video toe">
+                        <span class="icon">🎬</span>
+                    </button>
+                    <button type="button" class="hyves-tool-button" title="Voeg link toe">
+                        <span class="icon">🔗</span>
+                    </button>
+                    <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
+                        <span class="icon">😊</span>
+                    </button>
+                </div>
+                <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4" id="submitBtn">
+                    Plaatsen
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
             
             <!-- Posts feed -->
             <?php foreach ($posts as $post): ?>
@@ -142,9 +171,9 @@
                         
                         <!-- Post actions -->
                         <div class="flex justify-between text-sm border-t border-blue-100 pt-3">
-                            <button class="hyves-action-button">
-                                <span class="icon">👍</span>
-                                <span class="text"><?= $post['likes'] ?> Respect!</span>
+                            <button class="hyves-action-button like-button" data-post-id="<?= $post['id'] ?>">
+                                <span class="like-icon">👍</span>
+                                <span class="text"><span class="like-count"><?= $post['likes'] ?></span> Respect!</span>
                             </button>
                             <button class="hyves-action-button">
                                 <span class="icon">💬</span>
@@ -265,3 +294,144 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const postContent = document.getElementById('postContent');
+    const charCounter = document.getElementById('charCounter');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Karakterteller
+    function updateCharCounter() {
+        const length = postContent.value.length;
+        charCounter.textContent = length + '/1000';
+        
+        if (length > 1000) {
+            charCounter.classList.add('text-red-500');
+            charCounter.classList.remove('text-gray-500');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            charCounter.classList.remove('text-red-500');
+            charCounter.classList.add('text-gray-500');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+    
+    // Update bij het typen
+    postContent.addEventListener('input', updateCharCounter);
+    
+    // Update bij het laden (voor old_content)
+    updateCharCounter();
+    
+    // Form submit handling
+    document.getElementById('postForm').addEventListener('submit', function(e) {
+        const content = postContent.value.trim();
+        
+        if (content === '') {
+            e.preventDefault();
+            alert('Bericht mag niet leeg zijn');
+            return;
+        }
+        
+        if (content.length > 1000) {
+            e.preventDefault();
+            alert('Bericht mag maximaal 1000 karakters bevatten');
+            return;
+        }
+        
+        // Disable submit button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Plaatsen...';
+    });
+
+    // ===== LIKE FUNCTIONALITEIT (zonder extra DOMContentLoaded!) =====
+    const likeButtons = document.querySelectorAll('.like-button');
+    
+    likeButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const postId = this.getAttribute('data-post-id');
+            const likeCountElement = this.querySelector('.like-count');
+            const likeIcon = this.querySelector('.like-icon');
+            
+            // Disable button tijdens request
+            this.disabled = true;
+            
+            // AJAX request naar server
+            fetch('/feed/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'post_id=' + encodeURIComponent(postId)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update like count
+                    likeCountElement.textContent = data.like_count;
+                    
+                    // Update button appearance
+                    if (data.action === 'liked') {
+                        // User liked the post
+                        this.classList.add('liked');
+                        likeIcon.textContent = '👍'; // Filled thumb
+                    } else {
+                        // User unliked the post
+                        this.classList.remove('liked');
+                        likeIcon.textContent = '👍'; // Regular thumb
+                    }
+                } else {
+                    // Show error message
+                    alert('Fout: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Er ging iets mis bij het liken van dit bericht');
+            })
+            .finally(() => {
+                // Re-enable button
+                this.disabled = false;
+            });
+        });
+    });
+});
+
+// CSS voor liked state
+const likeStyles = `
+<style>
+.like-button.liked {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.like-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.like-button {
+    transition: all 0.2s ease;
+}
+
+.like-button:hover:not(:disabled) {
+    background-color: #dbeafe;
+    transform: translateY(-1px);
+}
+</style>
+`;
+
+// Voeg CSS toe aan de pagina
+document.head.insertAdjacentHTML('beforeend', likeStyles);
+</script>
+
+<?php 
+// Clear old content na gebruik
+if (isset($_SESSION['old_content'])) {
+    unset($_SESSION['old_content']);
+}
+?>

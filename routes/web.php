@@ -30,12 +30,28 @@ return [
     ],
     
     'feed' => [
-        'callback' => function () {
-            $feedController = new FeedController();
-            $feedController->index();
-        },
-        'middleware' => [FeedMiddleware::class]  
-    ],
+    'callback' => function () {
+        $feedController = new FeedController();
+        $feedController->index();
+    },
+    'middleware' => [FeedMiddleware::class]  
+],
+
+    'feed/create' => [
+    'callback' => function () {
+        $feedController = new FeedController();
+        $feedController->create();
+    },
+    'middleware' => [FeedMiddleware::class]  
+],
+
+    'feed/like' => [
+    'callback' => function () {
+        $feedController = new FeedController();
+        $feedController->toggleLike();
+    },
+    'middleware' => [FeedMiddleware::class]  
+],
 
     'about' => [
         'callback' => function () {
