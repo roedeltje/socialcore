@@ -138,52 +138,29 @@ class FeedController extends Controller
     return $stmt->fetchColumn() > 0;
     }
 
-    /**
-     * Haal de avatar URL op voor een gebruiker
-     */
-    private function getUserAvatar($userId)
-    {
-    // Je kunt deze functie later uitbreiden om echte avatars op te halen
-    // Voor nu gebruiken we een default avatar
-    return 'public/assets/images/default-avatar.png';
-    }
-
-    private function getCurrentUser($userId)
-    {
-    $query = "
-        SELECT 
-            u.id,
-            u.username,
-            COALESCE(up.display_name, u.username) as name,
-            COUNT(DISTINCT p.id) as post_count
-        FROM users u
-        LEFT JOIN user_profiles up ON u.id = up.user_id
-        LEFT JOIN posts p ON u.id = p.user_id AND p.is_deleted = 0
-        WHERE u.id = ?
-        GROUP BY u.id
-    ";
-    
-    $stmt = $this->db->prepare($query);
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($user) {
-        // Voeg dummy data toe voor nu
-        $user['following'] = 42;
-        $user['followers'] = 127;
-        return $user;
-    }
-    
-    // Fallback als user niet gevonden
-    return [
-        'id' => $userId,
-        'name' => 'Gebruiker',
-        'username' => 'user',
-        'post_count' => 0,
-        'following' => 0,
-        'followers' => 0
-    ];
-}
+        // Helper om de avatar van een gebruiker op te halen
+        private function getUserAvatar($userId)
+        {
+            // Implementeer dit op basis van je gebruikersprofielsysteem
+            // Bijvoorbeeld:
+            try {
+                $stmt = $this->db->prepare("
+                    SELECT avatar FROM user_profiles 
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([$userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($result && !empty($result['avatar'])) {
+                    return '/public/uploads/' . $result['avatar'];
+                }
+            } catch (Exception $e) {
+                error_log('Fout bij ophalen avatar: ' . $e->getMessage());
+            }
+            
+            // Fallback naar default avatar
+            return '/public/assets/images/default-avatar.png';
+        }
 
     /**
      * Formatteer een datetime naar een leesbare weergave
@@ -252,59 +229,204 @@ class FeedController extends Controller
 }
 
         /**
-         * Verwerk het POST request voor het maken van een nieuwe post
+         * Haalt de huidige ingelogde gebruiker op uit de database
+         * 
+         * @param int $userId De gebruikers-ID om op te halen
+         * @return array Array met gebruikersgegevens, met gegarandeerde sleutels
          */
-        public function create() 
+        private function getCurrentUser($userId = null)
         {
-        // Controleer of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            if ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '' === 'XMLHttpRequest') {
-                // Als het een AJAX request is, stuur JSON terug
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn om te posten']);
-                exit;
-            } else {
-                // Anders redirect naar login
-                $_SESSION['error_message'] = 'Je moet ingelogd zijn om te posten';
-                header('Location: /auth/login');
-                exit;
-            }
-        }
-        
-        // Als het een GET request is: redirect naar feed
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-            header('Location: /feed');
-            exit;
-        }
-        
-        // Als het een POST request is: verwerk het formulier
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $result = $this->createPost();
+            // Gebruik sessie user_id als geen specifieke ID is gegeven
+            $userId = $userId ?? ($_SESSION['user_id'] ?? null);
             
-            // Controleer of het een AJAX request is
-            if ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '' === 'XMLHttpRequest') {
-                // Als het een AJAX request is, stuur JSON terug
-                header('Content-Type: application/json');
-                echo json_encode($result);
-                exit;
-            } else {
-                // Anders, sla het resultaat op in de sessie en redirect
-                if ($result['success']) {
-                    $_SESSION['success_message'] = $result['message'];
-                } else {
-                    $_SESSION['error_message'] = $result['message'];
-                    $_SESSION['old_content'] = $_POST['content'] ?? '';
+            if (!$userId) {
+                // Geen gebruiker gevonden, retourneer standaardwaarden
+                return [
+                    'id' => 0,
+                    'name' => 'Gast',
+                    'username' => 'gast',
+                    'display_name' => 'Gast',
+                    'post_count' => 0,
+                    'following' => 0,
+                    'followers' => 0
+                ];
+            }
+
+            try {
+                // Haal gebruikersgegevens op
+                $stmt = $this->db->prepare("
+                    SELECT u.*, up.avatar, up.bio, up.location, up.website
+                    FROM users u
+                    LEFT JOIN user_profiles up ON u.id = up.user_id
+                    WHERE u.id = ?
+                ");
+                $stmt->execute([$userId]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$user) {
+                    // Gebruiker niet gevonden in database
+                    return [
+                        'id' => 0,
+                        'name' => 'Onbekende gebruiker',
+                        'username' => 'onbekend',
+                        'display_name' => 'Onbekende gebruiker',
+                        'post_count' => 0,
+                        'following' => 0,
+                        'followers' => 0
+                    ];
                 }
                 
-                // Redirect terug naar feed
-                header('Location: /feed');
+                // Zorg ervoor dat alle benodigde sleutels bestaan
+                $user['avatar_url'] = !empty($user['avatar']) 
+                    ? '/public/uploads/' . $user['avatar']
+                    : '/public/theme-assets/default/images/default-avatar.png';
+                    
+                // Voeg 'name' sleutel toe (dit is waar de fout optreedt)
+                $user['name'] = $user['display_name'] ?? $user['username'] ?? 'Gebruiker';
+                
+                // Zorg ervoor dat alle statistieken beschikbaar zijn
+                $user['post_count'] = $this->getUserPostCount($userId);
+                $user['following'] = $user['following'] ?? 0;
+                $user['followers'] = $user['followers'] ?? 0;
+                
+                return $user;
+            } catch (PDOException $e) {
+                error_log('Fout bij ophalen huidige gebruiker: ' . $e->getMessage());
+                // Fallback bij database fout
+                return [
+                    'id' => $userId,
+                    'name' => 'Gebruiker',
+                    'username' => 'gebruiker',
+                    'display_name' => 'Gebruiker',
+                    'post_count' => 0,
+                    'following' => 0,
+                    'followers' => 0
+                ];
+            }
+        }
+
+        /**
+         * Hulpfunctie om het aantal posts van een gebruiker te tellen
+         */
+        private function getUserPostCount($userId)
+        {
+            try {
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM posts WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                return (int)$stmt->fetchColumn();
+            } catch (PDOException $e) {
+                error_log('Fout bij tellen posts: ' . $e->getMessage());
+                return 0;
+            }
+        }
+
+        /**
+         * Verwerk het POST request voor het maken van een nieuwe post
+         */
+        public function create()
+        {
+            // Controleer of gebruiker is ingelogd
+            if (!isset($_SESSION['user_id'])) {
+                if ($this->isJsonRequest()) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Niet ingelogd']);
+                } else {
+                    $_SESSION['error'] = 'Je moet ingelogd zijn om een bericht te plaatsen.';
+                    header('Location: ' . $_SERVER['HTTP_REFERER'] ?? '/');
+                    exit;
+                }
+            }
+
+            // Verwerk het formulier
+            $result = $this->createPost();
+
+            // Return de juiste response
+            if ($this->isJsonRequest()) {
+                // Voeg extra data toe voor AJAX requests
+                if ($result['success'] && isset($result['post_id'])) {
+                    // Haal de volledige post data op voor de frontend
+                    $post = $this->getPostById($result['post_id']);
+                    if ($post) {
+                        $result['post'] = $post;
+                    }
+                }
+                
+                $this->jsonResponse($result);
+            } else {
+                // Voor reguliere form submits
+                if ($result['success']) {
+                    $_SESSION['success'] = $result['message'];
+                } else {
+                    $_SESSION['error'] = $result['message'];
+                }
+                
+                header('Location: ' . $_SERVER['HTTP_REFERER'] ?? '/');
                 exit;
             }
         }
-    }
+
+        // Helper om te controleren of het een JSON request is
+        private function isJsonRequest()
+        {
+            return (isset($_SERVER['HTTP_ACCEPT']) && 
+                    strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) || 
+                (isset($_SERVER['CONTENT_TYPE']) && 
+                    strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false);
+        }
+
+        // Helper om JSON response te sturen
+        private function jsonResponse($data)
+        {
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+
+        // Functie om een post op te halen op basis van ID
+        private function getPostById($postId)
+        {
+            try {
+                // Haal de post inclusief gebruikersdata op
+                $stmt = $this->db->prepare("
+                    SELECT p.*, u.username, u.display_name 
+                    FROM posts p 
+                    JOIN users u ON p.user_id = u.id 
+                    WHERE p.id = ?
+                ");
+                $stmt->execute([$postId]);
+                $post = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$post) {
+                    return null;
+                }
+                
+                // Voeg avatar en formatted date toe voor de frontend
+                $post['avatar'] = $this->getUserAvatar($post['user_id']);
+                $post['formatted_date'] = 'Zojuist geplaatst';
+                
+                // Als het een foto post is, haal de bijbehorende media op
+                if ($post['type'] === 'photo') {
+                    $stmt = $this->db->prepare("
+                        SELECT * FROM post_media 
+                        WHERE post_id = ? 
+                        ORDER BY display_order ASC
+                    ");
+                    $stmt->execute([$postId]);
+                    $media = $stmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($media) {
+                        $post['image_url'] = '/public/uploads/' . $media['file_path'];
+                    }
+                }
+                
+                return $post;
+            } catch (Exception $e) {
+                error_log('Fout bij ophalen post: ' . $e->getMessage());
+                return null;
+            }
+        }
     
-    public function createPost($userId = null, $content = null, $type = 'text') 
-    {
+        public function createPost($userId = null, $content = null, $type = 'text') 
+        {
         // Gebruik sessie user_id als deze niet expliciet is doorgegeven
         $userId = $userId ?? ($_SESSION['user_id'] ?? 0);
         
