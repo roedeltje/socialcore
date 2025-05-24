@@ -1,11 +1,12 @@
 <?php /* SocialCore nieuwsfeed in Hyves-stijl */ ?>
-
+<?php echo "<!-- Timeline.php geladen -->"; ?>
 <div class="feed-container">
     <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Linker zijbalk -->
+        <!-- Linker zijbalk (ongewijzigd) -->
         <div class="w-full lg:w-1/4">
-            <!-- Gebruikerskaart -->
+            <!-- Gebruikerskaart (ongewijzigd) -->
             <div class="user-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+                <!-- Inhoud ongewijzigd -->
                 <div class="bg-blue-100 p-4 border-b border-blue-200">
                     <h2 class="text-xl font-bold text-blue-800"><?= htmlspecialchars($current_user['name']) ?></h2>
                     <p class="text-sm text-blue-600">@<?= htmlspecialchars($current_user['username']) ?></p>
@@ -23,23 +24,24 @@
                     </div>
                     <div class="flex justify-between mt-4 text-center">
                         <div class="stats-item">
-                            <div class="font-bold text-blue-800"><?= $current_user['post_count'] ?></div>
+                            <div class="font-bold text-blue-800"><?= $current_user['post_count'] ?? 0 ?></div>
                             <div class="text-xs text-gray-500">Posts</div>
                         </div>
                         <div class="stats-item">
-                            <div class="font-bold text-blue-800"><?= $current_user['following'] ?></div>
+                            <div class="font-bold text-blue-800"><?= $current_user['following'] ?? 0 ?></div>
                             <div class="text-xs text-gray-500">Volgend</div>
                         </div>
                         <div class="stats-item">
-                            <div class="font-bold text-blue-800"><?= $current_user['followers'] ?></div>
+                            <div class="font-bold text-blue-800"><?= $current_user['followers'] ?? 0 ?></div>
                             <div class="text-xs text-gray-500">Volgers</div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Navigatie menu in Hyves-stijl -->
+            <!-- Navigatie menu in Hyves-stijl (ongewijzigd) -->
             <div class="hyves-menu bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Inhoud ongewijzigd -->
                 <div class="hyves-menu-header bg-blue-100 p-3 border-b border-blue-200">
                     <h3 class="font-bold text-blue-800">Menu</h3>
                 </div>
@@ -74,74 +76,82 @@
         
         <!-- Midden gedeelte - Posts feed -->
         <div class="w-full lg:w-2/4">
-            <!-- Post creator -->
+            <!-- Post creator - BIJGEWERKT MET AFBEELDING UPLOAD -->
             <div class="post-composer bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-    <div class="bg-blue-100 p-3 border-b border-blue-200">
-        <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
-    </div>
-    <div class="p-4">
-        <?php 
-        // Toon success/error berichten
-        if (isset($_SESSION['success_message'])): 
-        ?>
-            <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg">
-                <?= htmlspecialchars($_SESSION['success_message']) ?>
-            </div>
-            <?php unset($_SESSION['success_message']); ?>
-        <?php endif; ?>
-        
-        <?php 
-        if (isset($_SESSION['error_message'])): 
-        ?>
-            <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-                <?= htmlspecialchars($_SESSION['error_message']) ?>
-            </div>
-            <?php unset($_SESSION['error_message']); ?>
-        <?php endif; ?>
-        
-        <!-- Formulier aangepast naar de juiste route -->
-        <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="postForm">
-            <div class="flex space-x-3">
-                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                     alt="<?= htmlspecialchars($current_user['name']) ?>" 
-                     class="w-10 h-10 rounded-full border-2 border-blue-200">
-                <textarea name="content" rows="2" 
-                          class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                          placeholder="Wat is er aan de hand, <?= htmlspecialchars($current_user['name']) ?>?"
-                          maxlength="1000"
-                          id="postContent"><?= isset($_SESSION['old_content']) ? htmlspecialchars($_SESSION['old_content']) : '' ?></textarea>
-            </div>
-            
-            <!-- Karakterteller -->
-            <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
-                <span></span>
-                <span id="charCounter">0/1000</span>
-            </div>
-            
-            <div class="flex justify-between mt-3">
-                <div class="flex space-x-2">
-                    <button type="button" class="hyves-tool-button" title="Voeg foto toe">
-                        <span class="icon">📷</span>
-                    </button>
-                    <button type="button" class="hyves-tool-button" title="Voeg video toe">
-                        <span class="icon">🎬</span>
-                    </button>
-                    <button type="button" class="hyves-tool-button" title="Voeg link toe">
-                        <span class="icon">🔗</span>
-                    </button>
-                    <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
-                        <span class="icon">😊</span>
-                    </button>
+                <div class="bg-blue-100 p-3 border-b border-blue-200">
+                    <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
                 </div>
-                <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4" id="submitBtn">
-                    Plaatsen
-                </button>
+                <div class="p-4">
+                    <?php 
+                    // Toon success/error berichten
+                    if (isset($_SESSION['success_message'])): 
+                    ?>
+                        <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+                            <?= htmlspecialchars($_SESSION['success_message']) ?>
+                        </div>
+                        <?php unset($_SESSION['success_message']); ?>
+                    <?php endif; ?>
+                    
+                    <?php 
+                    if (isset($_SESSION['error_message'])): 
+                    ?>
+                        <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+                            <?= htmlspecialchars($_SESSION['error_message']) ?>
+                        </div>
+                        <?php unset($_SESSION['error_message']); ?>
+                    <?php endif; ?>
+                    
+                    <!-- Formulier aangepast naar de juiste route -->
+                    <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="postForm">
+                        <div class="flex space-x-3">
+                            <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                alt="<?= htmlspecialchars($current_user['name']) ?>" 
+                                class="w-10 h-10 rounded-full border-2 border-blue-200">
+                            <textarea name="content" rows="2" 
+                                    class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                    placeholder="Wat is er aan de hand, <?= htmlspecialchars($current_user['name']) ?>?"
+                                    maxlength="1000"
+                                    id="postContent"><?= isset($_SESSION['old_content']) ? htmlspecialchars($_SESSION['old_content']) : '' ?></textarea>
+                        </div>
+                        
+                        <!-- Afbeelding preview container -->
+                        <div id="imagePreview" class="mt-3 relative rounded-lg border border-blue-200 bg-blue-50 hidden">
+                            <img src="" alt="Preview" class="max-h-64 rounded-lg mx-auto">
+                            <button type="button" id="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">×</button>
+                        </div>
+                        
+                        <!-- Karakterteller -->
+                        <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
+                            <span></span>
+                            <span id="charCounter">0/1000</span>
+                        </div>
+                        
+                        <div class="flex justify-between mt-3">
+                            <div class="flex space-x-2">
+                                <!-- File input moet name="image" hebben -->
+                                <label for="imageUpload" class="hyves-tool-button cursor-pointer" title="Voeg foto toe">
+                                    <span class="icon">📷</span>
+                                    <input type="file" id="imageUpload" name="image" accept="image/*" class="hidden">
+                                </label>
+                                <button type="button" class="hyves-tool-button" title="Voeg video toe">
+                                    <span class="icon">🎬</span>
+                                </button>
+                                <button type="button" class="hyves-tool-button" title="Voeg link toe">
+                                    <span class="icon">🔗</span>
+                                </button>
+                                <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
+                                    <span class="icon">😊</span>
+                                </button>
+                            </div>
+                            <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4" id="submitBtn">
+                                Plaatsen
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
-    </div>
-</div>
             
-            <!-- Posts feed -->
+            <!-- Posts feed - BIJGEWERKT OM AFBEELDINGEN TE TONEN -->
             <?php foreach ($posts as $post): ?>
                 <div class="post-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
                     <div class="post-header flex justify-between items-center bg-blue-100 p-3 border-b border-blue-200">
@@ -166,12 +176,23 @@
                     </div>
                     <div class="p-4">
                         <div class="post-content mb-4">
-                            <?= nl2br(htmlspecialchars($post['content'])) ?>
+                            <?php if (!empty($post['content'])): ?>
+                                <p><?= nl2br(htmlspecialchars($post['content'])) ?></p>
+                            <?php endif; ?>
+                            
+                            <!-- Afbeelding weergave - NIEUW -->
+                            <?php if (!empty($post['media_path'])): ?>
+                                <div class="mt-3 post-media rounded-lg overflow-hidden border border-blue-200">
+                                    <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
+                                         alt="Post afbeelding" 
+                                         class="w-full h-auto max-h-96 object-contain">
+                                </div>
+                            <?php endif; ?>
                         </div>
                         
                         <!-- Post actions -->
                         <div class="flex justify-between text-sm border-t border-blue-100 pt-3">
-                            <button class="hyves-action-button like-button" data-post-id="<?= $post['id'] ?>">
+                            <button class="hyves-action-button like-button <?= $post['is_liked'] ? 'liked' : '' ?>" data-post-id="<?= $post['id'] ?>">
                                 <span class="like-icon">👍</span>
                                 <span class="text"><span class="like-count"><?= $post['likes'] ?></span> Respect!</span>
                             </button>
@@ -197,8 +218,9 @@
             <?php endif; ?>
         </div>
         
-        <!-- Rechter zijbalk -->
+        <!-- Rechter zijbalk (ongewijzigd) -->
         <div class="w-full lg:w-1/4">
+            <!-- Inhoud ongewijzigd -->
             <!-- Online vrienden -->
             <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
                 <div class="bg-blue-100 p-3 border-b border-blue-200 flex justify-between items-center">
@@ -320,33 +342,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Update bij het typen
-    postContent.addEventListener('input', updateCharCounter);
-    
-    // Update bij het laden (voor old_content)
-    updateCharCounter();
-    
-    // Form submit handling
-    document.getElementById('postForm').addEventListener('submit', function(e) {
-        const content = postContent.value.trim();
+    if (postContent) {
+        postContent.addEventListener('input', updateCharCounter);
         
-        if (content === '') {
-            e.preventDefault();
-            alert('Bericht mag niet leeg zijn');
-            return;
-        }
-        
-        if (content.length > 1000) {
-            e.preventDefault();
-            alert('Bericht mag maximaal 1000 karakters bevatten');
-            return;
-        }
-        
-        // Disable submit button to prevent double submission
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Plaatsen...';
-    });
+        // Update bij het laden (voor old_content)
+        updateCharCounter();
+    }
 
-    // ===== LIKE FUNCTIONALITEIT (zonder extra DOMContentLoaded!) =====
+    // ===== LIKE FUNCTIONALITEIT =====
     const likeButtons = document.querySelectorAll('.like-button');
     
     likeButtons.forEach(button => {
@@ -400,33 +403,70 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-
-// CSS voor liked state
-const likeStyles = `
-<style>
-.like-button.liked {
-    background-color: #3b82f6 !important;
-    color: white !important;
-}
-
-.like-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.like-button {
-    transition: all 0.2s ease;
-}
-
-.like-button:hover:not(:disabled) {
-    background-color: #dbeafe;
-    transform: translateY(-1px);
-}
-</style>
-`;
-
-// Voeg CSS toe aan de pagina
-document.head.insertAdjacentHTML('beforeend', likeStyles);
+</script>
+<script>
+// Direct na het laden van de pagina
+document.addEventListener('DOMContentLoaded', function() {
+    // Debug info
+    console.log('Afbeeldingspreview script geladen');
+    
+    // Elementen ophalen
+    const imageUpload = document.getElementById('imageUpload');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeImage = document.getElementById('removeImage');
+    
+    console.log('Elements gevonden:', 
+                imageUpload ? 'imageUpload ✓' : 'imageUpload ✗', 
+                imagePreview ? 'imagePreview ✓' : 'imagePreview ✗',
+                removeImage ? 'removeImage ✓' : 'removeImage ✗');
+    
+    // Als alle elementen bestaan
+    if (imageUpload && imagePreview && removeImage) {
+        // Bestand geselecteerd
+        imageUpload.addEventListener('change', function() {
+            console.log('Bestand geselecteerd', this.files);
+            
+            if (this.files && this.files[0]) {
+                // Bestandsvalidatie
+                const file = this.files[0];
+                console.log('Bestandstype:', file.type);
+                
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Alleen JPG, PNG, GIF en WEBP bestanden zijn toegestaan.');
+                    this.value = '';
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('De afbeelding mag niet groter zijn dan 5MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Preview tonen
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    console.log('Bestand gelezen, toon preview');
+                    const previewImg = imagePreview.querySelector('img');
+                    previewImg.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Afbeelding verwijderen
+        removeImage.addEventListener('click', function() {
+            console.log('Verwijder afbeelding');
+            imageUpload.value = '';
+            imagePreview.classList.add('hidden');
+            imagePreview.querySelector('img').src = '';
+        });
+    } else {
+        console.error('Kon niet alle benodigde elementen vinden voor afbeeldingspreview');
+    }
+});
 </script>
 
 <?php 

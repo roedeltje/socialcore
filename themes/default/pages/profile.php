@@ -130,6 +130,12 @@
                               id="profilePostContent"></textarea>
                 </div>
                 
+                <!-- Afbeelding preview container -->
+                <div id="profileImagePreview" class="mt-3 relative rounded-lg border border-blue-200 bg-blue-50 hidden">
+                    <img src="" alt="Preview" class="max-h-64 rounded-lg mx-auto">
+                    <button type="button" id="profileRemoveImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">×</button>
+                </div>
+                
                 <!-- Karakterteller -->
                 <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
                     <span></span>
@@ -138,9 +144,11 @@
                 
                 <div class="flex justify-between mt-3">
                     <div class="flex space-x-2">
-                        <button type="button" class="hyves-tool-button" title="Voeg foto toe">
+                        <!-- Afbeelding upload button -->
+                        <label for="profileImageUpload" class="hyves-tool-button cursor-pointer" title="Voeg foto toe">
                             <span class="icon">📷</span>
-                        </button>
+                            <input type="file" id="profileImageUpload" name="image" accept="image/*" class="hidden">
+                        </label>
                         <button type="button" class="hyves-tool-button" title="Voeg video toe">
                             <span class="icon">🎬</span>
                         </button>
@@ -161,40 +169,52 @@
 <?php endif; ?>
         
         <!-- Echte posts uit database -->
-        <?php if (!empty($posts)): ?>
-            <div class="mb-6">
-                <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Berichten</h4>
-                <?php foreach ($posts as $post): ?>
-                    <div class="bg-white p-4 rounded-lg shadow mb-4">
-                        <div class="flex items-center mb-3">
-                            <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                 alt="<?= htmlspecialchars($user['name']) ?>" 
-                                 class="w-10 h-10 rounded-full mr-3">
-                            <div>
-                                <div class="font-bold text-blue-600"><?= htmlspecialchars($user['name']) ?></div>
-                                <div class="text-gray-500 text-sm"><?= $post['created_at'] ?></div>
+        <!-- Weergave van posts met afbeeldingen -->
+            <?php if (!empty($posts)): ?>
+                <div class="mb-6">
+                    <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Berichten</h4>
+                    <?php foreach ($posts as $post): ?>
+                        <div class="bg-white p-4 rounded-lg shadow mb-4">
+                            <div class="flex items-center mb-3">
+                                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                    alt="<?= htmlspecialchars($user['name']) ?>" 
+                                    class="w-10 h-10 rounded-full mr-3">
+                                <div>
+                                    <div class="font-bold text-blue-600"><?= htmlspecialchars($user['name']) ?></div>
+                                    <div class="text-gray-500 text-sm"><?= $post['created_at'] ?></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <?php if (!empty($post['content'])): ?>
+                                    <p class="text-gray-700"><?= nl2br(htmlspecialchars($post['content'])) ?></p>
+                                <?php endif; ?>
+                                
+                                <!-- Afbeelding weergave -->
+                                <?php if (!empty($post['media_path'])): ?>
+                                    <div class="mt-3 post-media rounded-lg overflow-hidden border border-blue-200">
+                                        <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
+                                            alt="Post afbeelding" 
+                                            class="w-full h-auto max-h-96 object-contain">
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Post actions -->
+                            <div class="flex justify-between text-sm border-t border-gray-200 pt-3">
+                                <button class="hyves-action-button like-button <?= $post['is_liked'] ? 'liked' : '' ?>" data-post-id="<?= $post['id'] ?>">
+                                    <span class="like-icon">👍</span>
+                                    <span class="text"><span class="like-count"><?= $post['likes'] ?></span> Respect!</span>
+                                </button>
+                                <button class="flex items-center space-x-1 text-blue-600 hover:text-blue-800">
+                                    <span>💬</span>
+                                    <span><?= $post['comments'] ?> Reacties</span>
+                                </button>
                             </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <p class="text-gray-700"><?= nl2br(htmlspecialchars($post['content'])) ?></p>
-                        </div>
-                        
-                        <!-- Post actions -->
-                        <div class="flex justify-between text-sm border-t border-gray-200 pt-3">
-                            <button class="hyves-action-button like-button" data-post-id="<?= $post['id'] ?>">
-                                <span class="like-icon">👍</span>
-                                <span class="text"><span class="like-count"><?= $post['likes'] ?></span> Respect!</span>
-                            </button>
-                            <button class="flex items-center space-x-1 text-blue-600 hover:text-blue-800">
-                                <span>💬</span>
-                                <span><?= $post['comments'] ?> Reacties</span>
-                            </button>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         
         <!-- Dummy krabbels (later echte krabbels uit database) -->
         <?php if (!empty($krabbels)): ?>
@@ -330,6 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const profilePostContent = document.getElementById('profilePostContent');
     const profileCharCounter = document.getElementById('profileCharCounter');
     const profileSubmitBtn = document.getElementById('profileSubmitBtn');
+    const profilePostForm = document.getElementById('profilePostForm');
     
     // Karakterteller voor FEED pagina
     if (postContent && charCounter && submitBtn) {
@@ -398,29 +419,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         profilePostContent.addEventListener('input', updateProfileCharCounter);
         updateProfileCharCounter();
-        
-        // Form submit handling voor profiel
-        const profilePostForm = document.getElementById('profilePostForm');
-        if (profilePostForm) {
-            profilePostForm.addEventListener('submit', function(e) {
-                const content = profilePostContent.value.trim();
-                
-                if (content === '') {
-                    e.preventDefault();
-                    alert('Bericht mag niet leeg zijn');
-                    return;
-                }
-                
-                if (content.length > 1000) {
-                    e.preventDefault();
-                    alert('Bericht mag maximaal 1000 karakters bevatten');
-                    return;
-                }
-                
-                profileSubmitBtn.disabled = true;
-                profileSubmitBtn.textContent = 'Plaatsen...';
-            });
-        }
     }
 
     // ===== LIKE FUNCTIONALITEIT (werkt op beide pagina's) =====
@@ -476,6 +474,76 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    // Afbeelding upload preview voor profiel pagina
+    const profileImageUpload = document.getElementById('profileImageUpload');
+    const profileImagePreview = document.getElementById('profileImagePreview');
+    const profilePreviewImage = profileImagePreview ? profileImagePreview.querySelector('img') : null;
+    const profileRemoveImage = document.getElementById('profileRemoveImage');
+
+    if (profileImageUpload && profileImagePreview && profilePreviewImage && profileRemoveImage) {
+        // Preview tonen bij selecteren afbeelding
+        profileImageUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                // Bestandstype validatie
+                const file = this.files[0];
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                
+                if (!validTypes.includes(file.type)) {
+                    alert('Alleen JPG, PNG, GIF en WEBP bestanden zijn toegestaan.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Bestandsgrootte validatie (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('De afbeelding mag niet groter zijn dan 5MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Toon de preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreviewImage.src = e.target.result;
+                    profileImagePreview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Verwijder afbeelding
+        profileRemoveImage.addEventListener('click', function() {
+            profileImageUpload.value = '';
+            profileImagePreview.classList.add('hidden');
+            profilePreviewImage.src = '';
+        });
+    }
+
+    // Form submit handler voor profiel pagina
+    if (profilePostForm) {
+        profilePostForm.addEventListener('submit', function(e) {
+            // Controleer of er content of een afbeelding is
+            const content = profilePostContent.value.trim();
+            const hasImage = profileImageUpload && profileImageUpload.files && profileImageUpload.files.length > 0;
+            
+            if (!content && !hasImage) {
+                e.preventDefault();
+                alert('Voeg tekst of een afbeelding toe aan je bericht.');
+                return;
+            }
+            
+            if (content.length > 1000) {
+                e.preventDefault();
+                alert('Bericht mag maximaal 1000 karakters bevatten');
+                return;
+            }
+            
+            // Voorkom dubbele submits
+            profileSubmitBtn.disabled = true;
+            profileSubmitBtn.textContent = 'Bezig...';
+        });
+    }
 });
 
 // CSS voor liked state

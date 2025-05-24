@@ -169,3 +169,87 @@
         border-bottom: 3px solid #3B82F6;
     }
 }
+
+/* Toevoegen aan public/theme-assets/default/css/feed.css */
+
+/* Like button styling */
+.like-button.liked {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.like-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.like-button {
+    transition: all 0.2s ease;
+}
+
+.like-button:hover:not(:disabled) {
+    background-color: #dbeafe;
+    transform: translateY(-1px);
+}
+
+/* Afbeelding styling voor posts */
+.post-media {
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.post-media:hover {
+    opacity: 0.95;
+}
+
+.post-media img {
+    display: block;
+    margin: 0 auto;
+    max-height: 500px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Afbeelding preview styling voor formulier */
+#imagePreview, #profileImagePreview {
+    margin-top: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f0f2f5;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    max-height: 300px;
+}
+
+#imagePreview img, #profileImagePreview img {
+    max-height: 250px;
+    width: 100%;
+    object-fit: contain;
+}
+
+#removeImage, #profileRemoveImage {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: rgba(239, 68, 68, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+#removeImage:hover, #profileRemoveImage:hover {
+    background-color: rgba(220, 38, 38, 1);
+}

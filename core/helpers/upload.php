@@ -53,6 +53,9 @@ function get_upload_path($type = 'posts', $customPath = '') {
  * @return array Resultaat van upload [success, message, path]
  */
 function upload_file($file, $type = 'posts', $allowedTypes = [], $maxSize = 5242880, $prefix = '') {
+    // Debug om te zien wat er binnenkomt
+    error_log('Upload bestand: ' . ($file['name'] ?? 'geen') . ', type: ' . $type);
+    
     // Controleer of er een bestand is geüpload
     if (!isset($file) || $file['error'] != UPLOAD_ERR_OK) {
         return [
@@ -84,30 +87,42 @@ function upload_file($file, $type = 'posts', $allowedTypes = [], $maxSize = 5242
     }
     
     // Genereer unieke bestandsnaam
-    $newFilename = generate_unique_filename($file['name'], $prefix);
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $uniqueId = uniqid($prefix, true);
+    $filename = $uniqueId . '.' . strtolower($extension);
     
     // Bepaal upload pad
-    $uploadDir = get_upload_path($type);
-    $uploadPath = $uploadDir . '/' . $newFilename;
+    $year = date('Y');
+    $month = date('m');
+    $relativePath = $type . '/' . $year . '/' . $month . '/' . $filename;
+    $uploadDir = BASE_PATH . '/public/uploads/' . $type . '/' . $year . '/' . $month;
+    $uploadPath = $uploadDir . '/' . $filename;
+    
+    // Controleer of de directory bestaat, zo niet, maak deze aan
+    if (!is_dir($uploadDir)) {
+        error_log('Maak directory aan: ' . $uploadDir);
+        mkdir($uploadDir, 0755, true);
+    }
     
     // Upload het bestand
     if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-        // Bereken het relatieve pad voor gebruik in de database
-        $year = date('Y');
-        $month = date('m');
-        $relativePath = $type . '/' . $year . '/' . $month . '/' . $newFilename;
+        error_log('Upload success: ' . $uploadPath);
+        error_log('Relatief pad: ' . $relativePath);
         
         return [
             'success' => true,
             'message' => 'Bestand succesvol geüpload',
             'path' => $relativePath,
-            'filename' => $newFilename,
             'full_path' => $uploadPath
         ];
     } else {
+        $error = error_get_last();
+        $errorMsg = $error ? $error['message'] : 'Onbekende fout';
+        error_log('Upload failed: ' . $errorMsg);
+        
         return [
             'success' => false,
-            'message' => 'Fout bij het opslaan van het bestand',
+            'message' => 'Fout bij het opslaan van het bestand: ' . $errorMsg,
             'path' => null
         ];
     }

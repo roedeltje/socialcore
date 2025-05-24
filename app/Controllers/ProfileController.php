@@ -437,7 +437,8 @@ private function getUserPosts($userId, $limit = 10)
                 p.comments_count,
                 u.id as user_id,
                 u.username,
-                COALESCE(up.display_name, u.username) as user_name
+                COALESCE(up.display_name, u.username) as user_name,
+                (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
             FROM posts p
             JOIN users u ON p.user_id = u.id
             LEFT JOIN user_profiles up ON u.id = up.user_id
@@ -455,6 +456,13 @@ private function getUserPosts($userId, $limit = 10)
             $post['likes'] = $post['likes_count'];
             $post['comments'] = $post['comments_count'];
             $post['created_at'] = $this->formatDate($post['created_at']);
+            
+            // Controleer of gebruiker de post heeft geliked (indien deze methode bestaat)
+            if (method_exists($this, 'hasUserLikedPost')) {
+                $post['is_liked'] = $this->hasUserLikedPost($post['id']);
+            } else {
+                $post['is_liked'] = false; // Fallback als methode niet bestaat
+            }
         }
         
         return $posts;
@@ -466,11 +474,24 @@ private function getUserPosts($userId, $limit = 10)
     }
 }
 
-/**
- * Format datetime voor weergave
- */
-private function formatDate($datetime)
-{
+    private function hasUserLikedPost($postId)
+    {
+    if (!isset($_SESSION['user_id'])) {
+        return false;
+    }
+    
+    $userId = $_SESSION['user_id'];
+    $stmt = $this->db->prepare("SELECT COUNT(*) FROM post_likes WHERE post_id = ? AND user_id = ?");
+    $stmt->execute([$postId, $userId]);
+    
+    return $stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * Format datetime voor weergave
+     */
+    private function formatDate($datetime)
+    {
     $date = new \DateTime($datetime);
     $now = new \DateTime();
     $diff = $now->diff($date);
