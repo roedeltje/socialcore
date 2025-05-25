@@ -170,9 +170,26 @@
                                 <div class="text-xs text-blue-600"><?= $post['created_at'] ?></div>
                             </div>
                         </div>
-                        <button class="text-blue-600 hover:text-blue-800">
-                            <span class="icon">⋯</span>
-                        </button>
+                        <?php if (isset($_SESSION['user_id']) && ($post['user_id'] == $_SESSION['user_id'] || isset($_SESSION['role']) && $_SESSION['role'] === 'admin')): ?>
+    <div class="relative post-menu">
+        <button type="button" class="post-menu-button text-blue-600 hover:text-blue-800 p-1 rounded-full">
+            <span class="icon">⋯</span>
+        </button>
+        <div class="post-menu-dropdown absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden">
+            <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
+                <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                <button type="button" class="delete-post-button block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                    Bericht verwijderen
+                </button>
+            </form>
+        </div>
+    </div>
+<?php else: ?>
+    <!-- Toon de drie puntjes voor niet-eigenaars, maar zonder menu functionaliteit -->
+    <button class="text-blue-600 hover:text-blue-800">
+        <span class="icon">⋯</span>
+    </button>
+<?php endif; ?>
                     </div>
                     <div class="p-4">
                         <div class="post-content mb-4">

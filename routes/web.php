@@ -45,6 +45,14 @@ return [
     'middleware' => [FeedMiddleware::class]  
 ],
 
+    'feed/delete' => [
+    'callback' => function () {
+        $feedController = new FeedController();
+        $feedController->delete();
+    },
+    'middleware' => [FeedMiddleware::class]  
+],
+
     'feed/like' => [
     'callback' => function () {
         $feedController = new FeedController();

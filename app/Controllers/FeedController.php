@@ -607,136 +607,254 @@ class FeedController extends Controller
         }
     }
 
-    /**
-     * Zorg ervoor dat de post_media tabel bestaat
-     */
-    private function ensurePostMediaTable() 
-    {
-        try {
-            // Controleer of post_media tabel bestaat
-            $stmt = $this->db->query("SHOW TABLES LIKE 'post_media'");
-            if ($stmt->rowCount() == 0) {
-                // Maak post_media tabel aan
-                $createMediaTable = "CREATE TABLE `post_media` (
-                    `id` INT AUTO_INCREMENT PRIMARY KEY,
-                    `post_id` INT NOT NULL,
-                    `file_path` VARCHAR(255) NOT NULL,
-                    `file_type` VARCHAR(50) NOT NULL,
-                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
-                )";
-                $this->db->query($createMediaTable);
+        /**
+         * Zorg ervoor dat de post_media tabel bestaat
+         */
+        private function ensurePostMediaTable() 
+        {
+            try {
+                // Controleer of post_media tabel bestaat
+                $stmt = $this->db->query("SHOW TABLES LIKE 'post_media'");
+                if ($stmt->rowCount() == 0) {
+                    // Maak post_media tabel aan
+                    $createMediaTable = "CREATE TABLE `post_media` (
+                        `id` INT AUTO_INCREMENT PRIMARY KEY,
+                        `post_id` INT NOT NULL,
+                        `file_path` VARCHAR(255) NOT NULL,
+                        `file_type` VARCHAR(50) NOT NULL,
+                        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
+                    )";
+                    $this->db->query($createMediaTable);
+                }
+                
+                // Controleer of 'type' kolom bestaat in posts tabel
+                $stmt = $this->db->query("SHOW COLUMNS FROM `posts` LIKE 'type'");
+                if ($stmt->rowCount() == 0) {
+                    // Voeg type kolom toe als deze niet bestaat
+                    $this->db->query("ALTER TABLE `posts` ADD COLUMN `type` VARCHAR(20) DEFAULT 'text' AFTER `content`");
+                }
+            } catch (Exception $e) {
+                // Log de fout maar gooi hem niet opnieuw, zodat we verder kunnen
+                error_log('Fout bij het controleren/aanmaken van post_media tabel: ' . $e->getMessage());
+            }
+        }
+
+            /**
+         * Verwijder een bericht
+         * Deze methode kan via AJAX of via een normale request worden aangeroepen
+         */
+        public function delete()
+        {
+            // Controleer of gebruiker is ingelogd
+            if (!isset($_SESSION['user_id'])) {
+                // Bij AJAX request
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Je moet ingelogd zijn om een bericht te verwijderen'
+                    ]);
+                    exit;
+                }
+                
+                // Bij normale request
+                set_flash_message('error', 'Je moet ingelogd zijn om een bericht te verwijderen');
+                redirect('login');
+                return;
             }
             
-            // Controleer of 'type' kolom bestaat in posts tabel
-            $stmt = $this->db->query("SHOW COLUMNS FROM `posts` LIKE 'type'");
-            if ($stmt->rowCount() == 0) {
-                // Voeg type kolom toe als deze niet bestaat
-                $this->db->query("ALTER TABLE `posts` ADD COLUMN `type` VARCHAR(20) DEFAULT 'text' AFTER `content`");
+            // Haal post ID op
+            $postId = isset($_POST['post_id']) ? (int)$_POST['post_id'] : 0;
+            
+            if (!$postId) {
+                // Bij AJAX request
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Ongeldig bericht ID'
+                    ]);
+                    exit;
+                }
+                
+                // Bij normale request
+                set_flash_message('error', 'Ongeldig bericht ID');
+                redirect('feed');
+                return;
             }
-        } catch (Exception $e) {
-            // Log de fout maar gooi hem niet opnieuw, zodat we verder kunnen
-            error_log('Fout bij het controleren/aanmaken van post_media tabel: ' . $e->getMessage());
+            
+            try {
+                // Controleer of de gebruiker eigenaar is van het bericht of een admin
+                $userId = $_SESSION['user_id'];
+                $userRole = $_SESSION['role'] ?? 'user';
+                $isAdmin = ($userRole === 'admin');
+                
+                $stmt = $this->db->prepare("SELECT user_id FROM posts WHERE id = ?");
+                $stmt->execute([$postId]);
+                $post = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$post) {
+                    throw new \Exception('Bericht niet gevonden');
+                }
+                
+                $isOwner = ($post['user_id'] == $userId);
+                
+                // Alleen eigenaar of admin mag verwijderen
+                if (!$isOwner && !$isAdmin) {
+                    throw new \Exception('Je hebt geen toestemming om dit bericht te verwijderen');
+                }
+                
+                // Start een transactie om gerelateerde records ook te verwijderen
+                $this->db->beginTransaction();
+                
+                // We gebruiken soft delete (is_deleted vlag)
+                $stmt = $this->db->prepare("UPDATE posts SET is_deleted = 1 WHERE id = ?");
+                $success = $stmt->execute([$postId]);
+                
+                if (!$success) {
+                    throw new \Exception('Fout bij het verwijderen van het bericht');
+                }
+                
+                // Commit de transactie
+                $this->db->commit();
+                
+                // Bij AJAX request
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Bericht succesvol verwijderd'
+                    ]);
+                    exit;
+                }
+                
+                // Bij normale request
+                set_flash_message('success', 'Bericht succesvol verwijderd');
+                
+                // Redirect naar de juiste pagina (referer of fallback naar feed)
+                $referer = $_SERVER['HTTP_REFERER'] ?? '';
+                if ($referer && strpos($referer, $_SERVER['HTTP_HOST']) !== false) {
+                    redirect($referer);
+                } else {
+                    redirect('feed');
+                }
+                
+            } catch (\Exception $e) {
+                // Bij een fout, rollback de transactie
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
+                
+                // Bij AJAX request
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ]);
+                    exit;
+                }
+                
+                // Bij normale request
+                set_flash_message('error', $e->getMessage());
+                redirect('feed');
+            }
         }
-    }
 
         /**
-     * Toggle like op een post (like/unlike)
-     */
-    public function toggleLike()
-    {
-    // Controleer of gebruiker is ingelogd
-    if (!isset($_SESSION['user_id'])) {
-        echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
-        exit;
-    }
-    
-    // Controleer of het een POST request is
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
-        exit;
-    }
-    
-    $postId = $_POST['post_id'] ?? null;
-    $userId = $_SESSION['user_id'];
-    
-    if (!$postId) {
-        echo json_encode(['success' => false, 'message' => 'Post ID is verplicht']);
-        exit;
-    }
-    
-    try {
-        // Controleer of post bestaat
-        $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
-        $stmt->execute([$postId]);
-        $post = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$post) {
-            echo json_encode(['success' => false, 'message' => 'Post niet gevonden']);
+         * Toggle like op een post (like/unlike)
+         */
+        public function toggleLike()
+        {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
             exit;
         }
         
-        // Controleer of gebruiker deze post al heeft geliked
-        $stmt = $this->db->prepare("SELECT id FROM post_likes WHERE post_id = ? AND user_id = ?");
-        $stmt->execute([$postId, $userId]);
-        $existingLike = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($existingLike) {
-            // Unlike: verwijder de like
-            $this->removeLike($postId, $userId);
-            $action = 'unliked';
-        } else {
-            // Like: voeg like toe
-            $this->addLike($postId, $userId);
-            $action = 'liked';
+        // Controleer of het een POST request is
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
+            exit;
         }
         
-        // Haal nieuwe like count op
-        $newLikeCount = $this->getLikeCount($postId);
+        $postId = $_POST['post_id'] ?? null;
+        $userId = $_SESSION['user_id'];
         
-        echo json_encode([
-            'success' => true,
-            'action' => $action,
-            'like_count' => $newLikeCount
-        ]);
+        if (!$postId) {
+            echo json_encode(['success' => false, 'message' => 'Post ID is verplicht']);
+            exit;
+        }
         
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Er ging iets mis: ' . $e->getMessage()]);
+        try {
+            // Controleer of post bestaat
+            $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
+            $stmt->execute([$postId]);
+            $post = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$post) {
+                echo json_encode(['success' => false, 'message' => 'Post niet gevonden']);
+                exit;
+            }
+            
+            // Controleer of gebruiker deze post al heeft geliked
+            $stmt = $this->db->prepare("SELECT id FROM post_likes WHERE post_id = ? AND user_id = ?");
+            $stmt->execute([$postId, $userId]);
+            $existingLike = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($existingLike) {
+                // Unlike: verwijder de like
+                $this->removeLike($postId, $userId);
+                $action = 'unliked';
+            } else {
+                // Like: voeg like toe
+                $this->addLike($postId, $userId);
+                $action = 'liked';
+            }
+            
+            // Haal nieuwe like count op
+            $newLikeCount = $this->getLikeCount($postId);
+            
+            echo json_encode([
+                'success' => true,
+                'action' => $action,
+                'like_count' => $newLikeCount
+            ]);
+            
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Er ging iets mis: ' . $e->getMessage()]);
+        }
+        
+        exit;
     }
-    
-    exit;
-}
 
-    /**
-     * Voeg een like toe
-     */
-    private function addLike($postId, $userId)
-{
-    // Begin transaction
-    $this->db->beginTransaction();
-    
-    try {
-        // Voeg like toe aan post_likes tabel
-        $stmt = $this->db->prepare("INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)");
-        $stmt->execute([$postId, $userId]);
+        /**
+         * Voeg een like toe
+         */
+        private function addLike($postId, $userId)
+    {
+        // Begin transaction
+        $this->db->beginTransaction();
         
-        // Update likes_count in posts tabel
-        $stmt = $this->db->prepare("UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?");
-        $stmt->execute([$postId]);
-        
-        $this->db->commit();
-        
-    } catch (Exception $e) {
-        $this->db->rollBack();
-        throw $e;
+        try {
+            // Voeg like toe aan post_likes tabel
+            $stmt = $this->db->prepare("INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)");
+            $stmt->execute([$postId, $userId]);
+            
+            // Update likes_count in posts tabel
+            $stmt = $this->db->prepare("UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?");
+            $stmt->execute([$postId]);
+            
+            $this->db->commit();
+            
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
-}
 
     /**
      * Verwijder een like
      */
     private function removeLike($postId, $userId)
-{
+    {
     // Begin transaction
     $this->db->beginTransaction();
     
@@ -755,19 +873,19 @@ class FeedController extends Controller
         $this->db->rollBack();
         throw $e;
     }
-}
+    }
 
     /**
      * Haal het aantal likes op voor een post
      */
     private function getLikeCount($postId)
-{
+    {
     $stmt = $this->db->prepare("SELECT likes_count FROM posts WHERE id = ?");
     $stmt->execute([$postId]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     
     return $result ? (int)$result['likes_count'] : 0;
-}
+    }
     
     /**
      * Een methode voor het ophalen van meer posts (bijv. voor oneindige scroll)

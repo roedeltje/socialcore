@@ -1,325 +1,70 @@
 /**
- * SocialCore Theme JavaScript
- * 
- * Dit bestand bevat alle JavaScript functionaliteit voor het thema,
- * inclusief het plaatsen van berichten, likes en afbeeldingsupload.
+ * SocialCore theme.js
+ * Bevat alle client-side functionaliteit voor het SocialCore platform
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('SocialCore theme.js geladen');
+    // ===== NAVIGATIE FUNCTIONALITEIT =====
     
-    // Initialiseer alle functionaliteit
-    initMobileMenu();
-    initProfileDropdown();
+    // Mobile menu toggle
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuToggle && mobileMenu) {
+        mobileMenuToggle.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+    
+    // User dropdown menu
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenu = document.getElementById('user-menu');
+    
+    if (userMenuButton && userMenu) {
+        userMenuButton.addEventListener('click', function() {
+            userMenu.classList.toggle('hidden');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
+                userMenu.classList.add('hidden');
+            }
+        });
+    }
+    
+    // ===== POST FORMULIER INITIALISATIE =====
     initPostForm();
+    
+    // ===== LIKE BUTTONS INITIALISATIE =====
     initLikeButtons();
+    
+    // ===== AFBEELDING UPLOAD INITIALISATIE =====
     initImageUpload();
-    initCharacterCounter();
+    
+    // ===== POST MENU EN VERWIJDEREN INITIALISATIE =====
+    initPostMenus();
 });
 
 /**
- * Initialiseer de mobiele menu toggle
- */
-function initMobileMenu() {
-    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-    if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener('click', function() {
-            const mobileMenu = document.querySelector('.mobile-menu');
-            if (mobileMenu) {
-                mobileMenu.classList.toggle('hidden');
-            }
-        });
-    }
-}
-
-/**
- * Initialiseer het profiel dropdown menu
- */
-function initProfileDropdown() {
-    const profileDropdown = document.getElementById('profileDropdown');
-    const profileDropdownMenu = document.getElementById('profileDropdownMenu');
-
-    if (profileDropdown && profileDropdownMenu) {
-        console.log('Dropdown elements gevonden');
-        console.log('Initiële menu display:', getComputedStyle(profileDropdownMenu).display);
-        console.log('Menu classList:', profileDropdownMenu.className);
-        
-        // Zorg ervoor dat het menu initieel verborgen is
-        profileDropdownMenu.style.display = 'none';
-        
-        // Toggle menu bij klikken
-        profileDropdown.addEventListener('click', function(e) {
-            e.preventDefault(); // Voorkom navigatie
-            e.stopPropagation(); // Voorkom dat de click event bubbelt
-            
-            console.log('Dropdown toggle aangeklikt');
-            console.log('Menu display vóór toggle:', profileDropdownMenu.style.display);
-            
-            // Toggle visibility
-            if (profileDropdownMenu.style.display === 'none') {
-                profileDropdownMenu.style.display = 'block';
-                profileDropdownMenu.classList.remove('hidden');
-                console.log('Menu zou nu zichtbaar moeten zijn');
-            } else {
-                profileDropdownMenu.style.display = 'none';
-                profileDropdownMenu.classList.add('hidden');
-                console.log('Menu zou nu verborgen moeten zijn');
-            }
-            
-            console.log('Menu display na toggle:', profileDropdownMenu.style.display);
-        });
-        
-        // Sluit menu als ergens anders wordt geklikt
-        document.addEventListener('click', function(e) {
-            if (profileDropdownMenu.style.display !== 'none' && 
-                !profileDropdown.contains(e.target) && 
-                !profileDropdownMenu.contains(e.target)) {
-                
-                console.log('Klik buiten menu, sluiten');
-                profileDropdownMenu.style.display = 'none';
-                profileDropdownMenu.classList.add('hidden');
-            }
-        });
-    } else {
-        console.log('Dropdown elementen niet gevonden:', 
-                    profileDropdown ? 'Toggle gevonden' : 'Toggle niet gevonden', 
-                    profileDropdownMenu ? 'Menu gevonden' : 'Menu niet gevonden');
-    }
-}
-
-/**
- * Initialiseer het berichtenformulier met AJAX functionaliteit
+ * Initialiseert het formulier voor het plaatsen van berichten
+ * Werkt zowel op de timeline als profielpagina
  */
 function initPostForm() {
-    const postForm = document.getElementById('postForm');
-    
-    if (postForm) {
-        console.log('Post formulier gevonden, voeg AJAX toe');
-        
-        postForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            // Controleer of er content of een afbeelding is
-            const postContent = document.getElementById('postContent');
-            const imageUpload = document.getElementById('imageUpload');
-            const content = postContent ? postContent.value.trim() : '';
-            const hasImage = imageUpload && imageUpload.files && imageUpload.files.length > 0;
-            
-            if (!content && !hasImage) {
-                alert('Voeg tekst of een afbeelding toe aan je bericht.');
-                return;
-            }
-            
-            // Disable de submit button om dubbele posts te voorkomen
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Bezig...';
-            }
-            
-            // FormData gebruiken om zowel tekst als bestanden te versturen
-            const formData = new FormData(postForm);
-            
-            // AJAX request naar de server
-            fetch('/feed/create', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Reset formulier
-                    if (postContent) postContent.value = '';
-                    if (imageUpload) imageUpload.value = '';
-                    
-                    // Reset preview als die er is
-                    const imagePreview = document.getElementById('imagePreview');
-                    if (imagePreview) {
-                        imagePreview.classList.add('hidden');
-                    }
-                    
-                    // Update character counter
-                    if (postContent) {
-                        const event = new Event('input');
-                        postContent.dispatchEvent(event);
-                    }
-                    
-                    // Bericht tonen
-                    showNotification(data.message, 'success');
-                    
-                    // Pagina verversen om het nieuwe bericht te tonen
-                    // Later kunnen we dit vervangen door het bericht dynamisch toe te voegen
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    // Toon foutmelding
-                    showNotification(data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Er is iets misgegaan bij het plaatsen van je bericht.', 'error');
-            })
-            .finally(() => {
-                // Enable de submit button weer
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Plaatsen';
-                }
-            });
-        });
-    } else {
-        console.log('Post formulier niet gevonden');
-    }
-}
-
-/**
- * Initialiseer de like buttons met AJAX functionaliteit
- */
-function initLikeButtons() {
-    const likeButtons = document.querySelectorAll('.like-button');
-    
-    if (likeButtons.length > 0) {
-        console.log('Like buttons gevonden:', likeButtons.length);
-        
-        likeButtons.forEach(button => {
-            // Verwijder bestaande event listeners om dubbele events te voorkomen
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-            
-            newButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                const postId = this.getAttribute('data-post-id');
-                const likeCountElement = this.querySelector('.like-count');
-                const likeIcon = this.querySelector('.like-icon');
-                
-                // Disable button tijdens request
-                this.disabled = true;
-                
-                // AJAX request naar server
-                fetch('/feed/like', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ post_id: postId })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update like count
-                        if (likeCountElement) {
-                            likeCountElement.textContent = data.like_count || data.likes || 0;
-                        }
-                        
-                        // Update button appearance
-                        if (data.action === 'liked' || data.liked) {
-                            // User liked the post
-                            this.classList.add('liked');
-                            if (likeIcon) likeIcon.textContent = '👍';
-                        } else {
-                            // User unliked the post
-                            this.classList.remove('liked');
-                            if (likeIcon) likeIcon.textContent = '👍';
-                        }
-                    } else {
-                        // Show error message
-                        showNotification(data.message || 'Er ging iets mis', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('Er ging iets mis bij het liken van dit bericht', 'error');
-                })
-                .finally(() => {
-                    // Re-enable button
-                    this.disabled = false;
-                });
-            });
-        });
-    } else {
-        console.log('Geen like buttons gevonden');
-    }
-}
-
-/**
- * Initialiseer de afbeeldingsupload en preview functionaliteit
- */
-function initImageUpload() {
-    console.log('Initialiseer afbeeldingsupload');
-    
-    const imageUpload = document.getElementById('imageUpload');
-    const imagePreview = document.getElementById('imagePreview');
-    const removeImage = document.getElementById('removeImage');
-    
-    if (imageUpload && imagePreview && removeImage) {
-        console.log('Afbeeldingsupload elementen gevonden');
-        
-        // Bestand geselecteerd
-        imageUpload.addEventListener('change', function() {
-            console.log('Bestand geselecteerd', this.files);
-            
-            if (this.files && this.files[0]) {
-                // Bestandsvalidatie
-                const file = this.files[0];
-                console.log('Bestandstype:', file.type);
-                
-                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                if (!validTypes.includes(file.type)) {
-                    showNotification('Alleen JPG, PNG, GIF en WEBP bestanden zijn toegestaan.', 'error');
-                    this.value = '';
-                    return;
-                }
-                
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('De afbeelding mag niet groter zijn dan 5MB.', 'error');
-                    this.value = '';
-                    return;
-                }
-                
-                // Preview tonen
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    console.log('Bestand gelezen, toon preview');
-                    const previewImg = imagePreview.querySelector('img');
-                    previewImg.src = e.target.result;
-                    imagePreview.classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Afbeelding verwijderen
-        removeImage.addEventListener('click', function() {
-            console.log('Verwijder afbeelding');
-            imageUpload.value = '';
-            imagePreview.classList.add('hidden');
-            const previewImg = imagePreview.querySelector('img');
-            if (previewImg) previewImg.src = '';
-        });
-    } else {
-        console.log('Kon niet alle benodigde elementen vinden voor afbeeldingspreview');
-    }
-}
-
-/**
- * Initialiseer de karakterteller voor tekstinvoer
- */
-function initCharacterCounter() {
+    // Check of we op de feed pagina zijn (timeline.php)
     const postContent = document.getElementById('postContent');
     const charCounter = document.getElementById('charCounter');
     const submitBtn = document.getElementById('submitBtn');
+    const postForm = document.getElementById('postForm');
     
-    if (postContent && charCounter) {
-        console.log('Karakterteller elementen gevonden');
-        
-        // Update karakterteller
+    // OF op de profiel pagina zijn
+    const profilePostContent = document.getElementById('profilePostContent');
+    const profileCharCounter = document.getElementById('profileCharCounter');
+    const profileSubmitBtn = document.getElementById('profileSubmitBtn');
+    const profilePostForm = document.getElementById('profilePostForm');
+    
+    // Karakterteller voor FEED pagina
+    if (postContent && charCounter && submitBtn) {
         function updateCharCounter() {
             const length = postContent.value.length;
             charCounter.textContent = length + '/1000';
@@ -327,62 +72,410 @@ function initCharacterCounter() {
             if (length > 1000) {
                 charCounter.classList.add('text-red-500');
                 charCounter.classList.remove('text-gray-500');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                }
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
                 charCounter.classList.remove('text-red-500');
                 charCounter.classList.add('text-gray-500');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
         
-        // Update bij het typen
         postContent.addEventListener('input', updateCharCounter);
-        
-        // Update bij het laden (voor old_content)
         updateCharCounter();
-    } else {
-        console.log('Karakterteller elementen niet gevonden');
+        
+        // Form submit handling voor feed
+        if (postForm) {
+            postForm.addEventListener('submit', function(e) {
+                const content = postContent.value.trim();
+                
+                if (content === '') {
+                    e.preventDefault();
+                    alert('Bericht mag niet leeg zijn');
+                    return;
+                }
+                
+                if (content.length > 1000) {
+                    e.preventDefault();
+                    alert('Bericht mag maximaal 1000 karakters bevatten');
+                    return;
+                }
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Plaatsen...';
+            });
+        }
+    }
+    
+    // Karakterteller voor PROFIEL pagina
+    if (profilePostContent && profileCharCounter && profileSubmitBtn) {
+        function updateProfileCharCounter() {
+            const length = profilePostContent.value.length;
+            profileCharCounter.textContent = length + '/1000';
+            
+            if (length > 1000) {
+                profileCharCounter.classList.add('text-red-500');
+                profileCharCounter.classList.remove('text-gray-500');
+                profileSubmitBtn.disabled = true;
+                profileSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                profileCharCounter.classList.remove('text-red-500');
+                profileCharCounter.classList.add('text-gray-500');
+                profileSubmitBtn.disabled = false;
+                profileSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        profilePostContent.addEventListener('input', updateProfileCharCounter);
+        updateProfileCharCounter();
+        
+        // Form submit handler voor profiel pagina
+        if (profilePostForm) {
+            profilePostForm.addEventListener('submit', function(e) {
+                // Controleer of er content of een afbeelding is
+                const content = profilePostContent.value.trim();
+                const profileImageUpload = document.getElementById('profileImageUpload');
+                const hasImage = profileImageUpload && profileImageUpload.files && profileImageUpload.files.length > 0;
+                
+                if (!content && !hasImage) {
+                    e.preventDefault();
+                    alert('Voeg tekst of een afbeelding toe aan je bericht.');
+                    return;
+                }
+                
+                if (content.length > 1000) {
+                    e.preventDefault();
+                    alert('Bericht mag maximaal 1000 karakters bevatten');
+                    return;
+                }
+                
+                // Voorkom dubbele submits
+                profileSubmitBtn.disabled = true;
+                profileSubmitBtn.textContent = 'Bezig...';
+            });
+        }
     }
 }
 
 /**
- * Toon een notificatie aan de gebruiker
- * @param {string} message Het bericht om te tonen
- * @param {string} type Het type notificatie ('success' of 'error')
+ * Initialiseert de like-buttons op de pagina
+ * Werkt zowel op de timeline als profielpagina
  */
-function showNotification(message, type) {
-    // Eenvoudige alert fallback
-    if (type === 'error') {
-        alert('Fout: ' + message);
-    } else {
-        alert(message);
+function initLikeButtons() {
+    const likeButtons = document.querySelectorAll('.like-button');
+    
+    likeButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const postId = this.getAttribute('data-post-id');
+            const likeCountElement = this.querySelector('.like-count');
+            const likeIcon = this.querySelector('.like-icon');
+            
+            // Disable button tijdens request
+            this.disabled = true;
+            
+            // AJAX request naar server
+            fetch('/feed/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'post_id=' + encodeURIComponent(postId)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update like count
+                    likeCountElement.textContent = data.like_count;
+                    
+                    // Update button appearance
+                    if (data.action === 'liked') {
+                        // User liked the post
+                        this.classList.add('liked');
+                        likeIcon.textContent = '👍'; // Filled thumb
+                    } else {
+                        // User unliked the post
+                        this.classList.remove('liked');
+                        likeIcon.textContent = '👍'; // Regular thumb
+                    }
+                } else {
+                    // Show error message
+                    alert('Fout: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Er ging iets mis bij het liken van dit bericht');
+            })
+            .finally(() => {
+                // Re-enable button
+                this.disabled = false;
+            });
+        });
+    });
+}
+
+/**
+ * Initialiseert de afbeelding upload functionaliteit
+ * Werkt zowel op de timeline als profielpagina
+ */
+function initImageUpload() {
+    // Afbeelding upload voor feed pagina
+    const imageUpload = document.getElementById('imageUpload');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImage = imagePreview ? imagePreview.querySelector('img') : null;
+    const removeImage = document.getElementById('removeImage');
+    
+    if (imageUpload && imagePreview && previewImage && removeImage) {
+        // Preview tonen bij selecteren afbeelding
+        imageUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                // Bestandstype validatie
+                const file = this.files[0];
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                
+                if (!validTypes.includes(file.type)) {
+                    alert('Alleen JPG, PNG, GIF en WEBP bestanden zijn toegestaan.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Bestandsgrootte validatie (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('De afbeelding mag niet groter zijn dan 5MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Toon de preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Verwijder afbeelding
+        removeImage.addEventListener('click', function() {
+            imageUpload.value = '';
+            imagePreview.classList.add('hidden');
+            previewImage.src = '';
+        });
     }
     
-    // Hier kun je later een mooiere notificatie implementeren
-    /*
-    // Maak een nieuwe notificatie element
-    const notification = document.createElement('div');
-    notification.className = `notification ${type === 'error' ? 'bg-red-100 border-red-300 text-red-700' : 'bg-green-100 border-green-300 text-green-700'} 
-                             p-3 rounded-lg fixed top-4 right-4 shadow-md border z-50 max-w-xs`;
-    notification.textContent = message;
+    // Afbeelding upload voor profiel pagina
+    const profileImageUpload = document.getElementById('profileImageUpload');
+    const profileImagePreview = document.getElementById('profileImagePreview');
+    const profilePreviewImage = profileImagePreview ? profileImagePreview.querySelector('img') : null;
+    const profileRemoveImage = document.getElementById('profileRemoveImage');
     
-    // Voeg toe aan de pagina
-    document.body.appendChild(notification);
-    
-    // Verwijder na 3 seconden
-    setTimeout(() => {
-        notification.classList.add('opacity-0');
-        notification.style.transition = 'opacity 0.3s ease';
+    if (profileImageUpload && profileImagePreview && profilePreviewImage && profileRemoveImage) {
+        // Preview tonen bij selecteren afbeelding
+        profileImageUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                // Bestandstype validatie
+                const file = this.files[0];
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                
+                if (!validTypes.includes(file.type)) {
+                    alert('Alleen JPG, PNG, GIF en WEBP bestanden zijn toegestaan.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Bestandsgrootte validatie (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('De afbeelding mag niet groter zijn dan 5MB.');
+                    this.value = '';
+                    return;
+                }
+                
+                // Toon de preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreviewImage.src = e.target.result;
+                    profileImagePreview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
         
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
-    */
+        // Verwijder afbeelding
+        profileRemoveImage.addEventListener('click', function() {
+            profileImageUpload.value = '';
+            profileImagePreview.classList.add('hidden');
+            profilePreviewImage.src = '';
+        });
+    }
+}
+
+/**
+ * Initialiseert de post menu's en verwijderknop functionaliteit
+ * Werkt zowel op de timeline als profielpagina
+ */
+function initPostMenus() {
+    console.log('Initialiseren van post menu\'s...');
+    
+    // Post menu toggle (drie puntjes)
+    const postMenuButtons = document.querySelectorAll('.post-menu-button');
+    console.log(`Gevonden: ${postMenuButtons.length} menu knoppen`);
+    
+    postMenuButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Voorkom dat het event bubbelt naar de document click
+            
+            // Vind het dropdown menu voor deze knop
+            const dropdown = this.closest('.post-menu').querySelector('.post-menu-dropdown');
+            console.log('Menu button geklikt, dropdown:', dropdown);
+            
+            // Sluit eerst alle andere dropdowns
+            document.querySelectorAll('.post-menu-dropdown').forEach(menu => {
+                if (menu !== dropdown) {
+                    menu.classList.add('hidden');
+                }
+            });
+            
+            // Toggle het dropdown menu
+            dropdown.classList.toggle('hidden');
+        });
+    });
+    
+    // Sluit alle menu's als er buiten geklikt wordt
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.post-menu')) {
+            document.querySelectorAll('.post-menu-dropdown').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    });
+    
+    // Verwijder post knoppen
+    const deleteButtons = document.querySelectorAll('.delete-post-button');
+    console.log(`Gevonden: ${deleteButtons.length} verwijder knoppen`);
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Verwijder knop geklikt');
+            
+            // Bevestiging vragen
+            if (confirm('Weet je zeker dat je dit bericht wilt verwijderen? Dit kan niet ongedaan worden gemaakt.')) {
+                const form = this.closest('.delete-post-form');
+                const postId = form.querySelector('input[name="post_id"]').value;
+                console.log('Verwijderen bericht met ID:', postId);
+                
+                // AJAX request om post te verwijderen
+                fetch('/feed/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: 'post_id=' + encodeURIComponent(postId)
+                })
+                .then(response => {
+                    console.log('Response ontvangen:', response);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        // Zoek de juiste parent op basis van de pagina waarop we ons bevinden
+                        let postElement = null;
+                        
+                        // Op profielpagina 
+                        // Controleer of we op de krabbels tab van het profiel zijn
+                        const isProfilePage = document.querySelector('.profile-container') !== null;
+                        const isKrabbelsTab = document.querySelector('.krabbels-container') !== null;
+                        
+                        console.log('Is profielpagina:', isProfilePage);
+                        console.log('Is krabbels tab:', isKrabbelsTab);
+                        
+                        if (isProfilePage && isKrabbelsTab) {
+                            // Dit is specifiek voor de berichten in de krabbels tab
+                            console.log('Zoeken naar bericht op profielpagina');
+                            
+                            // Log de form parent structure voor debugging
+                            let parent = form.parentElement;
+                            let i = 0;
+                            console.log('Form parent structuur:');
+                            while (parent && i < 5) {
+                                console.log(`Level ${i}:`, parent);
+                                console.log(`Level ${i} classList:`, parent.classList);
+                                parent = parent.parentElement;
+                                i++;
+                            }
+                            
+                            // Probeer verschillende selectors om het post element te vinden
+                            const possiblePostElements = [
+                                form.closest('.bg-white.p-4.rounded-lg.shadow.mb-4'),  // Meest waarschijnlijke
+                                form.closest('[class*="bg-white"][class*="rounded-lg"][class*="shadow"]'),  // Algemenere selector
+                                form.closest('.mb-4'),  // Heel algemeen, laatste optie
+                            ];
+                            
+                            for (const element of possiblePostElements) {
+                                if (element) {
+                                    postElement = element;
+                                    console.log('Post element gevonden:', postElement);
+                                    break;
+                                }
+                            }
+                        } else {
+                            // Timeline of andere pagina
+                            console.log('Zoeken naar bericht op timeline of andere pagina');
+                            postElement = form.closest('.post-card') || 
+                                          form.closest('.bg-white.p-4.rounded-lg.shadow.mb-4');
+                        }
+                        
+                        console.log('Gevonden post element:', postElement);
+                        
+                        // Als we nog steeds geen element hebben gevonden, zoeken we omhoog
+                        if (!postElement) {
+                            let currentElement = form;
+                            for (let i = 0; i < 5; i++) {
+                                currentElement = currentElement.parentElement;
+                                if (!currentElement) break;
+                                
+                                console.log(`Kandidaat ${i}:`, currentElement);
+                                
+                                // Controleer of dit element een post zou kunnen zijn
+                                if (currentElement.classList.contains('bg-white') || 
+                                    currentElement.classList.contains('shadow') || 
+                                    currentElement.classList.contains('rounded-lg') ||
+                                    currentElement.classList.contains('mb-4')) {
+                                    
+                                    postElement = currentElement;
+                                    console.log('Post element gevonden via omhoog zoeken:', postElement);
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Als we een post element hebben gevonden, verwijder het
+                        if (postElement) {
+                            postElement.remove();
+                            console.log('Post element verwijderd uit DOM');
+                        } else {
+                            console.warn('Geen post element gevonden om te verwijderen, pagina verversen');
+                            window.location.reload();
+                        }
+                        
+                        // Toon een succesmelding
+                        alert(data.message);
+                    } else {
+                        // Toon een foutmelding
+                        alert('Fout: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Er ging iets mis bij het verwijderen van dit bericht');
+                });
+            }
+        });
+    });
 }

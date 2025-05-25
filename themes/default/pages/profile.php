@@ -17,7 +17,7 @@
             <div class="w-full md:w-1/3 p-4 border-r border-blue-100">
                 <div class="profile-photo mb-4">
                     <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                         alt="<?= htmlspecialchars($user['name'] ?? 'Rudy') ?>" 
+                         alt="<?= htmlspecialchars($user['name'] ?? 'Gebruiker') ?>" 
                          class="w-full max-w-xs mx-auto border-4 border-blue-200 rounded-lg">
                 </div>
                 
@@ -96,205 +96,222 @@
                     
                     <!-- Krabbels tab -->
                     <?php elseif ($active_tab == 'krabbels'): ?>
-                    
-                <!-- Krabbels tab content -->
-                <div class="krabbels-container mt-4">
-        
-        <!-- Krabbel formulier (voor andere gebruikers) -->
-        <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $user['id']): ?>
-            <form action="<?= base_url('?route=profile/post-krabbel') ?>" method="post" class="bg-blue-50 p-4 rounded-lg mb-4">
-                <h4 class="font-bold text-blue-700 mb-3">Schrijf een krabbel</h4>
-                <input type="hidden" name="receiver_id" value="<?= $user['id'] ?>">
-                <input type="hidden" name="receiver_username" value="<?= $user['username'] ?>">
-                <textarea name="message" placeholder="Schrijf een krabbel..." class="w-full p-2 border rounded mb-2" required></textarea>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Krabbel plaatsen</button>
-            </form>
-        <?php endif; ?>
-        
-        <!-- Post formulier (voor eigen profiel) -->
-        <?php if ($viewer_is_owner): ?>
-    <div class="post-composer bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-        <div class="bg-blue-100 p-3 border-b border-blue-200">
-            <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
-        </div>
-        <div class="p-4">
-            <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="profilePostForm">
-                <div class="flex space-x-3">
-                    <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                         alt="<?= htmlspecialchars($user['name']) ?>" 
-                         class="w-10 h-10 rounded-full border-2 border-blue-200">
-                    <textarea name="content" rows="2" 
-                              class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                              placeholder="Wat is er aan de hand, <?= htmlspecialchars($user['name']) ?>?"
-                              maxlength="1000"
-                              id="profilePostContent"></textarea>
-                </div>
-                
-                <!-- Afbeelding preview container -->
-                <div id="profileImagePreview" class="mt-3 relative rounded-lg border border-blue-200 bg-blue-50 hidden">
-                    <img src="" alt="Preview" class="max-h-64 rounded-lg mx-auto">
-                    <button type="button" id="profileRemoveImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">×</button>
-                </div>
-                
-                <!-- Karakterteller -->
-                <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
-                    <span></span>
-                    <span id="profileCharCounter">0/1000</span>
-                </div>
-                
-                <div class="flex justify-between mt-3">
-                    <div class="flex space-x-2">
-                        <!-- Afbeelding upload button -->
-                        <label for="profileImageUpload" class="hyves-tool-button cursor-pointer" title="Voeg foto toe">
-                            <span class="icon">📷</span>
-                            <input type="file" id="profileImageUpload" name="image" accept="image/*" class="hidden">
-                        </label>
-                        <button type="button" class="hyves-tool-button" title="Voeg video toe">
-                            <span class="icon">🎬</span>
-                        </button>
-                        <button type="button" class="hyves-tool-button" title="Voeg link toe">
-                            <span class="icon">🔗</span>
-                        </button>
-                        <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
-                            <span class="icon">😊</span>
-                        </button>
-                    </div>
-                    <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4" id="profileSubmitBtn">
-                        Plaatsen
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-<?php endif; ?>
-        
-        <!-- Echte posts uit database -->
-        <!-- Weergave van posts met afbeeldingen -->
-            <?php if (!empty($posts)): ?>
-                <div class="mb-6">
-                    <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Berichten</h4>
-                    <?php foreach ($posts as $post): ?>
-                        <div class="bg-white p-4 rounded-lg shadow mb-4">
-                            <div class="flex items-center mb-3">
-                                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                    alt="<?= htmlspecialchars($user['name']) ?>" 
-                                    class="w-10 h-10 rounded-full mr-3">
-                                <div>
-                                    <div class="font-bold text-blue-600"><?= htmlspecialchars($user['name']) ?></div>
-                                    <div class="text-gray-500 text-sm"><?= $post['created_at'] ?></div>
-                                </div>
-                            </div>
+                        <!-- Krabbels tab content -->
+                        <div class="krabbels-container mt-4">
+                            <!-- Krabbel formulier (voor andere gebruikers) -->
+                            <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $user['id']): ?>
+                                <form action="<?= base_url('?route=profile/post-krabbel') ?>" method="post" class="bg-blue-50 p-4 rounded-lg mb-4">
+                                    <h4 class="font-bold text-blue-700 mb-3">Schrijf een krabbel</h4>
+                                    <input type="hidden" name="receiver_id" value="<?= $user['id'] ?>">
+                                    <input type="hidden" name="receiver_username" value="<?= $user['username'] ?>">
+                                    <textarea name="message" placeholder="Schrijf een krabbel..." class="w-full p-2 border rounded mb-2" required></textarea>
+                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Krabbel plaatsen</button>
+                                </form>
+                            <?php endif; ?>
                             
-                            <div class="mb-3">
-                                <?php if (!empty($post['content'])): ?>
-                                    <p class="text-gray-700"><?= nl2br(htmlspecialchars($post['content'])) ?></p>
-                                <?php endif; ?>
-                                
-                                <!-- Afbeelding weergave -->
-                                <?php if (!empty($post['media_path'])): ?>
-                                    <div class="mt-3 post-media rounded-lg overflow-hidden border border-blue-200">
-                                        <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
-                                            alt="Post afbeelding" 
-                                            class="w-full h-auto max-h-96 object-contain">
+                            <!-- Post formulier (voor eigen profiel) -->
+                            <?php if ($viewer_is_owner): ?>
+                                <div class="post-composer bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+                                    <div class="bg-blue-100 p-3 border-b border-blue-200">
+                                        <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
                                     </div>
+                                    <div class="p-4">
+                                        <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="profilePostForm">
+                                            <div class="flex space-x-3">
+                                                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                                     alt="<?= htmlspecialchars($user['name']) ?>" 
+                                                     class="w-10 h-10 rounded-full border-2 border-blue-200">
+                                                <textarea name="content" rows="2" 
+                                                          class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                                          placeholder="Wat is er aan de hand, <?= htmlspecialchars($user['name']) ?>?"
+                                                          maxlength="1000"
+                                                          id="profilePostContent"></textarea>
+                                            </div>
+                                            
+                                            <!-- Afbeelding preview container -->
+                                            <div id="profileImagePreview" class="mt-3 relative rounded-lg border border-blue-200 bg-blue-50 hidden">
+                                                <img src="" alt="Preview" class="max-h-64 rounded-lg mx-auto">
+                                                <button type="button" id="profileRemoveImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">×</button>
+                                            </div>
+                                            
+                                            <!-- Karakterteller -->
+                                            <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
+                                                <span></span>
+                                                <span id="profileCharCounter">0/1000</span>
+                                            </div>
+                                            
+                                            <div class="flex justify-between mt-3">
+                                                <div class="flex space-x-2">
+                                                    <!-- Afbeelding upload button -->
+                                                    <label for="profileImageUpload" class="hyves-tool-button cursor-pointer" title="Voeg foto toe">
+                                                        <span class="icon">📷</span>
+                                                        <input type="file" id="profileImageUpload" name="image" accept="image/*" class="hidden">
+                                                    </label>
+                                                    <button type="button" class="hyves-tool-button" title="Voeg video toe">
+                                                        <span class="icon">🎬</span>
+                                                    </button>
+                                                    <button type="button" class="hyves-tool-button" title="Voeg link toe">
+                                                        <span class="icon">🔗</span>
+                                                    </button>
+                                                    <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
+                                                        <span class="icon">😊</span>
+                                                    </button>
+                                                </div>
+                                                <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4" id="profileSubmitBtn">
+                                                    Plaatsen
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <!-- Echte posts uit database -->
+                            <?php if (!empty($posts)): ?>
+                                <div class="mb-6">
+                                    <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Berichten</h4>
+                                    <?php foreach ($posts as $post): ?>
+                                        <div class="bg-white p-4 rounded-lg shadow mb-4">
+                                            <div class="flex items-center mb-3">
+                                                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                                    alt="<?= htmlspecialchars($user['name']) ?>" 
+                                                    class="w-10 h-10 rounded-full mr-3">
+                                                <div class="flex-grow">
+                                                    <div class="font-bold text-blue-600"><?= htmlspecialchars($user['name']) ?></div>
+                                                    <div class="text-gray-500 text-sm"><?= $post['created_at'] ?></div>
+                                                </div>
+                                                
+                                                <!-- Verwijder/opties menu -->
+                                                <?php if (isset($_SESSION['user_id']) && (isset($post['user_id']) && $post['user_id'] == $_SESSION['user_id'] || isset($_SESSION['role']) && $_SESSION['role'] === 'admin')): ?>
+                                                    <div class="relative post-menu">
+                                                        <button type="button" class="post-menu-button text-gray-500 hover:text-gray-700 p-1 rounded-full">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                                            </svg>
+                                                        </button>
+                                                        <div class="post-menu-dropdown absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden">
+                                                            <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
+                                                                <input type="hidden" name="post_id" value="<?= $post['id'] ?? 0 ?>">
+                                                                <button type="button" class="delete-post-button block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                                                    Bericht verwijderen
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <?php if (!empty($post['content'])): ?>
+                                                    <p class="text-gray-700"><?= nl2br(htmlspecialchars($post['content'])) ?></p>
+                                                <?php endif; ?>
+                                                
+                                                <!-- Afbeelding weergave -->
+                                                <?php if (!empty($post['media_path'])): ?>
+                                                    <div class="mt-3 post-media rounded-lg overflow-hidden border border-blue-200">
+                                                        <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
+                                                            alt="Post afbeelding" 
+                                                            class="w-full h-auto max-h-96 object-contain">
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            
+                                            <!-- Post actions -->
+                                            <div class="flex justify-between text-sm border-t border-gray-200 pt-3">
+                                                <button class="hyves-action-button like-button <?= isset($post['is_liked']) && $post['is_liked'] ? 'liked' : '' ?>" data-post-id="<?= $post['id'] ?>">
+                                                    <span class="like-icon">👍</span>
+                                                    <span class="text"><span class="like-count"><?= $post['likes'] ?? 0 ?></span> Respect!</span>
+                                                </button>
+                                                <button class="flex items-center space-x-1 text-blue-600 hover:text-blue-800">
+                                                    <span>💬</span>
+                                                    <span><?= $post['comments'] ?? 0 ?> Reacties</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <!-- Krabbels van vrienden -->
+                            <?php if (!empty($krabbels)): ?>
+                                <div class="mb-6">
+                                    <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Krabbels van vrienden</h4>
+                                    <?php foreach ($krabbels as $krabbel): ?>
+                                        <div class="krabbel-item bg-white p-4 rounded-lg shadow mb-4">
+                                            <div class="flex items-center mb-2">
+                                                <img src="<?= base_url('theme-assets/default/images/' . 
+                                                          (strpos($krabbel['sender_name'], 'Jan') !== false || 
+                                                           strpos($krabbel['sender_name'], 'Thomas') !== false || 
+                                                           strpos($krabbel['sender_name'], 'Lucas') !== false || 
+                                                           strpos($krabbel['sender_name'], 'Tim') !== false || 
+                                                           strpos($krabbel['sender_name'], 'Robin') !== false ? 
+                                                           'default-avatar-male.png' : 
+                                                           (strpos($krabbel['sender_name'], 'Petra') !== false || 
+                                                            strpos($krabbel['sender_name'], 'Emma') !== false || 
+                                                            strpos($krabbel['sender_name'], 'Sophie') !== false || 
+                                                            strpos($krabbel['sender_name'], 'Nina') !== false || 
+                                                            strpos($krabbel['sender_name'], 'Laura') !== false ? 
+                                                            'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
+                                                       alt="<?= htmlspecialchars($krabbel['sender_name']) ?>" class="w-10 h-10 rounded-full mr-2">
+                                                <div class="flex-grow">
+                                                    <a href="<?= base_url('profile/' . $krabbel['sender_username']) ?>" class="font-bold text-blue-600"><?= htmlspecialchars($krabbel['sender_name']) ?></a>
+                                                    <div class="text-gray-500 text-sm"><?= date('d-m-Y H:i', strtotime($krabbel['created_at'])) ?></div>
+                                                </div>
+                                            </div>
+                                            <p class="text-gray-700"><?= nl2br(htmlspecialchars($krabbel['message'])) ?></p>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <!-- Als er geen content is -->
+                            <?php if (empty($posts) && empty($krabbels)): ?>
+                                <div class="bg-white p-6 rounded-lg shadow text-center">
+                                    <div class="text-6xl mb-4">📭</div>
+                                    <h3 class="text-xl font-bold text-blue-800 mb-2">Nog geen krabbels</h3>
+                                    <p class="text-gray-600">
+                                        <?php if ($viewer_is_owner): ?>
+                                            Plaats je eerste bericht of vraag vrienden om een krabbel achter te laten!
+                                        <?php else: ?>
+                                            Wees de eerste om een krabbel achter te laten!
+                                        <?php endif; ?>
+                                    </p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                    <!-- Vrienden tab -->
+                    <?php elseif ($active_tab == 'vrienden'): ?>
+                        <!-- Vrienden tab content -->
+                        <div class="friends-container mt-4">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                <?php if (!empty($friends)): ?>
+                                    <?php foreach ($friends as $friend): ?>
+                                        <div class="friend-card text-center">
+                                            <a href="<?= base_url('profile/' . $friend['username']) ?>" class="block">
+                                                <img src="<?= base_url('theme-assets/default/images/' . 
+                                                          (strpos($friend['name'], 'Jan') !== false || 
+                                                           strpos($friend['name'], 'Thomas') !== false || 
+                                                           strpos($friend['name'], 'Lucas') !== false || 
+                                                           strpos($friend['name'], 'Tim') !== false || 
+                                                           strpos($friend['name'], 'Robin') !== false ? 
+                                                           'default-avatar-male.png' : 
+                                                           (strpos($friend['name'], 'Petra') !== false || 
+                                                            strpos($friend['name'], 'Emma') !== false || 
+                                                            strpos($friend['name'], 'Sophie') !== false || 
+                                                            strpos($friend['name'], 'Nina') !== false || 
+                                                            strpos($friend['name'], 'Laura') !== false ? 
+                                                            'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
+                                                   alt="<?= htmlspecialchars($friend['name']) ?>" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
+                                                <div class="font-medium"><?= htmlspecialchars($friend['name']) ?></div>
+                                            </a>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen vrienden.</p>
                                 <?php endif; ?>
                             </div>
-                            
-                            <!-- Post actions -->
-                            <div class="flex justify-between text-sm border-t border-gray-200 pt-3">
-                                <button class="hyves-action-button like-button <?= $post['is_liked'] ? 'liked' : '' ?>" data-post-id="<?= $post['id'] ?>">
-                                    <span class="like-icon">👍</span>
-                                    <span class="text"><span class="like-count"><?= $post['likes'] ?></span> Respect!</span>
-                                </button>
-                                <button class="flex items-center space-x-1 text-blue-600 hover:text-blue-800">
-                                    <span>💬</span>
-                                    <span><?= $post['comments'] ?> Reacties</span>
-                                </button>
-                            </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        
-        <!-- Dummy krabbels (later echte krabbels uit database) -->
-        <?php if (!empty($krabbels)): ?>
-            <div class="mb-6">
-                <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Krabbels van vrienden</h4>
-                <?php foreach ($krabbels as $krabbel): ?>
-                    <div class="krabbel-item bg-white p-4 rounded-lg shadow mb-4">
-                        <div class="flex items-center mb-2">
-                            <img src="<?= base_url('theme-assets/default/images/' . 
-                                      (strpos($krabbel['sender_name'], 'Jan') !== false || 
-                                       strpos($krabbel['sender_name'], 'Thomas') !== false || 
-                                       strpos($krabbel['sender_name'], 'Lucas') !== false || 
-                                       strpos($krabbel['sender_name'], 'Tim') !== false || 
-                                       strpos($krabbel['sender_name'], 'Robin') !== false ? 
-                                       'default-avatar-male.png' : 
-                                       (strpos($krabbel['sender_name'], 'Petra') !== false || 
-                                        strpos($krabbel['sender_name'], 'Emma') !== false || 
-                                        strpos($krabbel['sender_name'], 'Sophie') !== false || 
-                                        strpos($krabbel['sender_name'], 'Nina') !== false || 
-                                        strpos($krabbel['sender_name'], 'Laura') !== false ? 
-                                        'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                   alt="<?= htmlspecialchars($krabbel['sender_name']) ?>" class="w-10 h-10 rounded-full mr-2">
-                            <div>
-                                <a href="<?= base_url('profile/' . $krabbel['sender_username']) ?>" class="font-bold text-blue-600"><?= htmlspecialchars($krabbel['sender_name']) ?></a>
-                                <div class="text-gray-500 text-sm"><?= date('d-m-Y H:i', strtotime($krabbel['created_at'])) ?></div>
-                            </div>
-                        </div>
-                        <p class="text-gray-700"><?= nl2br(htmlspecialchars($krabbel['message'])) ?></p>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-        
-        <!-- Als er geen content is -->
-        <?php if (empty($posts) && empty($krabbels)): ?>
-            <div class="bg-white p-6 rounded-lg shadow text-center">
-                <div class="text-6xl mb-4">📭</div>
-                <h3 class="text-xl font-bold text-blue-800 mb-2">Nog geen krabbels</h3>
-                <p class="text-gray-600">
-                    <?php if ($viewer_is_owner): ?>
-                        Plaats je eerste bericht of vraag vrienden om een krabbel achter te laten!
-                    <?php else: ?>
-                        Wees de eerste om een krabbel achter te laten!
-                    <?php endif; ?>
-                </p>
-            </div>
-        <?php endif; ?>
-                    
-                <!-- Vrienden tab -->
-                <?php elseif ($active_tab == 'vrienden'): ?>
-                <!-- Vrienden tab content -->
-                <div class="friends-container mt-4">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        <?php if (!empty($friends)): ?>
-                            <?php foreach ($friends as $friend): ?>
-                                <div class="friend-card text-center">
-                                    <a href="<?= base_url('profile/' . $friend['username']) ?>" class="block">
-                                        <img src="<?= base_url('theme-assets/default/images/' . 
-                                                  (strpos($friend['name'], 'Jan') !== false || 
-                                                   strpos($friend['name'], 'Thomas') !== false || 
-                                                   strpos($friend['name'], 'Lucas') !== false || 
-                                                   strpos($friend['name'], 'Tim') !== false || 
-                                                   strpos($friend['name'], 'Robin') !== false ? 
-                                                   'default-avatar-male.png' : 
-                                                   (strpos($friend['name'], 'Petra') !== false || 
-                                                    strpos($friend['name'], 'Emma') !== false || 
-                                                    strpos($friend['name'], 'Sophie') !== false || 
-                                                    strpos($friend['name'], 'Nina') !== false || 
-                                                    strpos($friend['name'], 'Laura') !== false ? 
-                                                    'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                           alt="<?= htmlspecialchars($friend['name']) ?>" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
-                                        <div class="font-medium"><?= htmlspecialchars($friend['name']) ?></div>
-                                    </a>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen vrienden.</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
                     
                     <!-- Foto's tab -->
                     <?php elseif ($active_tab == 'fotos'): ?>
@@ -338,238 +355,3 @@
         </div> <!-- Sluit .flex flex-col md:flex-row -->
     </div> <!-- Sluit .profile-content -->
 </div> <!-- Sluit .profile-container -->
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Check of we op de feed pagina zijn (timeline.php)
-    const postContent = document.getElementById('postContent');
-    const charCounter = document.getElementById('charCounter');
-    const submitBtn = document.getElementById('submitBtn');
-    
-    // OF op de profiel pagina zijn
-    const profilePostContent = document.getElementById('profilePostContent');
-    const profileCharCounter = document.getElementById('profileCharCounter');
-    const profileSubmitBtn = document.getElementById('profileSubmitBtn');
-    const profilePostForm = document.getElementById('profilePostForm');
-    
-    // Karakterteller voor FEED pagina
-    if (postContent && charCounter && submitBtn) {
-        function updateCharCounter() {
-            const length = postContent.value.length;
-            charCounter.textContent = length + '/1000';
-            
-            if (length > 1000) {
-                charCounter.classList.add('text-red-500');
-                charCounter.classList.remove('text-gray-500');
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                charCounter.classList.remove('text-red-500');
-                charCounter.classList.add('text-gray-500');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-        
-        postContent.addEventListener('input', updateCharCounter);
-        updateCharCounter();
-        
-        // Form submit handling voor feed
-        const postForm = document.getElementById('postForm');
-        if (postForm) {
-            postForm.addEventListener('submit', function(e) {
-                const content = postContent.value.trim();
-                
-                if (content === '') {
-                    e.preventDefault();
-                    alert('Bericht mag niet leeg zijn');
-                    return;
-                }
-                
-                if (content.length > 1000) {
-                    e.preventDefault();
-                    alert('Bericht mag maximaal 1000 karakters bevatten');
-                    return;
-                }
-                
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Plaatsen...';
-            });
-        }
-    }
-    
-    // Karakterteller voor PROFIEL pagina
-    if (profilePostContent && profileCharCounter && profileSubmitBtn) {
-        function updateProfileCharCounter() {
-            const length = profilePostContent.value.length;
-            profileCharCounter.textContent = length + '/1000';
-            
-            if (length > 1000) {
-                profileCharCounter.classList.add('text-red-500');
-                profileCharCounter.classList.remove('text-gray-500');
-                profileSubmitBtn.disabled = true;
-                profileSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                profileCharCounter.classList.remove('text-red-500');
-                profileCharCounter.classList.add('text-gray-500');
-                profileSubmitBtn.disabled = false;
-                profileSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-        
-        profilePostContent.addEventListener('input', updateProfileCharCounter);
-        updateProfileCharCounter();
-    }
-
-    // ===== LIKE FUNCTIONALITEIT (werkt op beide pagina's) =====
-    const likeButtons = document.querySelectorAll('.like-button');
-    
-    likeButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const postId = this.getAttribute('data-post-id');
-            const likeCountElement = this.querySelector('.like-count');
-            const likeIcon = this.querySelector('.like-icon');
-            
-            // Disable button tijdens request
-            this.disabled = true;
-            
-            // AJAX request naar server
-            fetch('/feed/like', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'post_id=' + encodeURIComponent(postId)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update like count
-                    likeCountElement.textContent = data.like_count;
-                    
-                    // Update button appearance
-                    if (data.action === 'liked') {
-                        // User liked the post
-                        this.classList.add('liked');
-                        likeIcon.textContent = '👍'; // Filled thumb
-                    } else {
-                        // User unliked the post
-                        this.classList.remove('liked');
-                        likeIcon.textContent = '👍'; // Regular thumb
-                    }
-                } else {
-                    // Show error message
-                    alert('Fout: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Er ging iets mis bij het liken van dit bericht');
-            })
-            .finally(() => {
-                // Re-enable button
-                this.disabled = false;
-            });
-        });
-    });
-
-    // Afbeelding upload preview voor profiel pagina
-    const profileImageUpload = document.getElementById('profileImageUpload');
-    const profileImagePreview = document.getElementById('profileImagePreview');
-    const profilePreviewImage = profileImagePreview ? profileImagePreview.querySelector('img') : null;
-    const profileRemoveImage = document.getElementById('profileRemoveImage');
-
-    if (profileImageUpload && profileImagePreview && profilePreviewImage && profileRemoveImage) {
-        // Preview tonen bij selecteren afbeelding
-        profileImageUpload.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                // Bestandstype validatie
-                const file = this.files[0];
-                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                
-                if (!validTypes.includes(file.type)) {
-                    alert('Alleen JPG, PNG, GIF en WEBP bestanden zijn toegestaan.');
-                    this.value = '';
-                    return;
-                }
-                
-                // Bestandsgrootte validatie (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('De afbeelding mag niet groter zijn dan 5MB.');
-                    this.value = '';
-                    return;
-                }
-                
-                // Toon de preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profilePreviewImage.src = e.target.result;
-                    profileImagePreview.classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Verwijder afbeelding
-        profileRemoveImage.addEventListener('click', function() {
-            profileImageUpload.value = '';
-            profileImagePreview.classList.add('hidden');
-            profilePreviewImage.src = '';
-        });
-    }
-
-    // Form submit handler voor profiel pagina
-    if (profilePostForm) {
-        profilePostForm.addEventListener('submit', function(e) {
-            // Controleer of er content of een afbeelding is
-            const content = profilePostContent.value.trim();
-            const hasImage = profileImageUpload && profileImageUpload.files && profileImageUpload.files.length > 0;
-            
-            if (!content && !hasImage) {
-                e.preventDefault();
-                alert('Voeg tekst of een afbeelding toe aan je bericht.');
-                return;
-            }
-            
-            if (content.length > 1000) {
-                e.preventDefault();
-                alert('Bericht mag maximaal 1000 karakters bevatten');
-                return;
-            }
-            
-            // Voorkom dubbele submits
-            profileSubmitBtn.disabled = true;
-            profileSubmitBtn.textContent = 'Bezig...';
-        });
-    }
-});
-
-// CSS voor liked state
-const likeStyles = `
-<style>
-.like-button.liked {
-    background-color: #3b82f6 !important;
-    color: white !important;
-}
-
-.like-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.like-button {
-    transition: all 0.2s ease;
-}
-
-.like-button:hover:not(:disabled) {
-    background-color: #dbeafe;
-    transform: translateY(-1px);
-}
-</style>
-`;
-
-// Voeg CSS toe aan de pagina
-document.head.insertAdjacentHTML('beforeend', likeStyles);
-</script>
