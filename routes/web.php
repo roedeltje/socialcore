@@ -61,6 +61,14 @@ return [
     'middleware' => [FeedMiddleware::class]  
 ],
 
+    'feed/comment' => [
+    'callback' => function () {
+        $feedController = new FeedController();
+        $feedController->addComment();
+    },
+    'middleware' => [FeedMiddleware::class]  
+],
+
     'about' => [
         'callback' => function () {
             $aboutController = new AboutController();

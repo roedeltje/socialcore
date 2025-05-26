@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ===== POST MENU EN VERWIJDEREN INITIALISATIE =====
     initPostMenus();
+
+    // ===== COMMENT KARAKTERTELLER =====
+    initCommentCharCounter();
+
+    // ===== COMMENT FORMULIEREN =====
+    initCommentForms();
 });
 
 /**
@@ -478,4 +484,231 @@ function initPostMenus() {
             }
         });
     });
+
+    // ===== COMMENT KARAKTERTELLER =====
+    initCommentCharCounter();
+
+    /**
+     * Initialiseert de karakterteller voor comment formulieren
+     * Dit zorgt ervoor dat gebruikers kunnen zien hoeveel karakters ze hebben getypt
+     */
+    function initCommentCharCounter() {
+        // Zoek alle comment textareas op de pagina
+        const commentTextareas = document.querySelectorAll('.add-comment-form textarea');
+        
+        console.log(`Gevonden: ${commentTextareas.length} comment textareas`);
+        
+        // Voor elke textarea, voeg een event listener toe
+        commentTextareas.forEach(textarea => {
+            // Zoek de bijbehorende karakterteller
+            const form = textarea.closest('.add-comment-form');
+            const charCounter = form.querySelector('.comment-char-counter');
+            
+            if (charCounter) {
+                // Functie om de karakterteller bij te werken
+                function updateCharCounter() {
+                    const length = textarea.value.length;
+                    const maxLength = 500; // Maximaal aantal karakters
+                    
+                    // Update de tekst
+                    charCounter.textContent = `${length}/${maxLength}`;
+                    
+                    // Verander de kleur als we over de limiet gaan
+                    if (length > maxLength) {
+                        charCounter.classList.add('text-red-500');
+                        charCounter.classList.remove('text-gray-500');
+                    } else {
+                        charCounter.classList.remove('text-red-500');
+                        charCounter.classList.add('text-gray-500');
+                    }
+                }
+                
+                // Luister naar typing in de textarea
+                textarea.addEventListener('input', updateCharCounter);
+                
+                // Update de teller meteen bij het laden van de pagina
+                updateCharCounter();
+                
+                console.log('Karakterteller toegevoegd voor textarea');
+            }
+        });
+    }
+
+    // ===== COMMENT FORMULIEREN =====
+    initCommentForms();
+
+    /**
+     * Initialiseert de comment formulieren
+     * Dit zorgt ervoor dat we kunnen reageren op het versturen van comments
+     */
+    function initCommentForms() {
+    // Zoek alle comment formulieren op de pagina
+    const commentForms = document.querySelectorAll('.add-comment-form');
+    
+    console.log(`Gevonden: ${commentForms.length} comment formulieren`);
+    
+    // Voor elk formulier, voeg een event listener toe
+    commentForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Voorkom dat de pagina ververst (default gedrag)
+            e.preventDefault();
+            
+            console.log('Comment formulier verzonden!');
+            
+            // Haal de waarden op uit het formulier
+            const textarea = form.querySelector('textarea[name="comment_content"]');
+            const submitButton = form.querySelector('button[type="submit"]');
+            const postId = form.getAttribute('data-post-id');
+            const commentText = textarea.value.trim();
+            
+            console.log('Post ID:', postId);
+            console.log('Comment tekst:', commentText);
+            
+            // Eenvoudige validatie
+            if (commentText === '') {
+                alert('Je kunt geen lege reactie versturen.');
+                return;
+            }
+            
+            if (commentText.length > 500) {
+                alert('Je reactie mag maximaal 500 karakters bevatten.');
+                return;
+            }
+            
+            // Disable de knop tijdens het versturen
+            submitButton.disabled = true;
+            submitButton.textContent = 'Bezig...';
+            
+            // Verstuur de comment via AJAX
+            fetch('/feed/comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'post_id=' + encodeURIComponent(postId) + '&comment_content=' + encodeURIComponent(commentText)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response ontvangen:', data);
+                
+                if (data.success) {
+                    // Succesvol toegevoegd
+                    console.log('Comment succesvol toegevoegd!');
+                    
+                    // Maak het tekstveld leeg
+                    textarea.value = '';
+                    
+                    // Update de karakterteller
+                    const charCounter = form.querySelector('.comment-char-counter');
+                    if (charCounter) {
+                        charCounter.textContent = '0/500';
+                        charCounter.classList.remove('text-red-500');
+                        charCounter.classList.add('text-gray-500');
+                    }
+                    
+                    // Voeg de nieuwe comment toe aan de lijst
+                    if (data.comment) {
+                        addCommentToDOM(form, data.comment);
+                    }
+                    
+                    // Update comment count in de post actions
+                    updateCommentCount(postId);
+                    
+                    // Optioneel: toon een kort succesbericht
+                    showNotification('Reactie toegevoegd!', 'success');
+                    
+                } else {
+                    // Er ging iets mis
+                    console.error('Fout bij toevoegen comment:', data.message);
+                    alert('Fout: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Netwerk fout:', error);
+                alert('Er ging iets mis bij het versturen van je reactie. Probeer het opnieuw.');
+            })
+            .finally(() => {
+                // Enable de knop weer
+                submitButton.disabled = false;
+                submitButton.textContent = 'Reageren';
+            });
+        });
+    });
+  }
+
+    /**
+     * Voeg een nieuwe comment toe aan de DOM
+     */
+    function addCommentToDOM(form, comment) {
+        // Zoek de container waar comments worden weergegeven
+        const commentsSection = form.closest('.comments-section');
+        const existingComments = commentsSection.querySelector('.existing-comments');
+        
+        // Maak de HTML voor de nieuwe comment
+        const commentHTML = `
+            <div class="comment-item flex space-x-3 p-2 bg-blue-50 rounded-lg">
+                <img src="${comment.avatar}" 
+                    alt="${comment.user_name}" 
+                    class="w-8 h-8 rounded-full border border-blue-200 flex-shrink-0">
+                <div class="flex-grow">
+                    <div class="comment-header flex items-center space-x-2 mb-1">
+                        <a href="/profile/${comment.username}" class="font-medium text-blue-800 hover:underline text-sm">
+                            ${comment.user_name}
+                        </a>
+                        <span class="text-xs text-gray-500">${comment.time_ago}</span>
+                    </div>
+                    <p class="text-gray-700 text-sm">${comment.content}</p>
+                </div>
+            </div>
+        `;
+        
+        // Voeg de comment toe aan het einde van de existing comments
+        existingComments.insertAdjacentHTML('beforeend', commentHTML);
+        
+        console.log('Comment toegevoegd aan DOM');
+    }
+
+    /**
+     * Update de comment count in de post actions
+     */
+    function updateCommentCount(postId) {
+        // Zoek de comment button voor deze post
+        const postElement = document.querySelector(`[data-post-id="${postId}"]`).closest('.post-card, .bg-white');
+        if (postElement) {
+            const commentButton = postElement.querySelector('.hyves-action-button:nth-child(2)'); // Tweede button is meestal comments
+            if (commentButton) {
+                const countElement = commentButton.querySelector('.text');
+                if (countElement) {
+                    // Haal het huidige aantal op en verhoog met 1
+                    const currentText = countElement.textContent;
+                    const currentCount = parseInt(currentText.match(/\d+/)) || 0;
+                    const newCount = currentCount + 1;
+                    countElement.textContent = `${newCount} Reacties`;
+                    
+                    console.log(`Comment count bijgewerkt naar ${newCount}`);
+                }
+            }
+        }
+    }
+
+    /**
+     * Toon een korte notificatie (eenvoudige versie)
+     */
+    function showNotification(message, type = 'info') {
+        // Maak een eenvoudige notificatie
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`;
+        notification.textContent = message;
+        
+        // Voeg toe aan de pagina
+        document.body.appendChild(notification);
+        
+        // Verwijder na 3 seconden
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+
 }

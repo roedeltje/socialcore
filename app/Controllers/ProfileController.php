@@ -20,6 +20,12 @@ class ProfileController extends Controller
      */
     public function index($usernameFromUrl = null)
     {
+        // Controleer eerst of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
+        }
+        
         // Controleer of er een specifieke gebruiker is opgevraagd
         $requestedUsername = $_GET['username'] ?? null;
         // Bepaal welke tab actief is
@@ -39,20 +45,19 @@ class ProfileController extends Controller
                 if ($userBasic) {
                     $userId = $userBasic['id'];
                     $username = $userBasic['username'];
+                } else {
+                    // Gebruiker niet gevonden, redirect naar eigen profiel
+                    $userId = $_SESSION['user_id'];
+                    $username = $_SESSION['username'] ?? 'gebruiker';
                 }
             } catch (\Exception $e) {
                 // Bij een fout, gebruik de huidige gebruiker
                 error_log("Error fetching user by username: " . $e->getMessage());
+                $userId = $_SESSION['user_id'];
+                $username = $_SESSION['username'] ?? 'gebruiker';
             }
-        }
-        
-        // Als geen gebruiker is gevonden of meegegeven, gebruik de ingelogde gebruiker
-        if (!$userId) {
-            if (!isset($_SESSION['user_id'])) {
-                redirect('login');
-                return;
-            }
-            
+        } else {
+            // Geen username meegegeven, toon eigen profiel
             $userId = $_SESSION['user_id'];
             $username = $_SESSION['username'] ?? 'gebruiker';
         }
@@ -61,13 +66,16 @@ class ProfileController extends Controller
         $user = $this->getUserData($userId, $username);
         
         // Bepaal of de kijker de eigenaar is
-        $viewerIsOwner = isset($_SESSION['user_id']) && $_SESSION['user_id'] == $userId;
+        $viewerIsOwner = $_SESSION['user_id'] == $userId;
         
         // Laad vrienden
         $friends = $this->getFriends($userId);
         
         // Laad posts
         $posts = $this->getUserPosts($userId);
+
+        // Laadt comments
+        $posts = $this->getCommentsForPosts($posts);
         
         // Laad specifieke data op basis van de geselecteerde tab
         $krabbels = [];
@@ -98,22 +106,27 @@ class ProfileController extends Controller
      */
     private function getUserData($userId, $username)
     {
-        // Later vervangen door echte database query
-        // In de tussentijd gebruiken we deze dummy data
-        
         try {
-            // Probeer eerst uit de database te halen
+            // Haal gebruikersgegevens op uit de database - alleen bestaande kolommen
             $stmt = $this->db->prepare("
                 SELECT 
                     u.id, 
                     u.username, 
                     u.email,
                     u.created_at,
+                    u.role,
                     COALESCE(up.display_name, u.username) as name,
+                    up.display_name,
+                    up.avatar,
+                    up.cover_photo,
                     up.bio,
                     up.location,
-                    up.favorite_quote,
-                    up.avatar_path
+                    up.website,
+                    up.date_of_birth,
+                    up.gender,
+                    up.phone,
+                    up.created_at as profile_created_at,
+                    up.updated_at as profile_updated_at
                 FROM users u
                 LEFT JOIN user_profiles up ON u.id = up.user_id
                 WHERE u.id = ?
@@ -122,35 +135,66 @@ class ProfileController extends Controller
             $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($dbUser) {
-                // Formateer de data
-                return [
+                // Formateer de avatar path
+                $avatarPath = !empty($dbUser['avatar']) 
+                    ? $dbUser['avatar'] 
+                    : 'theme-assets/default/images/default-avatar.png';
+                    
+                // Formateer de join datum
+                $joinDate = !empty($dbUser['created_at']) 
+                    ? date('d M Y', strtotime($dbUser['created_at'])) 
+                    : date('d M Y');
+                
+                // Return alle beschikbare velden voor gebruik in edit formulier
+                $returnData = [
                     'id' => $dbUser['id'],
                     'username' => $dbUser['username'],
-                    'name' => $dbUser['name'] ?? $dbUser['username'],
-                    'bio' => $dbUser['bio'] ?? 'Welkom op mijn SocialCore profiel!',
-                    'location' => $dbUser['location'] ?? 'Nederland',
-                    'joined' => date('d M Y', strtotime($dbUser['created_at'] ?? 'now')),
-                    'avatar' => $dbUser['avatar_path'] ?? 'avatars/2025/05/default-avatar.png',
-                    'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'], // Nog geen tabel voor interesses
-                    'favorite_quote' => $dbUser['favorite_quote'] ?? 'De beste manier om de toekomst te voorspellen is haar te creëren.'
+                    'email' => $dbUser['email'],
+                    'name' => $dbUser['name'] ?: $dbUser['username'],
+                    'display_name' => $dbUser['display_name'] ?: $dbUser['username'],
+                    'bio' => $dbUser['bio'] ?: '',
+                    'location' => $dbUser['location'] ?: '',
+                    'website' => $dbUser['website'] ?: '',
+                    'date_of_birth' => $dbUser['date_of_birth'] ?: '',
+                    'gender' => $dbUser['gender'] ?: '',
+                    'phone' => $dbUser['phone'] ?: '',
+                    'avatar' => $avatarPath,
+                    'cover_photo' => $dbUser['cover_photo'] ?: '',
+                    'joined' => $joinDate,
+                    'role' => $dbUser['role'] ?: 'member',
+                    // Dummy data voor nu - later uit database halen
+                    'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
+                    'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.' // Dummy totdat we deze kolom toevoegen
                 ];
+                
+                // Debug output - tijdelijk toevoegen
+                error_log("DEBUG: Returning user data: " . print_r($returnData, true));
+                
+                return $returnData;
             }
         } catch (\Exception $e) {
             error_log("Error getting user data: " . $e->getMessage());
-            // Bij een fout, gebruik dummy data
         }
         
-        // Fallback naar dummy data
+        // Fallback: minimale gebruikersgegevens
         return [
             'id' => $userId,
             'username' => $username,
-            'name' => 'Gebruiker', 
-            'bio' => 'Welkom op mijn SocialCore profiel!',
-            'location' => 'Nederland',
-            'joined' => '16 mei 2025',
-            'avatar' => 'avatars/2025/05/default-avatar.png',
-            'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
-            'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.'
+            'email' => '',
+            'name' => $username,
+            'display_name' => $username,
+            'bio' => '',
+            'location' => '',
+            'website' => '',
+            'date_of_birth' => '',
+            'gender' => '',
+            'phone' => '',
+            'avatar' => 'theme-assets/default/images/default-avatar.png',
+            'cover_photo' => '',
+            'joined' => date('d M Y'),
+            'role' => 'member',
+            'interests' => [],
+            'favorite_quote' => ''
         ];
     }
 
@@ -335,17 +379,18 @@ class ProfileController extends Controller
      */
     public function edit()
     {
-        $form = new \App\Helpers\FormHelper();
-        
         // Controleer of de gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
             redirect('login');
             return;
         }
         
+        $form = new \App\Helpers\FormHelper();
+        
         // Haal gebruikersgegevens op
         $userId = $_SESSION['user_id'];
-        $user = $this->getUserData($userId, $_SESSION['username'] ?? '');
+        $username = $_SESSION['username'] ?? '';
+        $user = $this->getUserData($userId, $username);
         
         $data = [
             'title' => 'Profiel bewerken',
@@ -367,11 +412,117 @@ class ProfileController extends Controller
             return;
         }
         
-        // Valideer en verwerk het formulier
-        // Later: echte database implementatie
+        $userId = $_SESSION['user_id'];
+        $form = new \App\Helpers\FormHelper();
         
-        set_flash_message('success', 'Je profiel is bijgewerkt!');
-        redirect('profile');
+        // Validatie
+        $errors = [];
+        
+        // Display name is verplicht
+        if (empty($_POST['display_name'])) {
+            $errors['display_name'] = 'Weergavenaam is verplicht';
+        }
+        
+        // Website URL validatie (als ingevuld)
+        if (!empty($_POST['website']) && !filter_var($_POST['website'], FILTER_VALIDATE_URL)) {
+            $errors['website'] = 'Voer een geldige website URL in';
+        }
+        
+        // Telefoonnummer validatie (basis)
+        if (!empty($_POST['phone']) && !preg_match('/^[\+\-\s\(\)\d]+$/', $_POST['phone'])) {
+            $errors['phone'] = 'Voer een geldig telefoonnummer in';
+        }
+        
+        // Geboortedatum validatie
+        if (!empty($_POST['date_of_birth'])) {
+        $birthDate = \DateTime::createFromFormat('Y-m-d', $_POST['date_of_birth']);
+        if (!$birthDate || $birthDate > new \DateTime()) {
+            $errors['date_of_birth'] = 'Voer een geldige geboortedatum in';
+            }
+        }
+        
+        // Als er fouten zijn, ga terug naar het formulier
+        if (!empty($errors)) {
+            $_SESSION['form_errors'] = $errors;
+            $_SESSION['form_data'] = $_POST;
+            $_SESSION['error_message'] = 'Er zijn fouten in het formulier. Controleer je invoer.';
+            redirect('profile/edit');
+            return;
+        }
+        
+        try {
+            // Start een database transactie
+            $this->db->beginTransaction();
+            
+            // Controleer of er al een profiel bestaat
+            $stmt = $this->db->prepare("SELECT id FROM user_profiles WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $profileExists = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($profileExists) {
+                // Update bestaand profiel
+                $stmt = $this->db->prepare("
+                    UPDATE user_profiles SET 
+                        display_name = ?,
+                        bio = ?,
+                        location = ?,
+                        website = ?,
+                        phone = ?,
+                        date_of_birth = ?,
+                        gender = ?,
+                        updated_at = NOW()
+                    WHERE user_id = ?
+                ");
+                
+                $stmt->execute([
+                    $_POST['display_name'],
+                    $_POST['bio'] ?? '',
+                    $_POST['location'] ?? '',
+                    $_POST['website'] ?? '',
+                    $_POST['phone'] ?? '',
+                    $_POST['date_of_birth'] ?? null,
+                    $_POST['gender'] ?? '',
+                    $userId
+                ]);
+            } else {
+                // Maak nieuw profiel aan
+                $stmt = $this->db->prepare("
+                    INSERT INTO user_profiles (
+                        user_id, display_name, bio, location, website, 
+                        phone, date_of_birth, gender, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                ");
+                
+                $stmt->execute([
+                    $userId,
+                    $_POST['display_name'],
+                    $_POST['bio'] ?? '',
+                    $_POST['location'] ?? '',
+                    $_POST['website'] ?? '',
+                    $_POST['phone'] ?? '',
+                    $_POST['date_of_birth'] ?? null,
+                    $_POST['gender'] ?? ''
+                ]);
+            }
+            
+            // Commit de transactie
+            $this->db->commit();
+            
+            // Update ook de sessie met de nieuwe display name
+            $_SESSION['display_name'] = $_POST['display_name'];
+            
+            // Succes bericht
+            $_SESSION['success_message'] = 'Je profiel is succesvol bijgewerkt!';
+            redirect('profile');
+            
+        } catch (\Exception $e) {
+            // Rollback bij fout
+            $this->db->rollback();
+            error_log("Error updating profile: " . $e->getMessage());
+            
+            $_SESSION['error_message'] = 'Er is een fout opgetreden bij het opslaan. Probeer het opnieuw.';
+            redirect('profile/edit');
+        }
     }
 
     /**
@@ -500,4 +651,91 @@ class ProfileController extends Controller
         // Redirect terug naar het profiel met de foto's-tab
         redirect('profile?tab=fotos');
     }
+
+    private function getCommentsForPosts($posts)
+    {
+        if (empty($posts)) {
+            return $posts;
+        }
+        
+        // Haal alle post IDs op
+        $postIds = array_column($posts, 'id');
+        $placeholders = str_repeat('?,', count($postIds) - 1) . '?';
+        
+        try {
+            // Haal alle comments op voor deze posts
+            $stmt = $this->db->prepare("
+                SELECT 
+                    c.id,
+                    c.post_id,
+                    c.content,
+                    c.created_at,
+                    u.id as user_id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as user_name
+                FROM post_comments c
+                JOIN users u ON c.user_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE c.post_id IN ($placeholders) 
+                AND c.is_deleted = 0
+                ORDER BY c.created_at ASC
+            ");
+            $stmt->execute($postIds);
+            $allComments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Groepeer comments per post
+            $commentsByPost = [];
+            foreach ($allComments as $comment) {
+                // Voeg avatar en geformatteerde datum toe
+                $comment['avatar'] = $this->getUserAvatar($comment['user_id']);
+                $comment['time_ago'] = $this->formatDate($comment['created_at']);
+                
+                $commentsByPost[$comment['post_id']][] = $comment;
+            }
+            
+            // Voeg comments toe aan elke post
+            foreach ($posts as &$post) {
+                $post['comments_list'] = $commentsByPost[$post['id']] ?? [];
+            }
+            
+            return $posts;
+            
+        } catch (Exception $e) {
+            error_log('Fout bij ophalen comments: ' . $e->getMessage());
+            
+            // Bij fout, voeg lege comments array toe
+            foreach ($posts as &$post) {
+                $post['comments_list'] = [];
+            }
+            
+            return $posts;
+        }
+    }
+
+    /**
+     * Helper om de avatar van een gebruiker op te halen
+     */
+    private function getUserAvatar($userId)
+    {
+        // Implementeer dit op basis van je gebruikersprofielsysteem
+        try {
+            $stmt = $this->db->prepare("
+                SELECT avatar FROM user_profiles 
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result && !empty($result['avatar'])) {
+                return '/public/uploads/' . $result['avatar'];
+            }
+        } catch (Exception $e) {
+            error_log('Fout bij ophalen avatar: ' . $e->getMessage());
+        }
+        
+        // Fallback naar default avatar
+        return '/public/assets/images/default-avatar.png';
+    }
+
+
 }

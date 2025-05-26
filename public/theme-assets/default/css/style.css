@@ -900,19 +900,24 @@ a {
 
 /* CSS voor post menu's */
 .post-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%; /* Maakt de knop perfect rond */
     transition: all 0.2s ease;
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 9999px;
 }
 
 .post-menu-button:hover {
-    background-color: #f3f4f6;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .post-menu-dropdown {
     position: absolute;
     right: 0;
+    top: 100%;
     margin-top: 0.25rem;
     width: 12rem;
     background-color: white;
@@ -933,6 +938,11 @@ a {
 
 .delete-post-button:hover {
     background-color: #fef2f2;
+}
+
+.post-menu-button svg {
+    width: 20px;
+    height: 20px;
 }
 
 .post-menu-dropdown {

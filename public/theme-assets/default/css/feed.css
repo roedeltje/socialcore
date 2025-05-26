@@ -253,3 +253,77 @@
 #removeImage:hover, #profileRemoveImage:hover {
     background-color: rgba(220, 38, 38, 1);
 }
+
+/* Comments styling - toevoegen aan feed.css */
+
+.comments-section {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.comment-item {
+    transition: all 0.2s ease;
+}
+
+.comment-item:hover {
+    background-color: #e0f2fe;
+    transform: translateX(2px);
+}
+
+.comment-header a {
+    font-weight: 600;
+}
+
+.comment-header a:hover {
+    color: #1e40af;
+}
+
+.add-comment-form textarea {
+    transition: all 0.3s ease;
+    min-height: 40px;
+}
+
+.add-comment-form textarea:focus {
+    min-height: 60px;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.comment-char-counter {
+    font-size: 11px;
+}
+
+.comment-char-counter.text-red-500 {
+    font-weight: 600;
+}
+
+/* Hover effect voor comment avatars */
+.comment-item img {
+    transition: transform 0.2s ease;
+}
+
+.comment-item img:hover {
+    transform: scale(1.1);
+}
+
+/* Responsive aanpassingen voor comments */
+@media (max-width: 640px) {
+    .comments-section {
+        padding: 8px;
+    }
+    
+    .comment-item {
+        padding: 8px;
+    }
+    
+    .add-comment-form {
+        flex-direction: column;
+        space-x: 0;
+        gap: 8px;
+    }
+    
+    .add-comment-form img {
+        display: none; /* Verberg avatar op mobiel om ruimte te besparen */
+    }
+}

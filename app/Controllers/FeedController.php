@@ -23,103 +23,106 @@ class FeedController extends Controller
      * Toon de hoofdpagina van de nieuwsfeed
      */
     public function index()
-{
-    // Controleer of gebruiker is ingelogd
-    if (!isset($_SESSION['user_id'])) {
-        header('Location: /auth/login');
-        exit;
+    {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /auth/login');
+            exit;
+        }
+
+        try {
+            // Haal echte posts op uit de database
+            $posts = $this->getAllPosts();
+            
+            // Haal gebruikersinfo op
+            $currentUser = $this->getCurrentUser($_SESSION['user_id']);
+            
+            // Dummy data voor nu (later vervangen we dit ook)
+            $onlineFriends = $this->getOnlineFriends();
+            $trendingHashtags = $this->getTrendingHashtags();
+            $suggestedUsers = $this->getSuggestedUsers();
+            
+            
+            // Data doorsturen naar de view
+            $data = [
+                'posts' => $posts,
+                'current_user' => $currentUser,
+                'online_friends' => $onlineFriends,
+                'trending_hashtags' => $trendingHashtags,
+                'suggested_users' => $suggestedUsers
+            ];
+
+            // Debug huidige gebruiker
+            //$currentUser = $this->getCurrentUser($_SESSION['user_id']);
+            //var_dump($currentUser);
+
+            
+            
+            $this->view('feed/index', $data);
+            
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = 'Er ging iets mis bij het laden van de feed: ' . $e->getMessage();
+            $this->view('feed/index', [
+                'posts' => [],
+                'current_user' => ['name' => 'Gebruiker', 'username' => 'user'],
+                'online_friends' => [],
+                'trending_hashtags' => [],
+                'suggested_users' => []
+            ]);
+        }
     }
-
-    try {
-        // Haal echte posts op uit de database
-        $posts = $this->getAllPosts();
-        
-        // Haal gebruikersinfo op
-        $currentUser = $this->getCurrentUser($_SESSION['user_id']);
-        
-        // Dummy data voor nu (later vervangen we dit ook)
-        $onlineFriends = $this->getOnlineFriends();
-        $trendingHashtags = $this->getTrendingHashtags();
-        $suggestedUsers = $this->getSuggestedUsers();
-        
-        
-        // Data doorsturen naar de view
-        $data = [
-            'posts' => $posts,
-            'current_user' => $currentUser,
-            'online_friends' => $onlineFriends,
-            'trending_hashtags' => $trendingHashtags,
-            'suggested_users' => $suggestedUsers
-        ];
-
-        // Debug huidige gebruiker
-        //$currentUser = $this->getCurrentUser($_SESSION['user_id']);
-        //var_dump($currentUser);
-
-        
-        
-        $this->view('feed/index', $data);
-        
-    } catch (Exception $e) {
-        $_SESSION['error_message'] = 'Er ging iets mis bij het laden van de feed: ' . $e->getMessage();
-        $this->view('feed/index', [
-            'posts' => [],
-            'current_user' => ['name' => 'Gebruiker', 'username' => 'user'],
-            'online_friends' => [],
-            'trending_hashtags' => [],
-            'suggested_users' => []
-        ]);
-    }
-}
 
     private function getAllPosts($limit = 20)
     {
-    $query = "
-        SELECT 
-            p.id,
-            p.content,
-            p.type,
-            p.created_at,
-            p.likes_count,
-            p.comments_count,
-            u.id as user_id,
-            u.username,
-            COALESCE(up.display_name, u.username) as user_name,
-            (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN user_profiles up ON u.id = up.user_id
-        WHERE p.is_deleted = 0
-        ORDER BY p.created_at DESC
-        LIMIT ?
-    ";
-    
-    $stmt = $this->db->prepare($query);
-    $stmt->execute([$limit]);
-    $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format de data voor de view
-    foreach ($posts as &$post) {
-        $post['likes'] = $post['likes_count'];
-        $post['comments'] = $post['comments_count'];
+        $query = "
+            SELECT 
+                p.id,
+                p.content,
+                p.type,
+                p.created_at,
+                p.likes_count,
+                p.comments_count,
+                u.id as user_id,
+                u.username,
+                COALESCE(up.display_name, u.username) as user_name,
+                (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
+            FROM posts p
+            JOIN users u ON p.user_id = u.id
+            LEFT JOIN user_profiles up ON u.id = up.user_id
+            WHERE p.is_deleted = 0
+            ORDER BY p.created_at DESC
+            LIMIT ?
+        ";
         
-        // Bewaar de originele created_at
-        $original_date = $post['created_at'];
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([$limit]);
+        $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Formatteer de datum correct
-        $post['created_at'] = $this->formatDate($original_date);
+        // Format de data voor de view
+        foreach ($posts as &$post) {
+            $post['likes'] = $post['likes_count'];
+            $post['comments'] = $post['comments_count'];
+            
+            // Bewaar de originele created_at
+            $original_date = $post['created_at'];
+            
+            // Formatteer de datum correct
+            $post['created_at'] = $this->formatDate($original_date);
+            
+            // Gebruik dezelfde geformatteerde datum voor time_ago
+            $post['time_ago'] = $post['created_at'];
+            
+            // Voeg avatar toe
+            $post['avatar'] = $this->getUserAvatar($post['user_id']);
+            
+            // Controleer of de huidige gebruiker de post heeft geliked
+            $post['is_liked'] = $this->hasUserLikedPost($post['id']);
+        }
         
-        // Gebruik dezelfde geformatteerde datum voor time_ago
-        $post['time_ago'] = $post['created_at'];
+        // Voeg comments toe aan alle posts
+        $posts = $this->getCommentsForPosts($posts);
         
-        // Voeg avatar toe
-        $post['avatar'] = $this->getUserAvatar($post['user_id']);
-        
-        // Controleer of de huidige gebruiker de post heeft geliked
-        $post['is_liked'] = $this->hasUserLikedPost($post['id']);
-    }
-    
-    return $posts;
+        return $posts;
     }
 
     /**
@@ -895,4 +898,224 @@ class FeedController extends Controller
         // Functionaliteit voor het laden van meer posts
         // Komt in een latere fase
     }
+
+    public function addComment()
+    {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn om te reageren']);
+            exit;
+        }
+        
+        // Controleer of het een POST request is
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
+            exit;
+        }
+        
+        // Haal de gegevens op uit het formulier
+        $postId = $_POST['post_id'] ?? null;
+        $content = trim($_POST['comment_content'] ?? '');
+        $userId = $_SESSION['user_id'];
+        
+        // Validatie
+        if (!$postId) {
+            echo json_encode(['success' => false, 'message' => 'Post ID is verplicht']);
+            exit;
+        }
+        
+        if (empty($content)) {
+            echo json_encode(['success' => false, 'message' => 'Reactie mag niet leeg zijn']);
+            exit;
+        }
+        
+        if (strlen($content) > 500) {
+            echo json_encode(['success' => false, 'message' => 'Reactie mag maximaal 500 karakters bevatten']);
+            exit;
+        }
+        
+        try {
+            // Controleer of de post bestaat
+            $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
+            $stmt->execute([$postId]);
+            $post = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$post) {
+                echo json_encode(['success' => false, 'message' => 'Post niet gevonden']);
+                exit;
+            }
+            
+            // Voeg de comment toe aan de database
+            $result = $this->saveComment($postId, $userId, $content);
+            
+            if ($result['success']) {
+                // Haal de nieuwe comment op om terug te sturen
+                $comment = $this->getCommentById($result['comment_id']);
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Reactie toegevoegd!',
+                    'comment' => $comment
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => $result['message']]);
+            }
+            
+        } catch (Exception $e) {
+            error_log('Fout bij toevoegen comment: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Er ging iets mis bij het toevoegen van je reactie']);
+        }
+        
+        exit;
+    }
+
+    /**
+     * Sla een comment op in de database
+     */
+    private function saveComment($postId, $userId, $content)
+    {
+        try {
+            // Begin een transactie
+            $this->db->beginTransaction();
+            
+            // Voeg comment toe
+            $stmt = $this->db->prepare("
+                INSERT INTO post_comments (post_id, user_id, content, created_at) 
+                VALUES (?, ?, ?, NOW())
+            ");
+            $stmt->execute([$postId, $userId, $content]);
+            $commentId = $this->db->lastInsertId();
+            
+            // Update de comments_count in de posts tabel
+            $stmt = $this->db->prepare("
+                UPDATE posts 
+                SET comments_count = comments_count + 1 
+                WHERE id = ?
+            ");
+            $stmt->execute([$postId]);
+            
+            // Commit de transactie
+            $this->db->commit();
+            
+            return [
+                'success' => true,
+                'comment_id' => $commentId
+            ];
+            
+        } catch (Exception $e) {
+            // Rollback bij fouten
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            
+            error_log('Database fout bij opslaan comment: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Database fout: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Haal een comment op uit de database met gebruikersgegevens
+     */
+    private function getCommentById($commentId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    c.id,
+                    c.content,
+                    c.created_at,
+                    u.id as user_id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as user_name
+                FROM post_comments c
+                JOIN users u ON c.user_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE c.id = ? AND c.is_deleted = 0
+            ");
+            $stmt->execute([$commentId]);
+            $comment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($comment) {
+                // Voeg avatar toe
+                $comment['avatar'] = $this->getUserAvatar($comment['user_id']);
+                
+                // Formatteer de datum
+                $comment['time_ago'] = $this->formatDate($comment['created_at']);
+            }
+            
+            return $comment;
+            
+        } catch (Exception $e) {
+            error_log('Fout bij ophalen comment: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Voeg deze methode toe aan je FeedController.php
+     * Deze haalt alle comments op voor posts
+     */
+    private function getCommentsForPosts($posts)
+    {
+        if (empty($posts)) {
+            return $posts;
+        }
+        
+        // Haal alle post IDs op
+        $postIds = array_column($posts, 'id');
+        $placeholders = str_repeat('?,', count($postIds) - 1) . '?';
+        
+        try {
+            // Haal alle comments op voor deze posts
+            $stmt = $this->db->prepare("
+                SELECT 
+                    c.id,
+                    c.post_id,
+                    c.content,
+                    c.created_at,
+                    u.id as user_id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as user_name
+                FROM post_comments c
+                JOIN users u ON c.user_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE c.post_id IN ($placeholders) 
+                AND c.is_deleted = 0
+                ORDER BY c.created_at ASC
+            ");
+            $stmt->execute($postIds);
+            $allComments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Groepeer comments per post
+            $commentsByPost = [];
+            foreach ($allComments as $comment) {
+                // Voeg avatar en geformatteerde datum toe
+                $comment['avatar'] = $this->getUserAvatar($comment['user_id']);
+                $comment['time_ago'] = $this->formatDate($comment['created_at']);
+                
+                $commentsByPost[$comment['post_id']][] = $comment;
+            }
+            
+            // Voeg comments toe aan elke post
+            foreach ($posts as &$post) {
+                $post['comments_list'] = $commentsByPost[$post['id']] ?? [];
+            }
+            
+            return $posts;
+            
+        } catch (Exception $e) {
+            error_log('Fout bij ophalen comments: ' . $e->getMessage());
+            
+            // Bij fout, voeg lege comments array toe
+            foreach ($posts as &$post) {
+                $post['comments_list'] = [];
+            }
+            
+            return $posts;
+        }
+    }
+
 }
