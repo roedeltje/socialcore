@@ -107,7 +107,7 @@ class ProfileController extends Controller
     private function getUserData($userId, $username)
     {
         try {
-            // Haal gebruikersgegevens op uit de database - alleen bestaande kolommen
+            // Haal gebruikersgegevens op uit de database
             $stmt = $this->db->prepare("
                 SELECT 
                     u.id, 
@@ -135,17 +135,15 @@ class ProfileController extends Controller
             $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($dbUser) {
-                // Formateer de avatar path
-                $avatarPath = !empty($dbUser['avatar']) 
-                    ? $dbUser['avatar'] 
-                    : 'theme-assets/default/images/default-avatar.png';
+                // Formateer de avatar path met de nieuwe helper
+                $avatarPath = $this->getAvatarUrl($dbUser['avatar']);
                     
                 // Formateer de join datum
                 $joinDate = !empty($dbUser['created_at']) 
                     ? date('d M Y', strtotime($dbUser['created_at'])) 
                     : date('d M Y');
                 
-                // Return alle beschikbare velden voor gebruik in edit formulier
+                // Return alle beschikbare velden
                 $returnData = [
                     'id' => $dbUser['id'],
                     'username' => $dbUser['username'],
@@ -158,17 +156,15 @@ class ProfileController extends Controller
                     'date_of_birth' => $dbUser['date_of_birth'] ?: '',
                     'gender' => $dbUser['gender'] ?: '',
                     'phone' => $dbUser['phone'] ?: '',
-                    'avatar' => $avatarPath,
+                    'avatar' => $dbUser['avatar'] ?: 'theme-assets/default/images/default-avatar.png',
+                    'avatar_url' => $avatarPath, // Volledige URL voor weergave
                     'cover_photo' => $dbUser['cover_photo'] ?: '',
                     'joined' => $joinDate,
                     'role' => $dbUser['role'] ?: 'member',
                     // Dummy data voor nu - later uit database halen
                     'interests' => ['SocialCore', 'Sociale Netwerken', 'Webontwikkeling'],
-                    'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.' // Dummy totdat we deze kolom toevoegen
+                    'favorite_quote' => 'De beste manier om de toekomst te voorspellen is haar te creëren.'
                 ];
-                
-                // Debug output - tijdelijk toevoegen
-                error_log("DEBUG: Returning user data: " . print_r($returnData, true));
                 
                 return $returnData;
             }
@@ -190,6 +186,7 @@ class ProfileController extends Controller
             'gender' => '',
             'phone' => '',
             'avatar' => 'theme-assets/default/images/default-avatar.png',
+            'avatar_url' => base_url('theme-assets/default/images/default-avatar.png'),
             'cover_photo' => '',
             'joined' => date('d M Y'),
             'role' => 'member',
@@ -318,6 +315,8 @@ class ProfileController extends Controller
                 
                 // Controleer of gebruiker de post heeft geliked
                 $post['is_liked'] = $this->hasUserLikedPost($post['id']);
+
+                $post['avatar'] = $this->getUserAvatar($post['user_id']);
             }
             
             return $posts;
@@ -717,7 +716,6 @@ class ProfileController extends Controller
      */
     private function getUserAvatar($userId)
     {
-        // Implementeer dit op basis van je gebruikersprofielsysteem
         try {
             $stmt = $this->db->prepare("
                 SELECT avatar FROM user_profiles 
@@ -727,14 +725,258 @@ class ProfileController extends Controller
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($result && !empty($result['avatar'])) {
-                return '/public/uploads/' . $result['avatar'];
+                return $this->getAvatarUrl($result['avatar']);
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log('Fout bij ophalen avatar: ' . $e->getMessage());
         }
         
         // Fallback naar default avatar
-        return '/public/assets/images/default-avatar.png';
+        return base_url('theme-assets/default/images/default-avatar.png');
+    }
+
+    /**
+     * Update de profielfoto via AJAX of form submission
+     */
+    public function uploadAvatar() 
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
+                return;
+            }
+            redirect('login');
+            return;
+        }
+        
+        // Controleer of er een bestand is geüpload
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            $message = 'Er is geen geldige avatar geüpload';
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $message]);
+                return;
+            }
+            
+            $_SESSION['error_message'] = $message;
+            redirect('profile/edit');
+            return;
+        }
+        
+        // Toegestane bestandstypen voor avatars
+        $allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp'
+        ];
+        
+        // Maximale bestandsgrootte (2MB)
+        $maxSize = 2 * 1024 * 1024;
+        
+        // Upload de avatar met een prefix voor herkenning
+        $uploadResult = upload_file(
+            $_FILES['avatar'],
+            'avatars',
+            $allowedTypes,
+            $maxSize,
+            'avatar_' . $_SESSION['user_id'] . '_'
+        );
+        
+        if ($uploadResult['success']) {
+            try {
+                // Update de database met het nieuwe avatar pad
+                $userId = $_SESSION['user_id'];
+                $avatarPath = $uploadResult['path'];
+                
+                // Start database transactie
+                $this->db->beginTransaction();
+                
+                // Controleer of er al een profiel bestaat
+                $stmt = $this->db->prepare("SELECT id, avatar FROM user_profiles WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $existingProfile = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($existingProfile) {
+                    // Verwijder oude avatar als deze anders is dan de default
+                    if (!empty($existingProfile['avatar']) && 
+                        !str_contains($existingProfile['avatar'], 'default-avatar') &&
+                        !str_contains($existingProfile['avatar'], 'theme-assets')) {
+                        delete_uploaded_file($existingProfile['avatar']);
+                    }
+                    
+                    // Update bestaand profiel
+                    $stmt = $this->db->prepare("
+                        UPDATE user_profiles 
+                        SET avatar = ?, updated_at = NOW()
+                        WHERE user_id = ?
+                    ");
+                    $stmt->execute([$avatarPath, $userId]);
+                } else {
+                    // Maak nieuw profiel aan
+                    $stmt = $this->db->prepare("
+                        INSERT INTO user_profiles (user_id, avatar, created_at, updated_at) 
+                        VALUES (?, ?, NOW(), NOW())
+                    ");
+                    $stmt->execute([$userId, $avatarPath]);
+                }
+                
+                // Commit transactie
+                $this->db->commit();
+                
+                // Update sessie
+                $_SESSION['avatar'] = $avatarPath;
+                
+                $message = 'Profielfoto succesvol bijgewerkt!';
+                $avatarUrl = base_url('uploads/' . $avatarPath);
+                
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true, 
+                        'message' => $message,
+                        'avatar_url' => $avatarUrl,
+                        'avatar_path' => $avatarPath
+                    ]);
+                    return;
+                }
+                
+                $_SESSION['success_message'] = $message;
+                
+            } catch (\Exception $e) {
+                // Rollback bij database fout
+                $this->db->rollback();
+                
+                // Verwijder het geüploade bestand als database update mislukt
+                delete_uploaded_file($uploadResult['path']);
+                
+                error_log("Avatar upload database error: " . $e->getMessage());
+                $message = 'Er ging iets mis bij het opslaan van je profielfoto. Probeer het opnieuw.';
+                
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => $message]);
+                    return;
+                }
+                
+                $_SESSION['error_message'] = $message;
+            }
+        } else {
+            $message = $uploadResult['message'];
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $message]);
+                return;
+            }
+            
+            $_SESSION['error_message'] = $message;
+        }
+        
+        redirect('profile/edit');
+    }
+
+    /**
+     * Verwijder huidige avatar en zet terug naar default
+     */
+    public function removeAvatar()
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
+                return;
+            }
+            redirect('login');
+            return;
+        }
+        
+        try {
+            $userId = $_SESSION['user_id'];
+            
+            // Haal huidige avatar op
+            $stmt = $this->db->prepare("SELECT avatar FROM user_profiles WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($profile && !empty($profile['avatar'])) {
+                // Verwijder alleen als het geen default avatar is
+                if (!str_contains($profile['avatar'], 'default-avatar') &&
+                    !str_contains($profile['avatar'], 'theme-assets')) {
+                    delete_uploaded_file($profile['avatar']);
+                }
+                
+                // Update database naar default avatar
+                $defaultAvatar = 'theme-assets/default/images/default-avatar.png';
+                $stmt = $this->db->prepare("
+                    UPDATE user_profiles 
+                    SET avatar = ?, updated_at = NOW()
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([$defaultAvatar, $userId]);
+                
+                // Update sessie
+                $_SESSION['avatar'] = $defaultAvatar;
+            }
+            
+            $message = 'Profielfoto verwijderd en teruggezet naar standaard';
+            $defaultAvatar = 'theme-assets/default/images/default-avatar.png';
+            $avatarUrl = base_url($defaultAvatar);
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true, 
+                    'message' => $message,
+                    'avatar_url' => $avatarUrl
+                ]);
+                return;
+            }
+            
+            $_SESSION['success_message'] = $message;
+            
+        } catch (\Exception $e) {
+            error_log("Remove avatar error: " . $e->getMessage());
+            $message = 'Er ging iets mis bij het verwijderen van je profielfoto';
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $message]);
+                return;
+            }
+            
+            $_SESSION['error_message'] = $message;
+        }
+        
+        redirect('profile/edit');
+    }
+
+    /**
+     * Helper functie om de volledige avatar URL te krijgen
+     */
+    private function getAvatarUrl($avatarPath)
+    {
+        if (empty($avatarPath)) {
+            return base_url('theme-assets/default/images/default-avatar.png');
+        }
+        
+        // Als het pad al een volledige URL is
+        if (str_starts_with($avatarPath, 'http')) {
+            return $avatarPath;
+        }
+        
+        // Als het een theme asset is
+        if (str_starts_with($avatarPath, 'theme-assets')) {
+            return base_url($avatarPath);
+        }
+        
+        // Voor uploads: gebruik base_url zonder extra 'public'
+        // Want de upload path bevat al de juiste structuur
+        return base_url('uploads/' . $avatarPath);
     }
 
 

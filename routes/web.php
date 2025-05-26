@@ -149,6 +149,21 @@ return [
     'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
 ],
 
+    'admin/users/upload-avatar' => [
+    'callback' => function () {
+        $setupController = new SetupController();
+        $setupController->updateUserAvatar();
+    },
+    'middleware' => [AdminMiddleware::class]
+],
+
+    'admin/users/remove-avatar' => [
+    'callback' => function () {
+        $setupController = new SetupController();
+        $setupController->removeUserAvatar();
+    },
+    'middleware' => [AdminMiddleware::class]
+],
     'setup_uploads' => [
     'callback' => function () {
         // Definieer base path
@@ -302,6 +317,22 @@ return [
         'callback' => function () {
             $profileController = new ProfileController();
             $profileController->avatar(); // Nieuwe methode in ProfileController
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'profile/upload-avatar' => [
+        'callback' => function () {
+            $profileController = new ProfileController();
+            $profileController->uploadAvatar(); // Nieuwe methode in ProfileController
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'profile/remove-avatar' => [
+        'callback' => function () {
+            $profileController = new ProfileController();
+            $profileController->removeAvatar(); // Nieuwe methode in ProfileController
         },
         'middleware' => [AuthMiddleware::class]
     ],

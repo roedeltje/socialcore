@@ -15,11 +15,11 @@
         <div class="flex flex-col md:flex-row">
             <!-- Linker kolom - Profielfoto en acties -->
             <div class="w-full md:w-1/3 p-4 border-r border-blue-100">
-                <div class="profile-photo mb-4">
-                    <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                         alt="<?= htmlspecialchars($user['name'] ?? 'Gebruiker') ?>" 
-                         class="w-full max-w-xs mx-auto border-4 border-blue-200 rounded-lg">
-                </div>
+            <div class="profile-photo mb-4">
+                <img src="<?= $user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                    alt="<?= htmlspecialchars($user['name'] ?? 'Gebruiker') ?>" 
+                    class="w-full max-w-xs mx-auto border-4 border-blue-200 rounded-lg">
+            </div>
                 
                 <!-- Actieknoppen -->
                 <div class="profile-actions flex flex-col space-y-2 mt-4">
@@ -200,7 +200,7 @@
                                     <div class="p-4">
                                         <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="profilePostForm">
                                             <div class="flex space-x-3">
-                                                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                                <img src="<?= $user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                                      alt="<?= htmlspecialchars($user['name']) ?>" 
                                                      class="w-10 h-10 rounded-full border-2 border-blue-200">
                                                 <textarea name="content" rows="2" 
@@ -255,7 +255,7 @@
                                     <?php foreach ($posts as $post): ?>
                                         <div class="bg-white p-4 rounded-lg shadow mb-4">
                                             <div class="flex items-center mb-3">
-                                                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                                <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                                     alt="<?= htmlspecialchars($user['name']) ?>" 
                                                     class="w-10 h-10 rounded-full mr-3">
                                                 <div class="flex-grow">
@@ -341,7 +341,7 @@
                                                 
                                                 <!-- Comment formulier -->
                                                 <form class="add-comment-form flex space-x-3" data-post-id="<?= $post['id'] ?>">
-                                                    <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                                    <img src="<?= $user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                                          alt="<?= htmlspecialchars($user['name']) ?>" 
                                                          class="w-8 h-8 rounded-full border border-blue-200 flex-shrink-0">
                                                     <div class="flex-grow">

@@ -9,250 +9,250 @@ class UserController extends Controller
 {
     
     public function index() 
-{
-    // Haal gebruikers op uit de database
-    $users = [];
-    
-    try {
-        $db = \App\Database\Database::getInstance();
-        $users = $db->fetchAll("SELECT * FROM users ORDER BY id DESC");
-    } catch (\Exception $e) {
-        // Als er een fout is, gebruik placeholder data
-        $users = [
-            ['id' => 1, 'username' => 'admin', 'email' => 'admin@example.com', 'role' => 'admin', 'status' => 'active', 'created_at' => '2025-01-01'],
-            ['id' => 2, 'username' => 'user1', 'email' => 'user1@example.com', 'role' => 'member', 'status' => 'active', 'created_at' => '2025-01-15'],
-            ['id' => 3, 'username' => 'user2', 'email' => 'user2@example.com', 'role' => 'member', 'status' => 'inactive', 'created_at' => '2025-02-01'],
+    {
+        // Haal gebruikers op uit de database
+        $users = [];
+        
+        try {
+            $db = \App\Database\Database::getInstance();
+            $users = $db->fetchAll("SELECT * FROM users ORDER BY id DESC");
+        } catch (\Exception $e) {
+            // Als er een fout is, gebruik placeholder data
+            $users = [
+                ['id' => 1, 'username' => 'admin', 'email' => 'admin@example.com', 'role' => 'admin', 'status' => 'active', 'created_at' => '2025-01-01'],
+                ['id' => 2, 'username' => 'user1', 'email' => 'user1@example.com', 'role' => 'member', 'status' => 'active', 'created_at' => '2025-01-15'],
+                ['id' => 3, 'username' => 'user2', 'email' => 'user2@example.com', 'role' => 'member', 'status' => 'inactive', 'created_at' => '2025-02-01'],
+            ];
+        }
+        
+        $data = [
+            'users' => $users,
+            'title' => 'Gebruikersbeheer',
+            'contentView' => BASE_PATH . '/app/Views/admin/users/index.php'
         ];
+        
+        return $this->view('admin/layout', $data);
     }
     
-    $data = [
-        'users' => $users,
-        'title' => 'Gebruikersbeheer',
-        'contentView' => BASE_PATH . '/app/Views/admin/users/index.php'
-    ];
-    
-    return $this->view('admin/layout', $data);
-}
-    
     public function create() 
-{
-    $data = [
-        'title' => 'Nieuwe Gebruiker',
-        'contentView' => BASE_PATH . '/app/Views/admin/users/create.php'
-    ];
-    
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Validatie
-        $errors = [];
+    {
+        $data = [
+            'title' => 'Nieuwe Gebruiker',
+            'contentView' => BASE_PATH . '/app/Views/admin/users/create.php'
+        ];
         
-        // Gebruikersnaam validatie
-        $username = trim($_POST['username'] ?? '');
-        if (empty($username)) {
-            $errors[] = "Gebruikersnaam is verplicht.";
-        } elseif (strlen($username) < 3) {
-            $errors[] = "Gebruikersnaam moet minimaal 3 tekens bevatten.";
-        } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-            $errors[] = "Gebruikersnaam mag alleen letters, cijfers en underscores bevatten.";
-        }
-        
-        // Email validatie
-        $email = trim($_POST['email'] ?? '');
-        if (empty($email)) {
-            $errors[] = "E-mailadres is verplicht.";
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Ongeldig e-mailadres.";
-        }
-        
-        // Wachtwoord validatie
-        $password = $_POST['password'] ?? '';
-        $password_confirm = $_POST['password_confirm'] ?? '';
-        
-        if (empty($password)) {
-            $errors[] = "Wachtwoord is verplicht.";
-        } elseif (strlen($password) < 8) {
-            $errors[] = "Wachtwoord moet minimaal 8 tekens bevatten.";
-        } elseif ($password !== $password_confirm) {
-            $errors[] = "Wachtwoorden komen niet overeen.";
-        }
-        
-        // Overige velden ophalen
-        $display_name = trim($_POST['display_name'] ?? $username);
-        $role = $_POST['role'] ?? 'member';
-        $status = $_POST['status'] ?? 'active';
-        $send_welcome = isset($_POST['send_welcome']);
-        
-        // Als er geen fouten zijn, gebruiker aanmaken
-        if (empty($errors)) {
-            try {
-                // Database verbinding
-                $db = \App\Database\Database::getInstance();
-                
-                // Controleer of gebruikersnaam of e-mail al bestaat
-                $existingUser = $db->fetch(
-                    "SELECT id FROM users WHERE username = ? OR email = ?", 
-                    [$username, $email]
-                );
-                
-                if ($existingUser) {
-                    $errors[] = "Deze gebruikersnaam of dit e-mailadres is al in gebruik.";
-                } else {
-                    // Hash wachtwoord
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Validatie
+            $errors = [];
+            
+            // Gebruikersnaam validatie
+            $username = trim($_POST['username'] ?? '');
+            if (empty($username)) {
+                $errors[] = "Gebruikersnaam is verplicht.";
+            } elseif (strlen($username) < 3) {
+                $errors[] = "Gebruikersnaam moet minimaal 3 tekens bevatten.";
+            } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+                $errors[] = "Gebruikersnaam mag alleen letters, cijfers en underscores bevatten.";
+            }
+            
+            // Email validatie
+            $email = trim($_POST['email'] ?? '');
+            if (empty($email)) {
+                $errors[] = "E-mailadres is verplicht.";
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Ongeldig e-mailadres.";
+            }
+            
+            // Wachtwoord validatie
+            $password = $_POST['password'] ?? '';
+            $password_confirm = $_POST['password_confirm'] ?? '';
+            
+            if (empty($password)) {
+                $errors[] = "Wachtwoord is verplicht.";
+            } elseif (strlen($password) < 8) {
+                $errors[] = "Wachtwoord moet minimaal 8 tekens bevatten.";
+            } elseif ($password !== $password_confirm) {
+                $errors[] = "Wachtwoorden komen niet overeen.";
+            }
+            
+            // Overige velden ophalen
+            $display_name = trim($_POST['display_name'] ?? $username);
+            $role = $_POST['role'] ?? 'member';
+            $status = $_POST['status'] ?? 'active';
+            $send_welcome = isset($_POST['send_welcome']);
+            
+            // Als er geen fouten zijn, gebruiker aanmaken
+            if (empty($errors)) {
+                try {
+                    // Database verbinding
+                    $db = \App\Database\Database::getInstance();
                     
-                    // Gebruiker toevoegen
-                    $success = $db->query(
-                        "INSERT INTO users (username, email, password, display_name, role, status, created_at) 
-                         VALUES (?, ?, ?, ?, ?, ?, NOW())",
-                        [$username, $email, $hashed_password, $display_name, $role, $status]
+                    // Controleer of gebruikersnaam of e-mail al bestaat
+                    $existingUser = $db->fetch(
+                        "SELECT id FROM users WHERE username = ? OR email = ?", 
+                        [$username, $email]
                     );
                     
-                    if ($success) {
-                        // Gebruiker succesvol aangemaakt
-                        if ($send_welcome) {
-                            // Stuur welkomst-e-mail (later implementeren)
-                        }
-                        
-                        // Succes bericht in sessie opslaan
-                        $_SESSION['success_message'] = "Gebruiker {$username} is succesvol aangemaakt.";
-                        
-                        // Redirect naar gebruikersoverzicht
-                        header('Location: ' . base_url('admin/users'));
-                        exit;
+                    if ($existingUser) {
+                        $errors[] = "Deze gebruikersnaam of dit e-mailadres is al in gebruik.";
                     } else {
-                        $errors[] = "Er is een fout opgetreden bij het aanmaken van de gebruiker.";
+                        // Hash wachtwoord
+                        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                        
+                        // Gebruiker toevoegen
+                        $success = $db->query(
+                            "INSERT INTO users (username, email, password, display_name, role, status, created_at) 
+                            VALUES (?, ?, ?, ?, ?, ?, NOW())",
+                            [$username, $email, $hashed_password, $display_name, $role, $status]
+                        );
+                        
+                        if ($success) {
+                            // Gebruiker succesvol aangemaakt
+                            if ($send_welcome) {
+                                // Stuur welkomst-e-mail (later implementeren)
+                            }
+                            
+                            // Succes bericht in sessie opslaan
+                            $_SESSION['success_message'] = "Gebruiker {$username} is succesvol aangemaakt.";
+                            
+                            // Redirect naar gebruikersoverzicht
+                            header('Location: ' . base_url('admin/users'));
+                            exit;
+                        } else {
+                            $errors[] = "Er is een fout opgetreden bij het aanmaken van de gebruiker.";
+                        }
                     }
+                } catch (\Exception $e) {
+                    $errors[] = "Database fout: " . $e->getMessage();
                 }
-            } catch (\Exception $e) {
-                $errors[] = "Database fout: " . $e->getMessage();
+            }
+            
+            // Als er fouten zijn, toon het formulier opnieuw met foutmeldingen
+            if (!empty($errors)) {
+                $data['error_message'] = implode('<br>', $errors);
             }
         }
         
-        // Als er fouten zijn, toon het formulier opnieuw met foutmeldingen
-        if (!empty($errors)) {
-            $data['error_message'] = implode('<br>', $errors);
-        }
+        return $this->view('admin/layout', $data);
     }
-    
-    return $this->view('admin/layout', $data);
-}
     
     public function edit()
-{
-    $id = $_GET['id'] ?? null;
-    
-    if (!$id) {
-        header('Location: ' . base_url('admin/users'));
-        exit;
-    }
-    
-    try {
-        $db = \App\Database\Database::getInstance();
+    {
+        $id = $_GET['id'] ?? null;
         
-        // Haal gebruiker op uit de database
-        $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
-        
-        if (!$user) {
-            $_SESSION['error_message'] = "Gebruiker niet gevonden.";
+        if (!$id) {
             header('Location: ' . base_url('admin/users'));
             exit;
         }
         
-        // Maak een nieuwe FormHelper met de gebruikersgegevens
-        $form = new \App\Helpers\FormHelper($user);
-        
-        // Stel validatieregels in
-        $form->addRule('username', 'required')
-             ->addRule('username', 'min', 3)
-             ->addRule('username', 'regex', '/^[a-zA-Z0-9_]+$/', "Gebruikersnaam mag alleen letters, cijfers en underscores bevatten.")
-             ->addRule('username', 'unique', [$db, 'users', 'username', $id], "Deze gebruikersnaam is al in gebruik.")
-             ->addRule('email', 'required')
-             ->addRule('email', 'email')
-             ->addRule('email', 'unique', [$db, 'users', 'email', $id], "Dit e-mailadres is al in gebruik.");
-        
-        // Als wachtwoord is ingevuld, valideer het
-        if (!empty($_POST['password'])) {
-            $form->addRule('password', 'min', 8, "Wachtwoord moet minimaal 8 tekens bevatten.")
-                 ->addRule('password', 'matches', 'password_confirm', "Wachtwoorden komen niet overeen.");
-        }
-        
-        $success = false;
-        
-        // Verwerk het formulier als dit een POST verzoek is
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if ($form->validate($_POST)) {
-                // Bouw de updatequery
-                $query = "UPDATE users SET 
-                          username = ?,
-                          email = ?,
-                          display_name = ?,
-                          role = ?,
-                          status = ?,
-                          updated_at = NOW()";
-                
-                $formValues = $form->getValues();
-                $params = [
-                    $formValues['username'], 
-                    $formValues['email'], 
-                    $formValues['display_name'] ?? $formValues['username'], 
-                    $formValues['role'], 
-                    $formValues['status']
-                ];
-                
-                // Als wachtwoord moet worden bijgewerkt, voeg het toe aan de query
-                if (!empty($formValues['password'])) {
-                    $hashed_password = password_hash($formValues['password'], PASSWORD_DEFAULT);
-                    $query .= ", password = ?";
-                    $params[] = $hashed_password;
-                }
-                
-                // Voeg WHERE-clausule toe
-                $query .= " WHERE id = ?";
-                $params[] = $id;
-                
-                // Voer query uit
-                $success = $db->query($query, $params);
-                
-                if ($success) {
-                    // Succes bericht in sessie opslaan
-                    $_SESSION['success_message'] = "Gebruiker {$formValues['username']} is succesvol bijgewerkt.";
+        try {
+            $db = \App\Database\Database::getInstance();
+            
+            // Haal gebruiker op uit de database
+            $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
+            
+            if (!$user) {
+                $_SESSION['error_message'] = "Gebruiker niet gevonden.";
+                header('Location: ' . base_url('admin/users'));
+                exit;
+            }
+            
+            // Maak een nieuwe FormHelper met de gebruikersgegevens
+            $form = new \App\Helpers\FormHelper($user);
+            
+            // Stel validatieregels in
+            $form->addRule('username', 'required')
+                ->addRule('username', 'min', 3)
+                ->addRule('username', 'regex', '/^[a-zA-Z0-9_]+$/', "Gebruikersnaam mag alleen letters, cijfers en underscores bevatten.")
+                ->addRule('username', 'unique', [$db, 'users', 'username', $id], "Deze gebruikersnaam is al in gebruik.")
+                ->addRule('email', 'required')
+                ->addRule('email', 'email')
+                ->addRule('email', 'unique', [$db, 'users', 'email', $id], "Dit e-mailadres is al in gebruik.");
+            
+            // Als wachtwoord is ingevuld, valideer het
+            if (!empty($_POST['password'])) {
+                $form->addRule('password', 'min', 8, "Wachtwoord moet minimaal 8 tekens bevatten.")
+                    ->addRule('password', 'matches', 'password_confirm', "Wachtwoorden komen niet overeen.");
+            }
+            
+            $success = false;
+            
+            // Verwerk het formulier als dit een POST verzoek is
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if ($form->validate($_POST)) {
+                    // Bouw de updatequery
+                    $query = "UPDATE users SET 
+                            username = ?,
+                            email = ?,
+                            display_name = ?,
+                            role = ?,
+                            status = ?,
+                            updated_at = NOW()";
                     
-                    // Haal de bijgewerkte gebruiker op en update de form values
-                    $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
-                    $form->setValues($user);
-                } else {
-                    $form->addError("Er is een fout opgetreden bij het bijwerken van de gebruiker.");
+                    $formValues = $form->getValues();
+                    $params = [
+                        $formValues['username'], 
+                        $formValues['email'], 
+                        $formValues['display_name'] ?? $formValues['username'], 
+                        $formValues['role'], 
+                        $formValues['status']
+                    ];
+                    
+                    // Als wachtwoord moet worden bijgewerkt, voeg het toe aan de query
+                    if (!empty($formValues['password'])) {
+                        $hashed_password = password_hash($formValues['password'], PASSWORD_DEFAULT);
+                        $query .= ", password = ?";
+                        $params[] = $hashed_password;
+                    }
+                    
+                    // Voeg WHERE-clausule toe
+                    $query .= " WHERE id = ?";
+                    $params[] = $id;
+                    
+                    // Voer query uit
+                    $success = $db->query($query, $params);
+                    
+                    if ($success) {
+                        // Succes bericht in sessie opslaan
+                        $_SESSION['success_message'] = "Gebruiker {$formValues['username']} is succesvol bijgewerkt.";
+                        
+                        // Haal de bijgewerkte gebruiker op en update de form values
+                        $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$id]);
+                        $form->setValues($user);
+                    } else {
+                        $form->addError("Er is een fout opgetreden bij het bijwerken van de gebruiker.");
+                    }
                 }
             }
+        } catch (\Exception $e) {
+            if (isset($form)) {
+                $form->addError("Database fout: " . $e->getMessage());
+            } else {
+                // Als er een database fout is bij het ophalen van de gebruiker
+                $user = [
+                    'id' => $id,
+                    'username' => 'user' . $id,
+                    'email' => 'user' . $id . '@example.com',
+                    'display_name' => 'User ' . $id,
+                    'role' => 'member',
+                    'status' => 'active',
+                    'created_at' => '2025-01-01'
+                ];
+                $form = new \App\Helpers\FormHelper($user);
+                $form->addError("Database fout: " . $e->getMessage());
+            }
         }
-    } catch (\Exception $e) {
-        if (isset($form)) {
-            $form->addError("Database fout: " . $e->getMessage());
-        } else {
-            // Als er een database fout is bij het ophalen van de gebruiker
-            $user = [
-                'id' => $id,
-                'username' => 'user' . $id,
-                'email' => 'user' . $id . '@example.com',
-                'display_name' => 'User ' . $id,
-                'role' => 'member',
-                'status' => 'active',
-                'created_at' => '2025-01-01'
-            ];
-            $form = new \App\Helpers\FormHelper($user);
-            $form->addError("Database fout: " . $e->getMessage());
-        }
+        
+        $data = [
+            'user' => $user,
+            'form' => $form,
+            'title' => 'Gebruiker Bewerken',
+            'contentView' => BASE_PATH . '/app/Views/admin/users/edit.php',
+            'success' => $success ?? false
+        ];
+        
+        return $this->view('admin/layout', $data);
     }
-    
-    $data = [
-        'user' => $user,
-        'form' => $form,
-        'title' => 'Gebruiker Bewerken',
-        'contentView' => BASE_PATH . '/app/Views/admin/users/edit.php',
-        'success' => $success ?? false
-    ];
-    
-    return $this->view('admin/layout', $data);
-}
     
         /**
      * Verwijder een gebruiker
@@ -304,4 +304,129 @@ class UserController extends Controller
     header('Location: ' . base_url('?route=admin/users'));
     exit;
 }
+
+    /**
+ * Update avatar voor een specifieke gebruiker (admin functie)
+ */
+    public function updateUserAvatar()
+    {
+        $userId = $_POST['user_id'] ?? null;
+        
+        if (!$userId) {
+            $_SESSION['error_message'] = 'Geen gebruiker ID opgegeven';
+            redirect('admin/users');
+            return;
+        }
+        
+        // Controleer of gebruiker bestaat
+        $db = \App\Database\Database::getInstance();
+        $user = $db->fetch("SELECT * FROM users WHERE id = ?", [$userId]);
+        
+        if (!$user) {
+            $_SESSION['error_message'] = 'Gebruiker niet gevonden';
+            redirect('admin/users');
+            return;
+        }
+        
+        // Controleer of er een bestand is geüpload
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['error_message'] = 'Er is geen geldige avatar geüpload';
+            redirect('admin/users/edit?id=' . $userId);
+            return;
+        }
+        
+        // Upload avatar met admin prefix
+        $uploadResult = upload_avatar($_FILES['avatar'], $userId);
+        
+        if ($uploadResult['success']) {
+            try {
+                // Update database
+                $avatarPath = $uploadResult['path'];
+                
+                // Controleer of er al een profiel bestaat
+                $existingProfile = $db->fetch("SELECT id, avatar FROM user_profiles WHERE user_id = ?", [$userId]);
+                
+                if ($existingProfile) {
+                    // Verwijder oude avatar
+                    if (!empty($existingProfile['avatar']) && 
+                        !str_contains($existingProfile['avatar'], 'default-avatar')) {
+                        delete_uploaded_file($existingProfile['avatar']);
+                    }
+                    
+                    // Update profiel
+                    $db->query("
+                        UPDATE user_profiles 
+                        SET avatar = ?, updated_at = NOW()
+                        WHERE user_id = ?
+                    ", [$avatarPath, $userId]);
+                } else {
+                    // Maak nieuw profiel
+                    $db->query("
+                        INSERT INTO user_profiles (user_id, avatar, created_at, updated_at) 
+                        VALUES (?, ?, NOW(), NOW())
+                    ", [$userId, $avatarPath]);
+                }
+                
+                $_SESSION['success_message'] = "Avatar voor {$user['username']} succesvol bijgewerkt";
+                
+            } catch (\Exception $e) {
+                // Verwijder geüpload bestand bij database fout
+                delete_uploaded_file($uploadResult['path']);
+                error_log("Admin avatar upload error: " . $e->getMessage());
+                $_SESSION['error_message'] = 'Database fout bij het opslaan van de avatar';
+            }
+        } else {
+            $_SESSION['error_message'] = $uploadResult['message'];
+        }
+        
+        redirect('admin/users/edit?id=' . $userId);
+    }
+
+    /**
+     * Verwijder avatar van een gebruiker (admin functie)
+     */
+    public function removeUserAvatar()
+    {
+        $userId = $_POST['user_id'] ?? null;
+        
+        if (!$userId) {
+            $_SESSION['error_message'] = 'Geen gebruiker ID opgegeven';
+            redirect('admin/users');
+            return;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance();
+            
+            // Haal huidige avatar op
+            $profile = $db->fetch("SELECT avatar FROM user_profiles WHERE user_id = ?", [$userId]);
+            
+            if ($profile && !empty($profile['avatar'])) {
+                // Verwijder alleen als het geen default avatar is
+                if (!str_contains($profile['avatar'], 'default-avatar')) {
+                    delete_uploaded_file($profile['avatar']);
+                }
+                
+                // Reset naar default
+                $defaultAvatar = 'theme-assets/default/images/default-avatar.png';
+                $db->query("
+                    UPDATE user_profiles 
+                    SET avatar = ?, updated_at = NOW()
+                    WHERE user_id = ?
+                ", [$defaultAvatar, $userId]);
+            }
+            
+            $user = $db->fetch("SELECT username FROM users WHERE id = ?", [$userId]);
+            $_SESSION['success_message'] = "Avatar voor {$user['username']} verwijderd";
+            
+        } catch (\Exception $e) {
+            error_log("Admin remove avatar error: " . $e->getMessage());
+            $_SESSION['error_message'] = 'Er ging iets mis bij het verwijderen van de avatar';
+        }
+        
+        redirect('admin/users/edit?id=' . $userId);
+    }
+
+
+
 }

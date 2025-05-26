@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== COMMENT FORMULIEREN =====
     initCommentForms();
+
+    // ===== AVATAR UPLOAD INITIALISATIE =====
+    initAvatarUpload();
 });
 
 /**
@@ -484,64 +487,59 @@ function initPostMenus() {
             }
         });
     });
+}
 
-    // ===== COMMENT KARAKTERTELLER =====
-    initCommentCharCounter();
-
-    /**
-     * Initialiseert de karakterteller voor comment formulieren
-     * Dit zorgt ervoor dat gebruikers kunnen zien hoeveel karakters ze hebben getypt
-     */
-    function initCommentCharCounter() {
-        // Zoek alle comment textareas op de pagina
-        const commentTextareas = document.querySelectorAll('.add-comment-form textarea');
+/**
+ * Initialiseert de karakterteller voor comment formulieren
+ * Dit zorgt ervoor dat gebruikers kunnen zien hoeveel karakters ze hebben getypt
+ */
+function initCommentCharCounter() {
+    // Zoek alle comment textareas op de pagina
+    const commentTextareas = document.querySelectorAll('.add-comment-form textarea');
+    
+    console.log(`Gevonden: ${commentTextareas.length} comment textareas`);
+    
+    // Voor elke textarea, voeg een event listener toe
+    commentTextareas.forEach(textarea => {
+        // Zoek de bijbehorende karakterteller
+        const form = textarea.closest('.add-comment-form');
+        const charCounter = form.querySelector('.comment-char-counter');
         
-        console.log(`Gevonden: ${commentTextareas.length} comment textareas`);
-        
-        // Voor elke textarea, voeg een event listener toe
-        commentTextareas.forEach(textarea => {
-            // Zoek de bijbehorende karakterteller
-            const form = textarea.closest('.add-comment-form');
-            const charCounter = form.querySelector('.comment-char-counter');
-            
-            if (charCounter) {
-                // Functie om de karakterteller bij te werken
-                function updateCharCounter() {
-                    const length = textarea.value.length;
-                    const maxLength = 500; // Maximaal aantal karakters
-                    
-                    // Update de tekst
-                    charCounter.textContent = `${length}/${maxLength}`;
-                    
-                    // Verander de kleur als we over de limiet gaan
-                    if (length > maxLength) {
-                        charCounter.classList.add('text-red-500');
-                        charCounter.classList.remove('text-gray-500');
-                    } else {
-                        charCounter.classList.remove('text-red-500');
-                        charCounter.classList.add('text-gray-500');
-                    }
+        if (charCounter) {
+            // Functie om de karakterteller bij te werken
+            function updateCharCounter() {
+                const length = textarea.value.length;
+                const maxLength = 500; // Maximaal aantal karakters
+                
+                // Update de tekst
+                charCounter.textContent = `${length}/${maxLength}`;
+                
+                // Verander de kleur als we over de limiet gaan
+                if (length > maxLength) {
+                    charCounter.classList.add('text-red-500');
+                    charCounter.classList.remove('text-gray-500');
+                } else {
+                    charCounter.classList.remove('text-red-500');
+                    charCounter.classList.add('text-gray-500');
                 }
-                
-                // Luister naar typing in de textarea
-                textarea.addEventListener('input', updateCharCounter);
-                
-                // Update de teller meteen bij het laden van de pagina
-                updateCharCounter();
-                
-                console.log('Karakterteller toegevoegd voor textarea');
             }
-        });
-    }
+            
+            // Luister naar typing in de textarea
+            textarea.addEventListener('input', updateCharCounter);
+            
+            // Update de teller meteen bij het laden van de pagina
+            updateCharCounter();
+            
+            console.log('Karakterteller toegevoegd voor textarea');
+        }
+    });
+}
 
-    // ===== COMMENT FORMULIEREN =====
-    initCommentForms();
-
-    /**
-     * Initialiseert de comment formulieren
-     * Dit zorgt ervoor dat we kunnen reageren op het versturen van comments
-     */
-    function initCommentForms() {
+/**
+ * Initialiseert de comment formulieren
+ * Dit zorgt ervoor dat we kunnen reageren op het versturen van comments
+ */
+function initCommentForms() {
     // Zoek alle comment formulieren op de pagina
     const commentForms = document.querySelectorAll('.add-comment-form');
     
@@ -634,81 +632,387 @@ function initPostMenus() {
             });
         });
     });
-  }
+}
 
-    /**
-     * Voeg een nieuwe comment toe aan de DOM
-     */
-    function addCommentToDOM(form, comment) {
-        // Zoek de container waar comments worden weergegeven
-        const commentsSection = form.closest('.comments-section');
-        const existingComments = commentsSection.querySelector('.existing-comments');
-        
-        // Maak de HTML voor de nieuwe comment
-        const commentHTML = `
-            <div class="comment-item flex space-x-3 p-2 bg-blue-50 rounded-lg">
-                <img src="${comment.avatar}" 
-                    alt="${comment.user_name}" 
-                    class="w-8 h-8 rounded-full border border-blue-200 flex-shrink-0">
-                <div class="flex-grow">
-                    <div class="comment-header flex items-center space-x-2 mb-1">
-                        <a href="/profile/${comment.username}" class="font-medium text-blue-800 hover:underline text-sm">
-                            ${comment.user_name}
-                        </a>
-                        <span class="text-xs text-gray-500">${comment.time_ago}</span>
-                    </div>
-                    <p class="text-gray-700 text-sm">${comment.content}</p>
+/**
+ * Voeg een nieuwe comment toe aan de DOM
+ */
+function addCommentToDOM(form, comment) {
+    // Zoek de container waar comments worden weergegeven
+    const commentsSection = form.closest('.comments-section');
+    const existingComments = commentsSection.querySelector('.existing-comments');
+    
+    // Maak de HTML voor de nieuwe comment
+    const commentHTML = `
+        <div class="comment-item flex space-x-3 p-2 bg-blue-50 rounded-lg">
+            <img src="${comment.avatar}" 
+                alt="${comment.user_name}" 
+                class="w-8 h-8 rounded-full border border-blue-200 flex-shrink-0">
+            <div class="flex-grow">
+                <div class="comment-header flex items-center space-x-2 mb-1">
+                    <a href="/profile/${comment.username}" class="font-medium text-blue-800 hover:underline text-sm">
+                        ${comment.user_name}
+                    </a>
+                    <span class="text-xs text-gray-500">${comment.time_ago}</span>
                 </div>
+                <p class="text-gray-700 text-sm">${comment.content}</p>
             </div>
-        `;
-        
-        // Voeg de comment toe aan het einde van de existing comments
-        existingComments.insertAdjacentHTML('beforeend', commentHTML);
-        
-        console.log('Comment toegevoegd aan DOM');
-    }
+        </div>
+    `;
+    
+    // Voeg de comment toe aan het einde van de existing comments
+    existingComments.insertAdjacentHTML('beforeend', commentHTML);
+    
+    console.log('Comment toegevoegd aan DOM');
+}
 
-    /**
-     * Update de comment count in de post actions
-     */
-    function updateCommentCount(postId) {
-        // Zoek de comment button voor deze post
-        const postElement = document.querySelector(`[data-post-id="${postId}"]`).closest('.post-card, .bg-white');
-        if (postElement) {
-            const commentButton = postElement.querySelector('.hyves-action-button:nth-child(2)'); // Tweede button is meestal comments
-            if (commentButton) {
-                const countElement = commentButton.querySelector('.text');
-                if (countElement) {
-                    // Haal het huidige aantal op en verhoog met 1
-                    const currentText = countElement.textContent;
-                    const currentCount = parseInt(currentText.match(/\d+/)) || 0;
-                    const newCount = currentCount + 1;
-                    countElement.textContent = `${newCount} Reacties`;
-                    
-                    console.log(`Comment count bijgewerkt naar ${newCount}`);
-                }
+/**
+ * Update de comment count in de post actions
+ */
+function updateCommentCount(postId) {
+    // Zoek de comment button voor deze post
+    const postElement = document.querySelector(`[data-post-id="${postId}"]`).closest('.post-card, .bg-white');
+    if (postElement) {
+        const commentButton = postElement.querySelector('.hyves-action-button:nth-child(2)'); // Tweede button is meestal comments
+        if (commentButton) {
+            const countElement = commentButton.querySelector('.text');
+            if (countElement) {
+                // Haal het huidige aantal op en verhoog met 1
+                const currentText = countElement.textContent;
+                const currentCount = parseInt(currentText.match(/\d+/)) || 0;
+                const newCount = currentCount + 1;
+                countElement.textContent = `${newCount} Reacties`;
+                
+                console.log(`Comment count bijgewerkt naar ${newCount}`);
             }
         }
     }
+}
 
-    /**
-     * Toon een korte notificatie (eenvoudige versie)
-     */
-    function showNotification(message, type = 'info') {
-        // Maak een eenvoudige notificatie
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`;
-        notification.textContent = message;
-        
-        // Voeg toe aan de pagina
-        document.body.appendChild(notification);
-        
-        // Verwijder na 3 seconden
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
+/**
+ * Toon een korte notificatie (eenvoudige versie)
+ */
+function showNotification(message, type = 'info') {
+    // Maak een eenvoudige notificatie
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`;
+    notification.textContent = message;
+    
+    // Voeg toe aan de pagina
+    document.body.appendChild(notification);
+    
+    // Verwijder na 3 seconden
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// ===== AVATAR UPLOAD FUNCTIONALITEIT =====
+
+/**
+ * Initialiseert de avatar upload functionaliteit
+ */
+function initAvatarUpload() {
+    const form = document.getElementById('avatarUploadForm');
+    if (!form) return; // Geen avatar form op deze pagina
+    
+    const fileInput = document.getElementById('avatarFileInput');
+    const selectBtn = document.getElementById('selectAvatarBtn');
+    const uploadBtn = document.getElementById('uploadAvatarBtn');
+    const removeBtn = document.getElementById('removeAvatarBtn');
+    const uploadBtnText = document.getElementById('uploadBtnText');
+    const preview = document.getElementById('avatarPreview');
+    const previewImage = document.getElementById('previewImage');
+    const removePreview = document.getElementById('removePreview');
+    const currentAvatar = document.getElementById('currentAvatar');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const messagesDiv = document.getElementById('avatarMessages');
+    
+    console.log('Avatar upload geïnitialiseerd');
+
+    if (preview) {
+        preview.style.display = 'none';
+    }
+    
+    // Bestand selecteren
+    if (selectBtn && fileInput) {
+        selectBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+    }
+    
+    // Bestand geselecteerd
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                console.log('Bestand geselecteerd:', file.name);
+                
+                // Validatie
+                if (!isValidAvatarFile(file)) {
+                    return;
+                }
+                
+                // Preview tonen
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (previewImage && preview && uploadBtn) {
+                        previewImage.src = e.target.result;
+                        preview.style.display = 'block';
+                        uploadBtn.disabled = false;
+                    }
+                };
+                reader.readAsDataURL(file);
             }
-        }, 3000);
+        });
+    }
+    
+    // Preview verwijderen - VERBETERDE VERSIE MET DEBUG
+    if (removePreview) {
+        console.log('removePreview element gevonden:', removePreview);
+        
+        removePreview.addEventListener('click', function(e) {
+            e.preventDefault(); // Voorkom default button gedrag
+            e.stopPropagation(); // Stop event bubbling
+            
+            console.log('Preview verwijder knop geklikt!');
+            
+            // Reset file input
+            if (fileInput) {
+                fileInput.value = '';
+                console.log('File input gereset');
+            }
+            
+            // Verberg preview
+            if (preview) {
+                preview.style.display = 'none';
+                console.log('Preview verborgen');
+            }
+            
+            // Reset preview image
+            if (previewImage) {
+                previewImage.src = '';
+                console.log('Preview image src gereset');
+            }
+            
+            // Disable upload button
+            if (uploadBtn) {
+                uploadBtn.disabled = true;
+                console.log('Upload button uitgeschakeld');
+            }
+        });
+    } else {
+        console.log('removePreview element NIET gevonden!');
+    }
+    
+    // Avatar uploaden
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!fileInput || !fileInput.files[0]) {
+                showAvatarMessage('Selecteer eerst een bestand', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('avatar', fileInput.files[0]);
+            
+            console.log('Avatar uploaden gestart');
+            
+            // UI updates
+            if (uploadBtn && uploadBtnText) {
+                uploadBtn.disabled = true;
+                uploadBtnText.textContent = 'Uploaden...';
+            }
+            
+            if (uploadProgress) {
+                uploadProgress.classList.remove('hidden');
+                animateProgress();
+            }
+            
+            fetch('/profile/upload-avatar', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                console.log('Upload response ontvangen:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Upload data:', data);
+                
+                if (data.success) {
+                    // Update avatar weergave
+                    if (currentAvatar) {
+                        currentAvatar.src = data.avatar_url;
+                    }
+                    
+                    // Reset formulier
+                    if (fileInput && preview) {
+                        fileInput.value = '';
+                        preview.classList.add('hidden');
+                    }
+                    
+                    // Success message
+                    showAvatarMessage(data.message, 'success');
+                    
+                    // Update avatar in navigatie
+                    updateNavigationAvatar(data.avatar_url);
+                    
+                } else {
+                    showAvatarMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                showAvatarMessage('Er ging iets mis bij het uploaden. Probeer het opnieuw.', 'error');
+            })
+            .finally(() => {
+                // Reset UI
+                if (uploadBtn && uploadBtnText) {
+                    uploadBtn.disabled = false;
+                    uploadBtnText.textContent = 'Uploaden';
+                }
+                
+                if (uploadProgress) {
+                    uploadProgress.classList.add('hidden');
+                }
+            });
+        });
+    }
+    
+    // Avatar verwijderen
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            if (confirm('Weet je zeker dat je je profielfoto wilt verwijderen?')) {
+                console.log('Avatar verwijderen gestart');
+                
+                fetch('/profile/remove-avatar', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (currentAvatar) {
+                            currentAvatar.src = data.avatar_url;
+                        }
+                        showAvatarMessage(data.message, 'success');
+                        updateNavigationAvatar(data.avatar_url);
+                    } else {
+                        showAvatarMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Remove error:', error);
+                    showAvatarMessage('Er ging iets mis bij het verwijderen.', 'error');
+                });
+            }
+        });
     }
 
+        console.log('=== Avatar Upload Debug Info ===');
+        console.log('form:', form);
+        console.log('fileInput:', fileInput);
+        console.log('selectBtn:', selectBtn);
+        console.log('uploadBtn:', uploadBtn);
+        console.log('removeBtn:', removeBtn);
+        console.log('preview:', preview);
+        console.log('previewImage:', previewImage);
+        console.log('removePreview:', removePreview);
+        console.log('currentAvatar:', currentAvatar);
+        console.log('================================');       
+}
+
+/**
+ * Valideer avatar bestand
+ */
+function isValidAvatarFile(file) {
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    
+    if (!validTypes.includes(file.type)) {
+        showAvatarMessage('Alleen JPG, PNG, GIF en WebP bestanden zijn toegestaan.', 'error');
+        return false;
+    }
+    
+    if (file.size > maxSize) {
+        showAvatarMessage('Het bestand is te groot. Maximaal 2MB toegestaan.', 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Toon avatar bericht
+ */
+function showAvatarMessage(message, type) {
+    const messagesDiv = document.getElementById('avatarMessages');
+    if (!messagesDiv) return;
+    
+    const bgColor = type === 'success' 
+        ? 'bg-green-100 border-green-400 text-green-700' 
+        : 'bg-red-100 border-red-400 text-red-700';
+    
+    const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    
+    messagesDiv.innerHTML = `
+        <div class="${bgColor} border px-4 py-3 rounded relative flex items-center" role="alert">
+            <i class="${icon} mr-2"></i>
+            <span class="block sm:inline">${message}</span>
+        </div>
+    `;
+    
+    // Auto hide na 5 seconden
+    setTimeout(() => {
+        if (messagesDiv) {
+            messagesDiv.innerHTML = '';
+        }
+    }, 5000);
+}
+
+/**
+ * Update avatar in navigatiebalk
+ */
+function updateNavigationAvatar(avatarUrl) {
+    // Update avatar in navigatiebalk als aanwezig
+    const navAvatars = document.querySelectorAll('.nav-user img, .user-avatar img, [id*="user-menu"] img');
+    navAvatars.forEach(avatar => {
+        avatar.src = avatarUrl;
+    });
+    
+    console.log('Navigatie avatar bijgewerkt:', avatarUrl);
+}
+
+/**
+ * Animeer upload progress bar
+ */
+function animateProgress() {
+    const progressBar = document.querySelector('#uploadProgress .bg-blue-600');
+    if (!progressBar) return;
+    
+    let width = 0;
+    const interval = setInterval(() => {
+        width += Math.random() * 20;
+        if (width > 90) {
+            width = 90; // Stop bij 90% tot upload klaar is
+            clearInterval(interval);
+        }
+        progressBar.style.width = width + '%';
+    }, 100);
+    
+    // Stop animatie na 5 seconden (fallback)
+    setTimeout(() => {
+        clearInterval(interval);
+        progressBar.style.width = '100%';
+    }, 5000);
 }

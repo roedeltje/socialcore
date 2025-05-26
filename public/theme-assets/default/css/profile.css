@@ -569,3 +569,263 @@
         padding: 1rem;
     }
 }
+
+* Avatar Upload Component */
+.avatar-upload-section {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Huidige Avatar Styling */
+#currentAvatar {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+#currentAvatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Avatar Preview Styling */
+#avatarPreview {
+    position: relative;
+    display: inline-block;
+}
+
+#previewImage {
+    transition: all 0.3s ease;
+    border: 2px solid #e2e8f0;
+}
+
+#removePreview {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #ef4444;
+    color: white;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+#removePreview:hover {
+    background-color: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Upload Buttons Styling */
+.avatar-upload-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.avatar-upload-buttons button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.avatar-upload-buttons button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.avatar-upload-buttons button:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button Colors */
+.btn-upload {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-upload:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.btn-select {
+    background-color: #059669;
+    color: white;
+}
+
+.btn-select:hover {
+    background-color: #047857;
+}
+
+.btn-remove {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-remove:hover {
+    background-color: #dc2626;
+}
+
+/* Upload Progress Styling */
+#uploadProgress {
+    margin-top: 1rem;
+}
+
+.upload-progress-bar {
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.upload-progress-fill {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+}
+
+/* File Info Styling */
+.avatar-file-info {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-top: 1rem;
+}
+
+.avatar-file-info p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.avatar-file-info strong {
+    color: #334155;
+}
+
+/* Avatar Messages Styling */
+#avatarMessages {
+    margin-top: 1rem;
+}
+
+#avatarMessages .border {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Avatar Upload */
+@media (max-width: 768px) {
+    .avatar-upload-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .avatar-upload-buttons {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .avatar-upload-buttons button {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    #currentAvatar {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+/* Hyves-style Avatar Decorations */
+.avatar-container {
+    position: relative;
+}
+
+.avatar-container::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, transparent 0%, transparent 50%, #3b82f6 50%, #3b82f6 100%);
+    border-bottom-left-radius: 8px;
+    pointer-events: none;
+}
+
+/* Avatar Upload Hover Effects */
+.avatar-upload-section:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    transition: all 0.3s ease;
+}
+
+/* Success/Error Message Icons */
+.avatar-message-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+
+/* File Input Hidden Styling */
+#avatarFileInput {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Avatar Overlay Hover Effect */
+.avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+}
+
+.avatar-container:hover .avatar-overlay {
+    opacity: 1;
+}
+
+.avatar-overlay i {
+    color: white;
+    font-size: 1.5rem;
+}

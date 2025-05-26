@@ -13,7 +13,7 @@
                 </div>
                 <div class="p-4">
                     <div class="flex items-center space-x-4">
-                        <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                        <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
                              alt="<?= htmlspecialchars($current_user['name']) ?>" 
                              class="w-16 h-16 rounded-full border-2 border-blue-200">
                         <div>
@@ -104,7 +104,7 @@
                     <!-- Formulier aangepast naar de juiste route -->
                     <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="postForm">
                         <div class="flex space-x-3">
-                            <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                            <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                 alt="<?= htmlspecialchars($current_user['name']) ?>" 
                                 class="w-10 h-10 rounded-full border-2 border-blue-200">
                             <textarea name="content" rows="2" 
@@ -156,11 +156,7 @@
                 <div class="post-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
                     <div class="post-header flex justify-between items-center bg-blue-100 p-3 border-b border-blue-200">
                         <div class="flex items-center space-x-3">
-                            <img src="<?= base_url('theme-assets/default/images/' . (strpos($post['user_name'], 'Jan') !== false || 
-                                                            strpos($post['user_name'], 'Thomas') !== false ? 
-                                                            'default-avatar-male.png' : 
-                                                            (strpos($post['user_name'], 'Petra') !== false ? 
-                                                             'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
+                            <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                  alt="<?= htmlspecialchars($post['user_name']) ?>" 
                                  class="w-8 h-8 rounded-full border-2 border-blue-200">
                             <div>
@@ -171,25 +167,25 @@
                             </div>
                         </div>
                         <?php if (isset($_SESSION['user_id']) && ($post['user_id'] == $_SESSION['user_id'] || isset($_SESSION['role']) && $_SESSION['role'] === 'admin')): ?>
-    <div class="relative post-menu">
-        <button type="button" class="post-menu-button text-blue-600 hover:text-blue-800 p-1 rounded-full">
-            <span class="icon">⋯</span>
-        </button>
-        <div class="post-menu-dropdown absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden">
-            <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
-                <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
-                <button type="button" class="delete-post-button block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                    Bericht verwijderen
-                </button>
-            </form>
-        </div>
-    </div>
-<?php else: ?>
-    <!-- Toon de drie puntjes voor niet-eigenaars, maar zonder menu functionaliteit -->
-    <button class="text-blue-600 hover:text-blue-800">
-        <span class="icon">⋯</span>
-    </button>
-<?php endif; ?>
+                                <div class="relative post-menu">
+                                    <button type="button" class="post-menu-button text-blue-600 hover:text-blue-800 p-1 rounded-full">
+                                        <span class="icon">⋯</span>
+                                    </button>
+                                    <div class="post-menu-dropdown absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden">
+                                        <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
+                                            <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                                            <button type="button" class="delete-post-button block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                                Bericht verwijderen
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <!-- Toon de drie puntjes voor niet-eigenaars, maar zonder menu functionaliteit -->
+                                <button class="text-blue-600 hover:text-blue-800">
+                                    <span class="icon">⋯</span>
+                                </button>
+                            <?php endif; ?>
                     </div>
                     <div class="p-4">
                         <div class="post-content mb-4">
@@ -253,7 +249,7 @@
                             
                             <!-- Comment formulier -->
                             <form class="add-comment-form flex space-x-3" data-post-id="<?= $post['id'] ?>">
-                                <img src="<?= base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                      alt="<?= htmlspecialchars($current_user['name']) ?>" 
                                      class="w-8 h-8 rounded-full border border-blue-200 flex-shrink-0">
                                 <div class="flex-grow">

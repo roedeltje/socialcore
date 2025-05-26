@@ -155,14 +155,14 @@ class FeedController extends Controller
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($result && !empty($result['avatar'])) {
-                    return '/public/uploads/' . $result['avatar'];
+                    return base_url('uploads/' . $result['avatar']);
                 }
             } catch (Exception $e) {
                 error_log('Fout bij ophalen avatar: ' . $e->getMessage());
             }
             
             // Fallback naar default avatar
-            return '/public/assets/images/default-avatar.png';
+            return base_url('theme-assets/default/images/default-avatar.png');
         }
 
     /**
@@ -281,8 +281,8 @@ class FeedController extends Controller
                 
                 // Zorg ervoor dat alle benodigde sleutels bestaan
                 $user['avatar_url'] = !empty($user['avatar']) 
-                    ? '/public/uploads/' . $user['avatar']
-                    : '/public/theme-assets/default/images/default-avatar.png';
+                ? base_url('uploads/' . $user['avatar'])
+                : base_url('theme-assets/default/images/default-avatar.png');
                     
                 // Voeg 'name' sleutel toe (dit is waar de fout optreedt)
                 $user['name'] = $user['display_name'] ?? $user['username'] ?? 'Gebruiker';
@@ -417,7 +417,7 @@ class FeedController extends Controller
                     $media = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     if ($media) {
-                        $post['image_url'] = '/public/uploads/' . $media['file_path'];
+                        $post['image_url'] = base_url('uploads/' . $media['file_path']);
                     }
                 }
                 

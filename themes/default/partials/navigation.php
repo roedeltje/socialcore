@@ -47,7 +47,7 @@
                     
                     <div class="user-dropdown">
                         <div class="user-avatar" id="profileDropdown">
-                            <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('public/uploads/' . $_SESSION['avatar']) : base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                            <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('uploads/' . $_SESSION['avatar']) : base_url('theme-assets/default/images/default-avatar.png') ?>" 
                                  alt="Profielfoto">
                             <span class="dropdown-arrow">
                                 <i class="fas fa-chevron-down"></i>
