@@ -18,87 +18,117 @@ class ProfileController extends Controller
     /**
      * Toon de profielpagina
      */
-    public function index($usernameFromUrl = null)
+    public function index($userIdFromRoute = null, $usernameFromRoute = null)
+{
+    // Controleer eerst of gebruiker is ingelogd
+    if (!isset($_SESSION['user_id'])) {
+        redirect('login');
+        return;
+    }
+    
+    // Bepaal welke tab actief is
+    $activeTab = $_GET['tab'] ?? 'over';
+    
+    // Bepaal de gebruiker wiens profiel wordt bekeken
+    $targetUserId = null;
+    $targetUsername = null;
+    
+    // Prioriteit: Route parameters > GET parameters > eigen profiel
+    if ($userIdFromRoute !== null) {
+        // User ID uit route (bijv. /profile/1)
+        $targetUserId = $userIdFromRoute;
+    } elseif ($usernameFromRoute !== null) {
+        // Username uit route (bijv. /profile/johndoe)
+        $targetUsername = $usernameFromRoute;
+    } elseif (isset($_GET['username'])) {
+        // Username uit query parameter (bijv. ?username=johndoe) - backward compatibility
+        $targetUsername = $_GET['username'];
+    } else {
+        // Geen specifieke gebruiker, toon eigen profiel
+        $targetUserId = $_SESSION['user_id'];
+    }
+    
+    // Haal gebruikersgegevens op
+    $user = $this->getTargetUser($targetUserId, $targetUsername);
+    
+    if (!$user) {
+        // Gebruiker niet gevonden, redirect naar eigen profiel
+        $_SESSION['error_message'] = 'Gebruiker niet gevonden.';
+        redirect('profile');
+        return;
+    }
+    
+    // Bepaal of de kijker de eigenaar is
+    $viewerIsOwner = $_SESSION['user_id'] == $user['id'];
+    
+    // Laad vrienden
+    $friends = $this->getFriends($user['id']);
+    
+    // Laad posts
+    $posts = $this->getUserPosts($user['id']);
+
+    // Laadt comments
+    $posts = $this->getCommentsForPosts($posts);
+    
+    // Laad specifieke data op basis van de geselecteerde tab
+    $krabbels = [];
+    $fotos = [];
+    
+    if ($activeTab === 'krabbels') {
+        $krabbels = $this->getKrabbels($user['id']);
+    } elseif ($activeTab === 'fotos') {
+        $fotos = $this->getFotos($user['id']);
+    }
+    
+    $data = [
+        'title' => $user['name'] . ' - Profiel',
+        'user' => $user,
+        'friends' => $friends,
+        'posts' => $posts,
+        'krabbels' => $krabbels,
+        'fotos' => $fotos,
+        'viewer_is_owner' => $viewerIsOwner,
+        'active_tab' => $activeTab
+    ];
+    
+    $this->view('profile/index', $data);
+}
+    
+    /**
+     * Haal de doelgebruiker op (door ID of username)
+     */
+    private function getTargetUser($userId = null, $username = null)
     {
-        // Controleer eerst of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            redirect('login');
-            return;
-        }
-        
-        // Controleer of er een specifieke gebruiker is opgevraagd
-        $requestedUsername = $_GET['username'] ?? null;
-        // Bepaal welke tab actief is
-        $activeTab = $_GET['tab'] ?? 'over';
-        
-        // Bepaal de gebruiker wiens profiel wordt bekeken
-        $userId = null;
-        $username = null;
-        
-        // Als een username is meegegeven, probeer de gebruiker op te halen
-        if ($requestedUsername) {
-            try {
-                $stmt = $this->db->prepare("SELECT id, username FROM users WHERE username = ?");
-                $stmt->execute([$requestedUsername]);
+        try {
+            if ($userId !== null) {
+                // Zoek op user ID
+                $stmt = $this->db->prepare("SELECT id, username FROM users WHERE id = ?");
+                $stmt->execute([$userId]);
                 $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($userBasic) {
-                    $userId = $userBasic['id'];
-                    $username = $userBasic['username'];
-                } else {
-                    // Gebruiker niet gevonden, redirect naar eigen profiel
-                    $userId = $_SESSION['user_id'];
-                    $username = $_SESSION['username'] ?? 'gebruiker';
+                    return $this->getUserData($userBasic['id'], $userBasic['username']);
                 }
-            } catch (\Exception $e) {
-                // Bij een fout, gebruik de huidige gebruiker
-                error_log("Error fetching user by username: " . $e->getMessage());
+            } elseif ($username !== null) {
+                // Zoek op username
+                $stmt = $this->db->prepare("SELECT id, username FROM users WHERE username = ?");
+                $stmt->execute([$username]);
+                $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($userBasic) {
+                    return $this->getUserData($userBasic['id'], $userBasic['username']);
+                }
+            } else {
+                // Geen specifieke gebruiker, gebruik ingelogde gebruiker
                 $userId = $_SESSION['user_id'];
                 $username = $_SESSION['username'] ?? 'gebruiker';
+                return $this->getUserData($userId, $username);
             }
-        } else {
-            // Geen username meegegeven, toon eigen profiel
-            $userId = $_SESSION['user_id'];
-            $username = $_SESSION['username'] ?? 'gebruiker';
+        } catch (\Exception $e) {
+            error_log("Error fetching target user: " . $e->getMessage());
         }
         
-        // Haal gebruikersgegevens op
-        $user = $this->getUserData($userId, $username);
-        
-        // Bepaal of de kijker de eigenaar is
-        $viewerIsOwner = $_SESSION['user_id'] == $userId;
-        
-        // Laad vrienden
-        $friends = $this->getFriends($userId);
-        
-        // Laad posts
-        $posts = $this->getUserPosts($userId);
-
-        // Laadt comments
-        $posts = $this->getCommentsForPosts($posts);
-        
-        // Laad specifieke data op basis van de geselecteerde tab
-        $krabbels = [];
-        $fotos = [];
-        
-        if ($activeTab === 'krabbels') {
-            $krabbels = $this->getKrabbels($userId);
-        } elseif ($activeTab === 'fotos') {
-            $fotos = $this->getFotos($userId);
-        }
-        
-        $data = [
-            'title' => $user['name'] . ' - Profiel',
-            'user' => $user,
-            'friends' => $friends,
-            'posts' => $posts,
-            'krabbels' => $krabbels,
-            'fotos' => $fotos,
-            'viewer_is_owner' => $viewerIsOwner,
-            'active_tab' => $activeTab
-        ];
-        
-        $this->view('profile/index', $data);
+        return null;
     }
     
     /**

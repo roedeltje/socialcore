@@ -1,21 +1,45 @@
 # SocialCore .htaccess
-# Zorgt ervoor dat alle verzoeken naar index.php worden doorgestuurd
+# Zorgt ervoor dat alle verzoeken naar index.php worden doorgestuurd met de juiste route parameter
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
-    # Redirect Trailing Slashes
+    # Redirect Trailing Slashes (behalve voor root)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
     
-    # Stuur alle verzoeken naar index.php, behalve als het bestaande bestanden of mappen zijn
+    # Specifieke regels voor verschillende routes
+    
+    # Profile routes - /profile/1 of /profile/username
+    RewriteRule ^profile/([^/]+)/?$ index.php?route=profile&profile_param=$1 [QSA,L]
+    
+    # Admin routes - /admin/users, /admin/dashboard, etc.
+    RewriteRule ^admin/([^/]+)/?$ index.php?route=admin/$1 [QSA,L]
+    RewriteRule ^admin/([^/]+)/([^/]+)/?$ index.php?route=admin/$1&action=$2 [QSA,L]
+    
+    # Feed routes - /feed, /feed/create, etc.
+    RewriteRule ^feed/?$ index.php?route=feed [QSA,L]
+    RewriteRule ^feed/([^/]+)/?$ index.php?route=feed/$1 [QSA,L]
+    
+    # Auth routes - /login, /register, /logout
+    RewriteRule ^(login|register|logout)/?$ index.php?route=$1 [QSA,L]
+    
+    # Other specific routes
+    RewriteRule ^(about|home)/?$ index.php?route=$1 [QSA,L]
+    
+    # Algemene regel voor alle andere routes (moet als laatste)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    RewriteRule ^([^/]+)/?$ index.php?route=$1 [QSA,L]
+    
+    # Catch-all voor complexere routes
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
 </IfModule>
 
-# Voorkom directory listings
+# Beveiligingsinstellingen
 Options -Indexes
 
 # Verberg .htaccess bestand
@@ -23,3 +47,26 @@ Options -Indexes
     Order Allow,Deny
     Deny from all
 </Files>
+
+# Verberg andere gevoelige bestanden
+<Files "*.md">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+<Files "composer.*">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Cache headers voor statische bestanden
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 6 months"
+    ExpiresByType image/jpg "access plus 6 months"
+    ExpiresByType image/jpeg "access plus 6 months"
+    ExpiresByType image/gif "access plus 6 months"
+    ExpiresByType image/webp "access plus 6 months"
+</IfModule>

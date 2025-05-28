@@ -279,12 +279,29 @@ return [
 
     'profile' => [
     'callback' => function () {
-        // Haal username uit URL als die er is
-        $segments = explode('/', $_SERVER['REQUEST_URI']);
-        $username = $segments[2] ?? null; // of een andere index afhankelijk van je URL-structuur
+        // Haal de URL segmenten op om te bepalen welk profiel wordt bekeken
+        $uri = $_SERVER['REQUEST_URI'];
+        $segments = explode('/', trim($uri, '/'));
+        
+        // Zoek naar 'profile' in de segmenten
+        $profileIndex = array_search('profile', $segments);
+        $userId = null;
+        $username = null;
+        
+        // Als er een segment na 'profile' is, probeer dit als gebruiker ID of username
+        if ($profileIndex !== false && isset($segments[$profileIndex + 1])) {
+            $identifier = $segments[$profileIndex + 1];
+            
+            // Controleer of het een getal is (user ID) of tekst (username)
+            if (is_numeric($identifier)) {
+                $userId = intval($identifier);
+            } else {
+                $username = $identifier;
+            }
+        }
         
         $profileController = new ProfileController();
-        $profileController->index($username);
+        $profileController->index($userId, $username);
     },
     'middleware' => [AuthMiddleware::class]
 ],

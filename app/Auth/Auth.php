@@ -19,56 +19,66 @@ class Auth
     }
     
     public static function attempt($username, $password, $remember = false)
-{
-    try {
-        $db = Database::getInstance();
-        
-        // Debug info
-        error_log("Login attempt for user: $username");
-        
-        // Zoek de gebruiker op basis van gebruikersnaam
-        $user = $db->fetch(
-            "SELECT id, username, password FROM users WHERE username = ?", 
-            [$username]
-        );
-        
-        error_log("User found: " . ($user ? 'Yes' : 'No'));
-        
-        // Controleer of de gebruiker bestaat en het wachtwoord correct is
-        if ($user && password_verify($password, $user['password'])) {
-            // Sla gebruikersgegevens op in de sessie
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            error_log("Password verified, login successful");
+    {
+        try {
+            $db = Database::getInstance();
             
-            // Als "onthoud mij" is aangevinkt, genereer een remember token
-            if ($remember) {
-                // Genereer een unieke token
-                $token = bin2hex(random_bytes(32));
+            // Debug info
+            error_log("Login attempt for user: $username");
+            
+            // AANGEPAST: Zoek de gebruiker inclusief avatar informatie
+            $user = $db->fetch(
+                "SELECT u.id, u.username, u.password, u.email, u.role, 
+                        COALESCE(up.display_name, u.username) as display_name, 
+                        up.avatar 
+                FROM users u 
+                LEFT JOIN user_profiles up ON u.id = up.user_id 
+                WHERE u.username = ?", 
+                [$username]
+            );
+            
+            error_log("User found: " . ($user ? 'Yes' : 'No'));
+            
+            // Controleer of de gebruiker bestaat en het wachtwoord correct is
+            if ($user && password_verify($password, $user['password'])) {
+                // AANGEPAST: Sla meer gebruikersgegevens op in de sessie
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['display_name'] = $user['display_name'];
+                $_SESSION['avatar'] = $user['avatar']; // NIEUWE REGEL: Avatar opslaan
                 
-                // Sla de token op in de database, gekoppeld aan de gebruiker
-                $expires = date('Y-m-d H:i:s', strtotime('+30 days')); // Bijv. 30 dagen geldig
-                self::storeRememberToken($user['id'], $token, $expires);
+                error_log("Password verified, login successful");
                 
-                // Stel een cookie in met de token
-                $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'; // Cookie alleen via HTTPS
-                $httponly = true; // Cookie niet toegankelijk via JavaScript
-                setcookie('remember_token', $token, strtotime('+30 days'), '/', '', $secure, $httponly);
+                // Als "onthoud mij" is aangevinkt, genereer een remember token
+                if ($remember) {
+                    // Genereer een unieke token
+                    $token = bin2hex(random_bytes(32));
+                    
+                    // Sla de token op in de database, gekoppeld aan de gebruiker
+                    $expires = date('Y-m-d H:i:s', strtotime('+30 days')); // Bijv. 30 dagen geldig
+                    self::storeRememberToken($user['id'], $token, $expires);
+                    
+                    // Stel een cookie in met de token
+                    $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on'; // Cookie alleen via HTTPS
+                    $httponly = true; // Cookie niet toegankelijk via JavaScript
+                    setcookie('remember_token', $token, strtotime('+30 days'), '/', '', $secure, $httponly);
+                    
+                    error_log("Remember me token set for user: {$user['username']}");
+                }
                 
-                error_log("Remember me token set for user: {$user['username']}");
+                return true;
             }
             
-            return true;
+            error_log("Login failed for user: $username");
+            return false;
+        } catch (\Exception $e) {
+            // Log de fout, maar laat het inloggen mislukken
+            error_log("Database error in Auth::attempt(): " . $e->getMessage());
+            return false;
         }
-        
-        error_log("Login failed for user: $username");
-        return false;
-    } catch (\Exception $e) {
-        // Log de fout, maar laat het inloggen mislukken
-        error_log("Database error in Auth::attempt(): " . $e->getMessage());
-        return false;
     }
-}
 
     // Voeg deze statische methoden toe
     public static function isAdmin(): bool
@@ -248,36 +258,44 @@ private static function storeRememberToken($userId, $token, $expires)
     }
 }
 
-/**
- * Zoekt een gebruiker op basis van een remember token
- * 
- * @param string $token De token uit de cookie
- * @return array|null Gebruikersgegevens of null als niet gevonden
- */
-public static function getUserByRememberToken($token)
-{
-    try {
-        $db = Database::getInstance();
-        
-        // Zoek de token in de database
-        $tokenData = $db->fetch(
-            "SELECT user_id FROM remember_tokens WHERE token = ? AND expires_at > NOW()", 
-            [$token]
-        );
-        
-        if (!$tokenData) {
+    /**
+     * Zoekt een gebruiker op basis van een remember token
+     * 
+     * @param string $token De token uit de cookie
+     * @return array|null Gebruikersgegevens of null als niet gevonden
+     */
+    public static function getUserByRememberToken($token)
+    {
+        try {
+            $db = Database::getInstance();
+            
+            // Zoek de token in de database
+            $tokenData = $db->fetch(
+                "SELECT user_id FROM remember_tokens WHERE token = ? AND expires_at > NOW()", 
+                [$token]
+            );
+            
+            if (!$tokenData) {
+                return null;
+            }
+            
+            // AANGEPAST: Haal de gebruikersgegevens inclusief avatar op
+            $user = $db->fetch(
+                "SELECT u.id, u.username, u.email, u.role, 
+                        COALESCE(up.display_name, u.username) as display_name, 
+                        up.avatar 
+                FROM users u 
+                LEFT JOIN user_profiles up ON u.id = up.user_id 
+                WHERE u.id = ?", 
+                [$tokenData['user_id']]
+            );
+            
+            return $user;
+        } catch (\Exception $e) {
+            error_log("Database error in Auth::getUserByRememberToken(): " . $e->getMessage());
             return null;
         }
-        
-        // Haal de gebruikersgegevens op
-        $user = $db->fetch("SELECT id, username FROM users WHERE id = ?", [$tokenData['user_id']]);
-        
-        return $user;
-    } catch (\Exception $e) {
-        error_log("Database error in Auth::getUserByRememberToken(): " . $e->getMessage());
-        return null;
     }
-}
 
 /**
  * Verwijdert een remember token uit de database

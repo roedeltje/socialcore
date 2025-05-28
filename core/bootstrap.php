@@ -118,6 +118,10 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
         // Geldig token gevonden, log de gebruiker automatisch in
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['display_name'] = $user['display_name'];
+        $_SESSION['avatar'] = $user['avatar']; // BELANGRIJK: Avatar toevoegen
         
         // Optioneel: vernieuw de token voor extra veiligheid
         // Dit vereist een extra functie die je kunt toevoegen als je wilt
