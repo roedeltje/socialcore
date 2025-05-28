@@ -409,26 +409,41 @@ class ProfileController extends Controller
     public function edit()
     {
         // Controleer of de gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            redirect('login');
-            return;
-        }
-        
-        $form = new \App\Helpers\FormHelper();
-        
-        // Haal gebruikersgegevens op
-        $userId = $_SESSION['user_id'];
-        $username = $_SESSION['username'] ?? '';
+    if (!isset($_SESSION['user_id'])) {
+        redirect('login');
+        return;
+    }
+    
+    // NIEUWE CODE: Zorg ervoor dat we altijd het eigen profiel bewerken
+    // Haal direct de eigen gebruikersgegevens op
+    $userId = $_SESSION['user_id'];
+    $username = $_SESSION['username'] ?? '';
+    
+    try {
         $user = $this->getUserData($userId, $username);
         
-        $data = [
-            'title' => 'Profiel bewerken',
-            'user' => $user,
-            'form' => $form
-        ];
-        
-        $this->view('profile/edit', $data);
+        if (!$user) {
+            $_SESSION['error_message'] = 'Kon je profielgegevens niet ophalen.';
+            redirect('profile');
+            return;
+        }
+    } catch (\Exception $e) {
+        error_log("Error in profile edit: " . $e->getMessage());
+        $_SESSION['error_message'] = 'Er ging iets mis bij het laden van je profiel.';
+        redirect('profile');
+        return;
     }
+    
+    $form = new \App\Helpers\FormHelper();
+    
+    $data = [
+        'title' => 'Profiel bewerken',
+        'user' => $user,
+        'form' => $form
+    ];
+    
+    $this->view('profile/edit', $data);
+}
 
     /**
      * Update profielgegevens

@@ -9,9 +9,13 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
     
-    # Specifieke regels voor verschillende routes
-    
-    # Profile routes - /profile/1 of /profile/username
+    # Specifieke profile routes eerst (deze hebben voorrang)
+    RewriteRule ^profile/edit/?$ index.php?route=profile/edit [QSA,L]
+    RewriteRule ^profile/upload-avatar/?$ index.php?route=profile/upload-avatar [QSA,L] 
+    RewriteRule ^profile/remove-avatar/?$ index.php?route=profile/remove-avatar [QSA,L]
+    RewriteRule ^profile/update/?$ index.php?route=profile/update [QSA,L]
+
+    # Daarna de algemene profile regel (ALLEEN DEZE, geen dubbele!)
     RewriteRule ^profile/([^/]+)/?$ index.php?route=profile&profile_param=$1 [QSA,L]
     
     # Admin routes - /admin/users, /admin/dashboard, etc.
