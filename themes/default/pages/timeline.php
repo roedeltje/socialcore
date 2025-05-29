@@ -82,24 +82,8 @@
                     <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
                 </div>
                 <div class="p-4">
-                    <?php 
-                    // Toon success/error berichten
-                    if (isset($_SESSION['success_message'])): 
-                    ?>
-                        <div class="mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg">
-                            <?= htmlspecialchars($_SESSION['success_message']) ?>
-                        </div>
-                        <?php unset($_SESSION['success_message']); ?>
-                    <?php endif; ?>
                     
-                    <?php 
-                    if (isset($_SESSION['error_message'])): 
-                    ?>
-                        <div class="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-                            <?= htmlspecialchars($_SESSION['error_message']) ?>
-                        </div>
-                        <?php unset($_SESSION['error_message']); ?>
-                    <?php endif; ?>
+                    <?php include THEME_PATH . '/partials/messages.php'; ?>
                     
                     <!-- Formulier aangepast naar de juiste route -->
                     <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="postForm">

@@ -1,5 +1,7 @@
 <?php /* SocialCore profielpagina in Hyves-stijl */ ?>
 
+<?php include THEME_PATH . '/partials/messages.php'; ?>
+
 <div class="profile-container">
     <!-- Profiel header -->
     <div class="profile-header bg-blue-100 border-b-4 border-blue-400 rounded-t-lg p-4">
@@ -24,21 +26,109 @@
                 <!-- Actieknoppen -->
                 <div class="profile-actions flex flex-col space-y-2 mt-4">
                     <?php if ($viewer_is_owner): ?>
+                        <!-- Eigen profiel - toon bewerk knop -->
                         <a href="<?= base_url('profile/edit') ?>" class="hyves-button bg-blue-500 hover:bg-blue-600">
                             Profiel bewerken
                         </a>
                     <?php else: ?>
-                        <a href="<?= base_url('friends/add/' . $user['username']) ?>" class="hyves-button bg-green-500 hover:bg-green-600">
-                            + Vriend toevoegen
-                        </a>
+                        <!-- Andermans profiel - toon slimme vriendschapsknop -->
+                        <?php 
+                        // Bepaal welke knop en actie te tonen op basis van vriendschapsstatus
+                        $buttonText = '';
+                        $buttonClass = '';
+                        $buttonAction = '';
+                        $buttonDisabled = false;
+                        
+                        switch($friendship_status) {
+                            case 'none':
+                                // Geen vriendschap - toon voeg vriend toe knop
+                                $buttonText = '+ Vriend toevoegen';
+                                $buttonClass = 'bg-green-500 hover:bg-green-600';
+                                $buttonAction = base_url('?route=friends/add&user=' . $user['username']);
+                                break;
+                                
+                            case 'pending':
+                                if ($friendship_direction === 'sent') {
+                                    // Ik heb verzoek verstuurd - toon verzoek verzonden (disabled)
+                                    $buttonText = 'Verzoek verzonden ⏳';
+                                    $buttonClass = 'bg-yellow-500 cursor-not-allowed';
+                                    $buttonDisabled = true;
+                                } else {
+                                    // Ik heb verzoek ontvangen - toon accepteer knop
+                                    $buttonText = 'Verzoek accepteren ✓';
+                                    $buttonClass = 'bg-green-500 hover:bg-green-600';
+                                    $buttonAction = '#'; // We maken later een form voor accepteren
+                                }
+                                break;
+                                
+                            case 'accepted':
+                                // We zijn vrienden - toon vrienden status
+                                $buttonText = 'Vrienden ✓';
+                                $buttonClass = 'bg-blue-500 hover:bg-blue-600';
+                                $buttonDisabled = true;
+                                break;
+                                
+                            default:
+                                // Fallback
+                                $buttonText = '+ Vriend toevoegen';
+                                $buttonClass = 'bg-green-500 hover:bg-green-600';
+                                $buttonAction = base_url('?route=friends/add&user=' . $user['username']);
+                                break;
+                        }
+                        ?>
+                        
+                        <!-- Slimme vriendschapsknop -->
+                        <?php if ($friendship_status === 'pending' && $friendship_direction === 'received'): ?>
+                            <!-- Speciale knoppen voor ontvangen verzoek -->
+                            <div class="flex space-x-2">
+                                <form action="<?= base_url('friends/accept') ?>" method="post" class="flex-1">
+                                    <input type="hidden" name="friendship_id" value="<?= $friendship_data['id'] ?? '' ?>">
+                                    <button type="submit" class="hyves-button bg-green-500 hover:bg-green-600 w-full">
+                                        ✓ Accepteren
+                                    </button>
+                                </form>
+                                <form action="<?= base_url('friends/decline') ?>" method="post" class="flex-1">
+                                    <input type="hidden" name="friendship_id" value="<?= $friendship_data['id'] ?? '' ?>">
+                                    <button type="submit" class="hyves-button bg-red-500 hover:bg-red-600 w-full">
+                                        ✗ Weigeren
+                                    </button>
+                                </form>
+                            </div>
+                        <?php else: ?>
+                            <!-- Standaard vriendschapsknop -->
+                            <?php if ($buttonDisabled): ?>
+                                <button class="hyves-button <?= $buttonClass ?>" disabled>
+                                    <?= $buttonText ?>
+                                </button>
+                            <?php else: ?>
+                                <a href="<?= $buttonAction ?>" class="hyves-button <?= $buttonClass ?>">
+                                    <?= $buttonText ?>
+                                </a>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <!-- Bericht sturen knop (altijd beschikbaar voor andere gebruikers) -->
                         <a href="<?= base_url('messages/new/' . $user['username']) ?>" class="hyves-button bg-blue-500 hover:bg-blue-600">
                             Bericht sturen
                         </a>
                     <?php endif; ?>
+                    
+                    <!-- Respect tonen knop (voor iedereen beschikbaar) -->
                     <a href="<?= base_url('profile/' . $user['username'] . '/respect') ?>" class="hyves-button bg-yellow-500 hover:bg-yellow-600">
                         Respect tonen! ✓
                     </a>
                 </div>
+                <!-- Debug informatie (kun je later weghalen) -->
+                <?php if (isset($_GET['debug'])): ?>
+                    <div class="mt-4 p-3 bg-gray-100 rounded text-sm">
+                        <strong>Debug info:</strong><br>
+                        Friendship status: <?= $friendship_status ?? 'undefined' ?><br>
+                        Friendship direction: <?= $friendship_direction ?? 'undefined' ?><br>
+                        Viewer is owner: <?= $viewer_is_owner ? 'yes' : 'no' ?><br>
+                        User ID: <?= $user['id'] ?><br>
+                        Current user ID: <?= $_SESSION['user_id'] ?? 'not set' ?>
+                    </div>
+                <?php endif; ?>
             </div>
             
             <!-- Rechter kolom - Profiel content tabs -->

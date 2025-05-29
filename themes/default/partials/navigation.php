@@ -15,6 +15,48 @@ if (isset($_SESSION['avatar']) && !empty($_SESSION['avatar'])) {
 }
 ?>
 
+<?php
+// Debug blok - voeg dit toe na de avatar logica in navigation.php
+$notificationCount = 0;
+if (isset($_SESSION['user_id'])) {
+    echo "<!-- Debug: User ID = " . $_SESSION['user_id'] . " -->";
+    
+    try {
+        // Controleer of het bestand bestaat
+        $controllerPath = BASE_PATH . '/app/Controllers/NotificationsController.php';
+        echo "<!-- Debug: Controller path = " . $controllerPath . " -->";
+        echo "<!-- Debug: File exists = " . (file_exists($controllerPath) ? 'YES' : 'NO') . " -->";
+        
+        require_once $controllerPath;
+        $notificationsController = new \App\Controllers\NotificationsController();
+        $notificationCount = $notificationsController->getUnreadCount();
+        
+        echo "<!-- Debug: Notification count = " . $notificationCount . " -->";
+    } catch (Exception $e) {
+        echo "<!-- Debug: Error = " . $e->getMessage() . " -->";
+        $notificationCount = 0;
+    }
+}
+echo "<!-- Debug: Final count = " . $notificationCount . " -->";
+?>
+
+<?php
+
+// Haal notificatie count op
+$notificationCount = 0;
+if (isset($_SESSION['user_id'])) {
+    // Gebruik de NotificationsController om het aantal op te halen
+    try {
+        require_once BASE_PATH . '/app/Controllers/NotificationsController.php';
+        $notificationsController = new \App\Controllers\NotificationsController();
+        $notificationCount = $notificationsController->getUnreadCount();
+    } catch (Exception $e) {
+        error_log("Error getting notification count: " . $e->getMessage());
+        $notificationCount = 0;
+    }
+}
+?>
+
 <nav class="main-navigation">
     <div class="nav-container">
         <!-- Navigatielinks (nu links geplaatst) -->
@@ -34,9 +76,12 @@ if (isset($_SESSION['avatar']) && !empty($_SESSION['avatar'])) {
                 <span>Berichten</span>
             </a>
             
-            <a href="/meldingen" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/meldingen') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('meldingen') ?>" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/meldingen') !== false ? 'active' : '' ?>">
                 <i class="fas fa-bell"></i>
                 <span>Meldingen</span>
+                <?php if ($notificationCount > 0): ?>
+                    <span class="notification-badge"><?= $notificationCount > 99 ? '99+' : $notificationCount ?></span>
+                <?php endif; ?>
             </a>
         </div>
         
@@ -130,6 +175,47 @@ if (isset($_SESSION['avatar']) && !empty($_SESSION['avatar'])) {
     height: 1px;
     background-color: #e5e7eb;
     margin: 0.5rem 0;
+}
+
+.nav-link {
+    position: relative;
+    display: inline-block;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Voor mobiele weergave */
+@media (max-width: 768px) {
+    .notification-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+        top: -6px;
+        right: -6px;
+    }
 }
 </style>
 

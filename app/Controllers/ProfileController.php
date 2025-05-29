@@ -60,6 +60,33 @@ class ProfileController extends Controller
     
     // Bepaal of de kijker de eigenaar is
     $viewerIsOwner = $_SESSION['user_id'] == $user['id'];
+
+    // Haal vriendschapsstatus op als het niet je eigen profiel is
+    $friendshipStatus = null;
+    $friendshipData = null;
+
+    if (!$viewerIsOwner) {
+        // Gebruik de FriendsController helper methode
+        $friendsController = new \App\Controllers\FriendsController();
+        $friendshipData = $friendsController->getFriendshipStatus($_SESSION['user_id'], $user['id']);
+        
+        if ($friendshipData) {
+            $friendshipStatus = $friendshipData['status'];
+            
+            // Bepaal wie het verzoek heeft verstuurd
+            if ($friendshipData['user_id'] == $_SESSION['user_id']) {
+                // Ik heb het verzoek verstuurd
+                $friendshipDirection = 'sent';
+            } else {
+                // Ik heb een verzoek ontvangen
+                $friendshipDirection = 'received';
+            }
+        } else {
+            // Geen vriendschap gevonden
+            $friendshipStatus = 'none';
+            $friendshipDirection = null;
+        }
+    }
     
     // Laad vrienden
     $friends = $this->getFriends($user['id']);
@@ -88,7 +115,10 @@ class ProfileController extends Controller
         'krabbels' => $krabbels,
         'fotos' => $fotos,
         'viewer_is_owner' => $viewerIsOwner,
-        'active_tab' => $activeTab
+        'active_tab' => $activeTab,
+        'friendship_status' => $friendshipStatus,
+        'friendship_direction' => $friendshipDirection ?? null,
+        'friendship_data' => $friendshipData
     ];
     
     $this->view('profile/index', $data);

@@ -7,6 +7,8 @@ use App\Controllers\ProfileController;
 use App\Controllers\SetupController;
 use App\Controllers\FeedController;
 use App\Controllers\AboutController;
+use App\Controllers\FriendsController;
+use App\Controllers\NotificationsController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Middleware\AuthMiddleware;
@@ -369,6 +371,99 @@ return [
         },
         'middleware' => [AuthMiddleware::class]
     ],
+
+    'friends/add' => [
+        'callback' => function () {
+            $friendsController = new FriendsController();
+            $friendsController->add();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'friends/accept' => [
+        'callback' => function () {
+            $friendsController = new FriendsController();
+            $friendsController->accept();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'friends/decline' => [
+        'callback' => function () {
+            $friendsController = new FriendsController();
+            $friendsController->decline();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'friends/requests' => [
+        'callback' => function () {
+            $friendsController = new FriendsController();
+            $friendsController->requests();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'friends' => [
+        'callback' => function () {
+            $friendsController = new FriendsController();
+            $friendsController->index();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'meldingen' => [
+    'callback' => function () {
+        $notificationsController = new NotificationsController();
+        $notificationsController->index();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'notifications' => [
+        'callback' => function () {
+            $notificationsController = new NotificationsController();
+            $notificationsController->index();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'notifications/count' => [
+        'callback' => function () {
+            $notificationsController = new NotificationsController();
+            $count = $notificationsController->getUnreadCount();
+            
+            header('Content-Type: application/json');
+            echo json_encode(['count' => $count]);
+            exit;
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'notifications/mark-read' => [
+    'callback' => function () {
+        $notificationsController = new NotificationsController();
+        $notificationsController->markAsRead();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+'notifications/mark-all-read' => [
+    'callback' => function () {
+        if (!isset($_SESSION['user_id'])) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Not logged in']);
+            return;
+        }
+
+        // Sla een "gelezen" timestamp op in de sessie
+        $_SESSION['notifications_read_at'] = time();
+        
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'message' => 'Marked as read']);
+    },
+    'middleware' => [AuthMiddleware::class]
+],
     
     // Eventuele andere routes...
 ];
