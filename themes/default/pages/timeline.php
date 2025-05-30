@@ -86,52 +86,12 @@
                     <?php include THEME_PATH . '/partials/messages.php'; ?>
                     
                     <!-- Formulier aangepast naar de juiste route -->
-                    <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="postForm">
-                        <div class="flex space-x-3">
-                            <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                alt="<?= htmlspecialchars($current_user['name']) ?>" 
-                                class="w-10 h-10 rounded-full border-2 border-blue-200">
-                            <textarea name="content" rows="2" 
-                                    class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                    placeholder="Wat is er aan de hand, <?= htmlspecialchars($current_user['name']) ?>?"
-                                    maxlength="1000"
-                                    id="postContent"><?= isset($_SESSION['old_content']) ? htmlspecialchars($_SESSION['old_content']) : '' ?></textarea>
-                        </div>
-                        
-                        <!-- Afbeelding preview container -->
-                        <div id="imagePreview" class="mt-3 relative rounded-lg border border-blue-200 bg-blue-50 hidden">
-                            <img src="" alt="Preview" class="max-h-64 rounded-lg mx-auto">
-                            <button type="button" id="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">×</button>
-                        </div>
-                        
-                        <!-- Karakterteller -->
-                        <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
-                            <span></span>
-                            <span id="charCounter">0/1000</span>
-                        </div>
-                        
-                        <div class="flex justify-between mt-3">
-                            <div class="flex space-x-2">
-                                <!-- File input moet name="image" hebben -->
-                                <label for="imageUpload" class="hyves-tool-button cursor-pointer" title="Voeg foto toe">
-                                    <span class="icon">📷</span>
-                                    <input type="file" id="imageUpload" name="image" accept="image/*" class="hidden">
-                                </label>
-                                <button type="button" class="hyves-tool-button" title="Voeg video toe">
-                                    <span class="icon">🎬</span>
-                                </button>
-                                <button type="button" class="hyves-tool-button" title="Voeg link toe">
-                                    <span class="icon">🔗</span>
-                                </button>
-                                <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
-                                    <span class="icon">😊</span>
-                                </button>
-                            </div>
-                            <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4" id="submitBtn">
-                                Plaatsen
-                            </button>
-                        </div>
-                    </form>
+                    <?php 
+                        $form_id = 'postForm';
+                        $context = 'timeline';
+                        $user = $current_user;
+                        include __DIR__ . '/../partials/post-form.php';
+                        ?>
                 </div>
             </div>
             

@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== AVATAR UPLOAD INITIALISATIE =====
     initAvatarUpload();
+
+    // ===== EMOJI PICKER INITIALISATIE =====
+    initEmojiPicker()
 });
 
 /**
@@ -536,24 +539,27 @@ function initCommentCharCounter() {
 }
 
 /**
- * Initialiseert de comment formulieren
- * Dit zorgt ervoor dat we kunnen reageren op het versturen van comments
+ * Initialiseert de comment formulieren met event delegation
+ * Dit voorkomt dubbele event listeners en zorgt voor betere performance
  */
 function initCommentForms() {
-    // Zoek alle comment formulieren op de pagina
-    const commentForms = document.querySelectorAll('.add-comment-form');
+    // Check of we al een event listener hebben geregistreerd
+    if (window.commentEventListenerActive) {
+        console.log('Comment event listener al actief, skip registratie');
+        return;
+    }
     
-    console.log(`Gevonden: ${commentForms.length} comment formulieren`);
-    
-    // Voor elk formulier, voeg een event listener toe
-    commentForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
+    // Gebruik event delegation op document level
+    document.addEventListener('submit', function(e) {
+        // Check of het een comment formulier is
+        if (e.target && e.target.classList.contains('add-comment-form')) {
             // Voorkom dat de pagina ververst (default gedrag)
             e.preventDefault();
             
-            console.log('Comment formulier verzonden!');
+            console.log('Comment formulier verzonden via event delegation!');
             
             // Haal de waarden op uit het formulier
+            const form = e.target;
             const textarea = form.querySelector('textarea[name="comment_content"]');
             const submitButton = form.querySelector('button[type="submit"]');
             const postId = form.getAttribute('data-post-id');
@@ -561,6 +567,12 @@ function initCommentForms() {
             
             console.log('Post ID:', postId);
             console.log('Comment tekst:', commentText);
+            
+            // Check of de knop al disabled is (voorkomt dubbele submits)
+            if (submitButton.disabled) {
+                console.log('Button al disabled, skip submit');
+                return;
+            }
             
             // Eenvoudige validatie
             if (commentText === '') {
@@ -626,12 +638,19 @@ function initCommentForms() {
                 alert('Er ging iets mis bij het versturen van je reactie. Probeer het opnieuw.');
             })
             .finally(() => {
-                // Enable de knop weer
-                submitButton.disabled = false;
-                submitButton.textContent = 'Reageren';
+                // Enable de knop weer na een korte delay
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Reageren';
+                }, 500); // 500ms delay om dubbele submits te voorkomen
             });
-        });
+        }
     });
+    
+    // Markeer dat we de event listener hebben geregistreerd
+    window.commentEventListenerActive = true;
+    
+    console.log('Comment event delegation geregistreerd');
 }
 
 /**
@@ -1015,4 +1034,301 @@ function animateProgress() {
         clearInterval(interval);
         progressBar.style.width = '100%';
     }, 5000);
+}
+
+/**
+ * Emoji Picker Functionaliteit
+ * Werkt met de herbruikbare post-form partial
+ */
+
+function initEmojiPicker() {
+    console.log('Initializing emoji picker...');
+    
+    // Event delegation voor emoji picker buttons
+    document.addEventListener('click', function(e) {
+        // Open/sluit emoji picker
+        if (e.target.closest('.emoji-picker-trigger')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const button = e.target.closest('.emoji-picker-trigger');
+            const formId = button.getAttribute('data-form-id');
+            toggleEmojiPicker(formId);
+        }
+        
+        // Sluit emoji picker
+        else if (e.target.closest('.emoji-picker-close')) {
+            e.preventDefault();
+            const formId = e.target.getAttribute('data-form-id');
+            closeEmojiPicker(formId);
+        }
+        
+        // Voeg emoji toe
+        else if (e.target.closest('.emoji-item')) {
+            e.preventDefault();
+            const emojiElement = e.target.closest('.emoji-item');
+            const emoji = emojiElement.getAttribute('data-emoji');
+            const panel = emojiElement.closest('.emoji-picker-panel');
+            const formId = panel.id.replace('EmojiPanel', '');
+            
+            insertEmoji(formId, emoji);
+            closeEmojiPicker(formId);
+        }
+        
+        // Sluit picker bij klikken buiten
+        else if (!e.target.closest('.emoji-picker-panel') && !e.target.closest('.emoji-picker-trigger')) {
+            closeAllEmojiPickers();
+        }
+    });
+    
+    // ESC key om picker te sluiten
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAllEmojiPickers();
+        }
+    });
+    
+    console.log('Emoji picker initialized');
+}
+
+/**
+ * Toggle emoji picker voor specifiek formulier
+ */
+function toggleEmojiPicker(formId) {
+    const panel = document.getElementById(formId + 'EmojiPanel');
+    const button = document.querySelector(`[data-form-id="${formId}"].emoji-picker-trigger`);
+    
+    if (!panel || !button) {
+        console.error('Emoji picker elements not found for form:', formId);
+        return;
+    }
+    
+    // Sluit alle andere pickers
+    closeAllEmojiPickers();
+    
+    // Toggle huidige picker
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        openEmojiPicker(formId);
+    } else {
+        closeEmojiPicker(formId);
+    }
+}
+
+/**
+ * Open emoji picker
+ */
+function openEmojiPicker(formId) {
+    const panel = document.getElementById(formId + 'EmojiPanel');
+    const button = document.querySelector(`[data-form-id="${formId}"].emoji-picker-trigger`);
+    
+    if (panel && button) {
+        panel.style.display = 'block';
+        button.classList.add('active');
+        
+        // Gebruik fixed positioning om z-index problemen te vermijden
+        positionEmojiPicker(formId);
+        
+        console.log('Opened emoji picker for:', formId);
+    }
+}
+
+/**
+ * Sluit emoji picker
+ */
+function closeEmojiPicker(formId) {
+    const panel = document.getElementById(formId + 'EmojiPanel');
+    const button = document.querySelector(`[data-form-id="${formId}"].emoji-picker-trigger`);
+    
+    if (panel && button) {
+        panel.style.display = 'none';
+        button.classList.remove('active');
+        
+        console.log('Closed emoji picker for:', formId);
+    }
+}
+
+/**
+ * Sluit alle emoji pickers
+ */
+function closeAllEmojiPickers() {
+    const panels = document.querySelectorAll('.emoji-picker-panel');
+    const buttons = document.querySelectorAll('.emoji-picker-trigger');
+    
+    panels.forEach(panel => {
+        panel.style.display = 'none';
+    });
+    
+    buttons.forEach(button => {
+        button.classList.remove('active');
+    });
+}
+
+/**
+ * Voeg emoji toe aan textarea op cursor positie
+ */
+function insertEmoji(formId, emoji) {
+    const textarea = document.getElementById(formId + 'Content');
+    
+    if (!textarea) {
+        console.error('Textarea not found for form:', formId);
+        return;
+    }
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    
+    // Voeg emoji toe op cursor positie
+    const newText = text.substring(0, start) + emoji + text.substring(end);
+    textarea.value = newText;
+    
+    // Zet cursor na de emoji
+    const newCursorPos = start + emoji.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    
+    // Focus terug naar textarea
+    textarea.focus();
+    
+    // Update karakterteller
+    updateCharacterCounter(formId);
+    
+    console.log('Inserted emoji:', emoji, 'in form:', formId);
+}
+
+/**
+ * Update karakterteller voor formulier
+ */
+function updateCharacterCounter(formId) {
+    const textarea = document.getElementById(formId + 'Content');
+    const counter = document.getElementById(formId + 'CharCounter');
+    
+    if (textarea && counter) {
+        const length = textarea.value.length;
+        const maxLength = parseInt(textarea.getAttribute('maxlength')) || 1000;
+        
+        counter.textContent = `${length}/${maxLength}`;
+        
+        // Kleur aanpassen bij bijna vol
+        if (length > maxLength * 0.9) {
+            counter.style.color = '#ef4444'; // Rood
+        } else if (length > maxLength * 0.8) {
+            counter.style.color = '#f59e0b'; // Oranje
+        } else {
+            counter.style.color = '#6b7280'; // Grijs
+        }
+    }
+}
+
+/**
+ * Auto-complete emoji functionaliteit (toekomst)
+ * Type :smile: en het wordt automatisch vervangen door 😊
+ */
+function initEmojiAutocomplete() {
+    // Event delegation voor textareas
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('textarea[data-form-id]')) {
+            const textarea = e.target;
+            const text = textarea.value;
+            const cursorPos = textarea.selectionStart;
+            
+            // Zoek naar :emoji: patterns
+            const emojiPattern = /:([a-z]+):/g;
+            let match;
+            
+            while ((match = emojiPattern.exec(text)) !== null) {
+                const emojiCode = match[1];
+                const emoji = getEmojiByCode(emojiCode);
+                
+                if (emoji) {
+                    // Vervang :code: door emoji
+                    const newText = text.replace(match[0], emoji);
+                    textarea.value = newText;
+                    
+                    // Pas cursor positie aan
+                    const newCursorPos = cursorPos - match[0].length + emoji.length;
+                    textarea.setSelectionRange(newCursorPos, newCursorPos);
+                    
+                    console.log('Auto-replaced:', match[0], 'with', emoji);
+                    break; // Stop na eerste match om conflicten te voorkomen
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Krijg emoji op basis van code (:smile: -> 😊)
+ */
+function getEmojiByCode(code) {
+    const emojiMap = {
+        'smile': '😊',
+        'laugh': '😂',
+        'love': '😍',
+        'cry': '😭',
+        'angry': '😡',
+        'sleep': '😴',
+        'cool': '😎',
+        'think': '🤔',
+        'heart': '❤️',
+        'blue_heart': '💙',
+        'green_heart': '💚',
+        'yellow_heart': '💛',
+        'orange_heart': '🧡',
+        'purple_heart': '💜',
+        'black_heart': '🖤',
+        'thumbs_up': '👍',
+        'thumbs_down': '👎',
+        'ok': '👌',
+        'victory': '✌️',
+        'clap': '👏',
+        'party': '🎉',
+        'confetti': '🎊',
+        'cake': '🎂',
+        'gift': '🎁',
+        'star': '⭐',
+        'sparkles': '✨'
+    };
+    
+    return emojiMap[code.toLowerCase()] || null;
+}
+
+// Verbeterde emoji picker positioning
+function positionEmojiPicker(formId) {
+    const panel = document.getElementById(formId + 'EmojiPanel');
+    const button = document.querySelector(`[data-form-id="${formId}"].emoji-picker-trigger`);
+    
+    if (!panel || !button) return;
+    
+    // Krijg button positie relatief aan viewport
+    const buttonRect = button.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    
+    // Zet panel op fixed positioning
+    panel.style.position = 'fixed';
+    panel.style.top = (buttonRect.bottom + 8) + 'px';
+    panel.style.zIndex = '99999';
+    
+    // Bereken optimale horizontale positie
+    const panelWidth = 320; // Geschatte breedte van emoji panel
+    let leftPosition = buttonRect.left;
+    
+    // Als panel buiten scherm zou vallen, plaats dan rechts uitgelijnd
+    if (leftPosition + panelWidth > viewportWidth) {
+        leftPosition = buttonRect.right - panelWidth;
+    }
+    
+    // Zorg dat panel niet buiten links scherm valt
+    if (leftPosition < 10) {
+        leftPosition = 10;
+    }
+    
+    panel.style.left = leftPosition + 'px';
+    panel.style.right = 'auto';
+    panel.style.width = panelWidth + 'px';
+    
+    console.log('Emoji picker gepositioneerd op:', {
+        top: panel.style.top,
+        left: panel.style.left,
+        zIndex: panel.style.zIndex
+    });
 }

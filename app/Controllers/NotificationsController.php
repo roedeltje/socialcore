@@ -20,7 +20,6 @@ class NotificationsController extends Controller
      */
     public function index()
     {
-        // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
             redirect('login');
             return;
@@ -28,44 +27,96 @@ class NotificationsController extends Controller
 
         $userId = $_SESSION['user_id'];
         
-        // Haal het aantal ongelezen notificaties op VOORDAT we ze markeren
-        $unreadCount = $this->getUnreadCount($userId);
-        
-        // Haal alle notificaties op voor deze gebruiker
+        // Haal alle notificaties op (zowel gelezen als ongelezen)
         $notifications = $this->getNotifications($userId);
         
-        // VERPLAATST: Markeer alle notificaties als gelezen NA het ophalen
-        // (dit gebeurt nu via JavaScript of een aparte AJAX call)
+        // Haal het aantal ongelezen notificaties op
+        $unreadCount = $this->getUnreadCount($userId);
         
         $data = [
             'title' => 'Meldingen',
             'notifications' => $notifications,
-            'unread_count' => $unreadCount // Toon het echte aantal ongelezen
+            'unread_count' => $unreadCount
         ];
         
         $this->view('notifications/index', $data);
     }
 
     /**
-     * Markeer alle notificaties als gelezen (via AJAX)
+     * Markeer een specifieke notificatie als gelezen
      */
     public function markAsRead()
     {
         if (!isset($_SESSION['user_id'])) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Not logged in']);
+            $this->jsonResponse(['success' => false, 'message' => 'Not logged in']);
+            return;
+        }
+
+        $notificationId = $_POST['notification_id'] ?? $_GET['id'] ?? null;
+        $userId = $_SESSION['user_id'];
+
+        if (!$notificationId) {
+            $this->jsonResponse(['success' => false, 'message' => 'No notification ID provided']);
+            return;
+        }
+
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE notifications 
+                SET is_read = 1, read_at = NOW() 
+                WHERE id = ? AND user_id = ?
+            ");
+            $success = $stmt->execute([$notificationId, $userId]);
+            
+            if ($success && $stmt->rowCount() > 0) {
+                $this->jsonResponse(['success' => true, 'message' => 'Notification marked as read']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Notification not found or already read']);
+            }
+        } catch (\Exception $e) {
+            error_log("Error marking notification as read: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+        }
+    }
+
+    /**
+     * Markeer alle notificaties als gelezen
+     */
+    public function markAllAsRead()
+    {
+        if (!isset($_SESSION['user_id'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Not logged in']);
             return;
         }
 
         $userId = $_SESSION['user_id'];
-        $this->markAllAsRead($userId);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true]);
+
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE notifications 
+                SET is_read = 1, read_at = NOW() 
+                WHERE user_id = ? AND is_read = 0
+            ");
+            $success = $stmt->execute([$userId]);
+            
+            if ($success) {
+                $affectedRows = $stmt->rowCount();
+                $this->jsonResponse([
+                    'success' => true, 
+                    'message' => "Marked {$affectedRows} notifications as read",
+                    'count' => $affectedRows
+                ]);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Failed to update notifications']);
+            }
+        } catch (\Exception $e) {
+            error_log("Error marking all notifications as read: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+        }
     }
 
     /**
-     * Haal het aantal ongelezen notificaties op (voor in de navigatie)
+     * Haal het aantal ongelezen notificaties op
      */
     public function getUnreadCount($userId = null)
     {
@@ -77,24 +128,92 @@ class NotificationsController extends Controller
             return 0;
         }
 
-        // Check of gebruiker alle notificaties als gelezen heeft gemarkeerd
-        $readAt = $_SESSION['notifications_read_at'] ?? 0;
-
         try {
-            // Tel vriendschapsverzoeken die NIEUWER zijn dan de "gelezen" timestamp
             $stmt = $this->db->prepare("
-                SELECT COUNT(*) FROM friendships 
-                WHERE friend_id = ? 
-                AND status = 'pending'
-                AND UNIX_TIMESTAMP(created_at) > ?
+                SELECT COUNT(*) FROM notifications 
+                WHERE user_id = ? AND is_read = 0
             ");
-            $stmt->execute([$userId, $readAt]);
+            $stmt->execute([$userId]);
             
-            return $stmt->fetchColumn();
-
+            return (int) $stmt->fetchColumn();
         } catch (\Exception $e) {
             error_log("Error getting unread count: " . $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * API endpoint voor het ophalen van notification count (voor AJAX)
+     */
+    public function getCountApi()
+    {
+        if (!isset($_SESSION['user_id'])) {
+            $this->jsonResponse(['count' => 0]);
+            return;
+        }
+
+        $count = $this->getUnreadCount();
+        $this->jsonResponse(['count' => $count]);
+    }
+
+    /**
+     * Verwijder een notificatie
+     */
+    public function delete()
+    {
+        if (!isset($_SESSION['user_id'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Not logged in']);
+            return;
+        }
+
+        $notificationId = $_POST['notification_id'] ?? $_GET['id'] ?? null;
+        $userId = $_SESSION['user_id'];
+
+        if (!$notificationId) {
+            $this->jsonResponse(['success' => false, 'message' => 'No notification ID provided']);
+            return;
+        }
+
+        try {
+            $stmt = $this->db->prepare("
+                DELETE FROM notifications 
+                WHERE id = ? AND user_id = ?
+            ");
+            $success = $stmt->execute([$notificationId, $userId]);
+            
+            if ($success && $stmt->rowCount() > 0) {
+                $this->jsonResponse(['success' => true, 'message' => 'Notification deleted']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Notification not found']);
+            }
+        } catch (\Exception $e) {
+            error_log("Error deleting notification: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'Database error']);
+        }
+    }
+
+    /**
+     * Maak een nieuwe notificatie aan (helper functie voor andere controllers)
+     */
+    public static function create($userId, $type, $title, $message, $actionUrl = null, $relatedUserId = null, $relatedPostId = null, $relatedCommentId = null, $relatedFriendshipId = null)
+    {
+        try {
+            $db = Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                INSERT INTO notifications (
+                    user_id, type, related_user_id, related_post_id, 
+                    related_comment_id, related_friendship_id, title, message, action_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            return $stmt->execute([
+                $userId, $type, $relatedUserId, $relatedPostId, 
+                $relatedCommentId, $relatedFriendshipId, $title, $message, $actionUrl
+            ]);
+        } catch (\Exception $e) {
+            error_log("Error creating notification: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -103,150 +222,122 @@ class NotificationsController extends Controller
      */
     private function getNotifications($userId, $limit = 50)
     {
-        $notifications = [];
-
         try {
-            // 1. Vriendschapsverzoeken
             $stmt = $this->db->prepare("
                 SELECT 
-                    f.id,
-                    f.created_at,
-                    'friend_request' as type,
-                    u.id as from_user_id,
-                    u.username as from_username,
-                    COALESCE(up.display_name, u.username) as from_name,
-                    up.avatar as from_avatar
-                FROM friendships f
-                JOIN users u ON f.user_id = u.id
-                LEFT JOIN user_profiles up ON u.id = up.user_id
-                WHERE f.friend_id = ? AND f.status = 'pending'
-                ORDER BY f.created_at DESC
+                    n.*,
+                    ru.username as related_username,
+                    COALESCE(rup.display_name, ru.username) as related_display_name,
+                    rup.avatar as related_avatar
+                FROM notifications n
+                LEFT JOIN users ru ON n.related_user_id = ru.id
+                LEFT JOIN user_profiles rup ON ru.id = rup.user_id
+                WHERE n.user_id = ?
+                ORDER BY n.created_at DESC
+                LIMIT ?
             ");
-            $stmt->execute([$userId]);
-            $friendRequests = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $stmt->execute([$userId, $limit]);
+            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            foreach ($friendRequests as $friendRequest) { // ← Was $request, nu $friendRequest
-            $notifications[] = [
-                'id' => 'friend_' . $friendRequest['id'],
-                'type' => 'friend_request',
-                'created_at' => $friendRequest['created_at'],
-                'formatted_date' => $this->formatDate($friendRequest['created_at']), // ← Gecorrigeerd
-                'from_user_id' => $friendRequest['from_user_id'],
-                'from_username' => $friendRequest['from_username'],
-                'from_name' => $friendRequest['from_name'],
-                'from_avatar' => $this->getAvatarUrl($friendRequest['from_avatar']),
-                'message' => $friendRequest['from_name'] . ' heeft je een vriendschapsverzoek gestuurd',
-                'action_url' => base_url('friends/requests'),
-                'is_read' => false
-    ];
+            // Format de notificaties voor weergave
+            foreach ($notifications as &$notification) {
+                $notification['formatted_date'] = $this->formatDate($notification['created_at']);
+                $notification['from_avatar'] = $this->getAvatarUrl($notification['related_avatar']);
+                $notification['from_name'] = $notification['related_display_name'] ?? 'Systeem';
+                $notification['from_username'] = $notification['related_username'] ?? '';
+                
+                // Voeg type-specifieke data toe
+                $notification = $this->enrichNotificationData($notification);
             }
 
-            // 2. Nieuwe likes op eigen posts (laatste 7 dagen)
-            $stmt = $this->db->prepare("
-                SELECT 
-                    pl.id,
-                    pl.created_at,
-                    'post_like' as type,
-                    u.id as from_user_id,
-                    u.username as from_username,
-                    COALESCE(up.display_name, u.username) as from_name,
-                    up.avatar as from_avatar,
-                    p.id as post_id,
-                    SUBSTRING(p.content, 1, 50) as post_preview
-                FROM post_likes pl
-                JOIN users u ON pl.user_id = u.id
-                LEFT JOIN user_profiles up ON u.id = up.user_id
-                JOIN posts p ON pl.post_id = p.id
-                WHERE p.user_id = ? 
-                AND pl.user_id != ? 
-                AND pl.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
-                ORDER BY pl.created_at DESC
-                LIMIT 20
-            ");
-            $stmt->execute([$userId, $userId]);
-            $likes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            foreach ($likes as $like) {
-                $notifications[] = [
-                    'id' => 'like_' . $like['id'],
-                    'type' => 'post_like',
-                    'created_at' => $like['created_at'],
-                    'formatted_date' => $this->formatDate($like['created_at']),
-                    'from_user_id' => $like['from_user_id'],
-                    'from_username' => $like['from_username'],
-                    'from_name' => $like['from_name'],
-                    'from_avatar' => $this->getAvatarUrl($like['from_avatar']),
-                    'message' => $like['from_name'] . ' vindt je bericht leuk',
-                    'action_url' => base_url('profile?tab=krabbels'),
-                    'post_preview' => $like['post_preview'],
-                    'is_read' => false
-                ];
-            }
-
-            // 3. Nieuwe comments op eigen posts (laatste 7 dagen)
-            $stmt = $this->db->prepare("
-                SELECT 
-                    pc.id,
-                    pc.created_at,
-                    'post_comment' as type,
-                    u.id as from_user_id,
-                    u.username as from_username,
-                    COALESCE(up.display_name, u.username) as from_name,
-                    up.avatar as from_avatar,
-                    p.id as post_id,
-                    SUBSTRING(p.content, 1, 50) as post_preview,
-                    SUBSTRING(pc.content, 1, 100) as comment_preview
-                FROM post_comments pc
-                JOIN users u ON pc.user_id = u.id
-                LEFT JOIN user_profiles up ON u.id = up.user_id
-                JOIN posts p ON pc.post_id = p.id
-                WHERE p.user_id = ? 
-                AND pc.user_id != ? 
-                AND pc.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
-                ORDER BY pc.created_at DESC
-                LIMIT 20
-            ");
-            $stmt->execute([$userId, $userId]);
-            $comments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            foreach ($comments as $comment) {
-                $notifications[] = [
-                    'id' => 'comment_' . $comment['id'],
-                    'type' => 'post_comment',
-                    'created_at' => $comment['created_at'],
-                    'formatted_date' => $this->formatDate($comment['created_at']),
-                    'from_user_id' => $comment['from_user_id'],
-                    'from_username' => $comment['from_username'],
-                    'from_name' => $comment['from_name'],
-                    'from_avatar' => $this->getAvatarUrl($comment['from_avatar']),
-                    'message' => $comment['from_name'] . ' reageerde op je bericht',
-                    'action_url' => base_url('profile?tab=krabbels'),
-                    'post_preview' => $comment['post_preview'],
-                    'comment_preview' => $comment['comment_preview'],
-                    'is_read' => false
-                ];
-            }
-
+            return $notifications;
         } catch (\Exception $e) {
             error_log("Error getting notifications: " . $e->getMessage());
+            return [];
         }
-
-        // Sorteer alle notificaties op datum (nieuwste eerst)
-        usort($notifications, function($a, $b) {
-            return strtotime($b['created_at']) - strtotime($a['created_at']);
-        });
-
-        return array_slice($notifications, 0, $limit);
     }
 
     /**
-     * Markeer alle notificaties als gelezen (voor toekomstige implementatie)
+     * Verrijk notificatie data met type-specifieke informatie
      */
-    private function markAllAsRead($userId)
+    private function enrichNotificationData($notification)
     {
-        // Voor nu doen we nog niets, maar later kunnen we hier 
-        // een notifications tabel gebruiken om gelezen status bij te houden
-        return true;
+        switch ($notification['type']) {
+            case 'friend_request':
+                $notification['icon'] = '👥';
+                $notification['icon_class'] = 'bg-green-100 text-green-600';
+                break;
+            case 'friend_accepted':
+                $notification['icon'] = '✅';
+                $notification['icon_class'] = 'bg-blue-100 text-blue-600';
+                break;
+            case 'post_like':
+                $notification['icon'] = '❤️';
+                $notification['icon_class'] = 'bg-red-100 text-red-600';
+                if ($notification['related_post_id']) {
+                    $notification['post_preview'] = $this->getPostPreview($notification['related_post_id']);
+                }
+                break;
+            case 'post_comment':
+                $notification['icon'] = '💬';
+                $notification['icon_class'] = 'bg-blue-100 text-blue-600';
+                if ($notification['related_post_id']) {
+                    $notification['post_preview'] = $this->getPostPreview($notification['related_post_id']);
+                }
+                if ($notification['related_comment_id']) {
+                    $notification['comment_preview'] = $this->getCommentPreview($notification['related_comment_id']);
+                }
+                break;
+            case 'system':
+                $notification['icon'] = '🔔';
+                $notification['icon_class'] = 'bg-gray-100 text-gray-600';
+                break;
+            default:
+                $notification['icon'] = '🔔';
+                $notification['icon_class'] = 'bg-gray-100 text-gray-600';
+        }
+
+        return $notification;
+    }
+
+    /**
+     * Helper functie om post preview te krijgen
+     */
+    private function getPostPreview($postId, $maxLength = 50)
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT content FROM posts WHERE id = ? AND is_deleted = 0");
+            $stmt->execute([$postId]);
+            $content = $stmt->fetchColumn();
+            
+            if ($content) {
+                return substr($content, 0, $maxLength) . (strlen($content) > $maxLength ? '...' : '');
+            }
+        } catch (\Exception $e) {
+            error_log("Error getting post preview: " . $e->getMessage());
+        }
+        
+        return 'Bericht niet beschikbaar';
+    }
+
+    /**
+     * Helper functie om comment preview te krijgen
+     */
+    private function getCommentPreview($commentId, $maxLength = 100)
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT content FROM post_comments WHERE id = ? AND is_deleted = 0");
+            $stmt->execute([$commentId]);
+            $content = $stmt->fetchColumn();
+            
+            if ($content) {
+                return substr($content, 0, $maxLength) . (strlen($content) > $maxLength ? '...' : '');
+            }
+        } catch (\Exception $e) {
+            error_log("Error getting comment preview: " . $e->getMessage());
+        }
+        
+        return 'Reactie niet beschikbaar';
     }
 
     /**
@@ -274,7 +365,6 @@ class NotificationsController extends Controller
      */
     private function formatDate($datetime)
     {
-        // Controleer op null/empty waarden
         if (empty($datetime) || $datetime === null) {
             return 'Onbekende tijd';
         }
@@ -301,5 +391,15 @@ class NotificationsController extends Controller
             error_log("Error formatting date '$datetime': " . $e->getMessage());
             return 'Onbekende tijd';
         }
+    }
+
+    /**
+     * Helper functie voor JSON responses
+     */
+    private function jsonResponse($data)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 }

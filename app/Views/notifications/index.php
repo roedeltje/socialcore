@@ -1,91 +1,117 @@
 <?php
-// /app/Views/notifications/index.php
+// /app/Views/notifications/index.php - Verbeterde versie
 ?>
 
 <div class="notifications-container">
     <div class="notifications-header bg-blue-100 border-b-4 border-blue-400 rounded-t-lg p-4">
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-blue-800">📢 Meldingen</h1>
-            <p class="text-blue-600">Alle activiteiten en updates op een rijtje</p>
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-800">📢 Meldingen</h1>
+                <p class="text-blue-600">
+                    <?php if ($unread_count > 0): ?>
+                        Je hebt <?= $unread_count ?> nieuwe <?= $unread_count == 1 ? 'melding' : 'meldingen' ?>
+                    <?php else: ?>
+                        Alle meldingen zijn gelezen
+                    <?php endif; ?>
+                </p>
+            </div>
+            
+            <?php if (!empty($notifications) && $unread_count > 0): ?>
+                <button id="markAllReadBtn" class="hyves-button bg-green-500 hover:bg-green-600 text-sm px-4 py-2">
+                    ✓ Alles als gelezen markeren
+                </button>
+            <?php endif; ?>
         </div>
-        
-        <?php if (!empty($notifications)): ?>
-            <button id="markAllReadBtn" class="hyves-button bg-green-500 hover:bg-green-600 text-sm px-4 py-2">
-                ✓ Alles als gelezen markeren
-            </button>
-        <?php endif; ?>
     </div>
-</div>
 
     <div class="notifications-content bg-white rounded-b-lg shadow-md">
         <?php if (!empty($notifications)): ?>
             <div class="notifications-list">
                 <?php foreach ($notifications as $notification): ?>
-                    <div class="notification-item <?= $notification['is_read'] ? 'read' : 'unread' ?>" data-id="<?= $notification['id'] ?>">
+                    <div class="notification-item <?= $notification['is_read'] ? 'read' : 'unread' ?>" 
+                         data-id="<?= $notification['id'] ?>">
                         <div class="notification-content">
                             <!-- Avatar -->
                             <div class="notification-avatar">
-                                <img src="<?= $notification['from_avatar'] ?>" 
-                                     alt="<?= htmlspecialchars($notification['from_name']) ?>" 
-                                     class="w-12 h-12 rounded-full border-2 border-blue-200">
+                                <?php if ($notification['related_user_id']): ?>
+                                    <img src="<?= $notification['from_avatar'] ?>" 
+                                         alt="<?= htmlspecialchars($notification['from_name']) ?>" 
+                                         class="w-12 h-12 rounded-full border-2 border-blue-200">
+                                <?php else: ?>
+                                    <!-- Systeem notificatie icoon -->
+                                    <div class="w-12 h-12 rounded-full border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
+                                        <i class="fas fa-cog text-gray-600"></i>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
                             <!-- Content -->
                             <div class="notification-body">
                                 <div class="notification-header">
-                                    <!-- Icoon per type notificatie -->
+                                    <!-- Type-specifiek icoon -->
                                     <span class="notification-icon">
-                                        <?php switch($notification['type']):
-                                            case 'friend_request': ?>
-                                                <span class="bg-green-100 text-green-600 rounded-full p-1">👥</span>
-                                                <?php break;
-                                            case 'post_like': ?>
-                                                <span class="bg-red-100 text-red-600 rounded-full p-1">❤️</span>
-                                                <?php break;
-                                            case 'post_comment': ?>
-                                                <span class="bg-blue-100 text-blue-600 rounded-full p-1">💬</span>
-                                                <?php break;
-                                            default: ?>
-                                                <span class="bg-gray-100 text-gray-600 rounded-full p-1">🔔</span>
-                                        <?php endswitch; ?>
+                                        <span class="<?= $notification['icon_class'] ?> rounded-full p-1">
+                                            <?= $notification['icon'] ?>
+                                        </span>
                                     </span>
 
-                                    <!-- Bericht -->
+                                    <!-- Hoofdbericht -->
                                     <div class="notification-message">
-                                        <p class="text-gray-800">
-                                            <a href="<?= base_url('profile/' . $notification['from_username']) ?>" 
-                                               class="font-semibold text-blue-600 hover:underline">
-                                                <?= htmlspecialchars($notification['from_name']) ?>
-                                            </a>
-                                            <?= $notification['message'] ?>
+                                        <div class="notification-title">
+                                            <h4 class="font-semibold text-gray-900"><?= htmlspecialchars($notification['title']) ?></h4>
+                                        </div>
+                                        
+                                        <p class="text-gray-800 mt-1">
+                                            <?php if ($notification['related_user_id']): ?>
+                                                <a href="<?= base_url('profile/' . $notification['from_username']) ?>" 
+                                                   class="font-semibold text-blue-600 hover:underline">
+                                                    <?= htmlspecialchars($notification['from_name']) ?>
+                                                </a>
+                                                <?= str_replace($notification['from_name'], '', $notification['message']) ?>
+                                            <?php else: ?>
+                                                <?= htmlspecialchars($notification['message']) ?>
+                                            <?php endif; ?>
                                         </p>
 
                                         <!-- Preview van post/comment als beschikbaar -->
                                         <?php if (!empty($notification['post_preview'])): ?>
                                             <div class="notification-preview bg-gray-50 rounded p-2 mt-2 text-sm text-gray-600">
-                                                <strong>Bericht:</strong> "<?= htmlspecialchars($notification['post_preview']) ?>..."
+                                                <strong>Bericht:</strong> "<?= htmlspecialchars($notification['post_preview']) ?>"
                                                 
                                                 <?php if (!empty($notification['comment_preview'])): ?>
-                                                    <br><strong>Reactie:</strong> "<?= htmlspecialchars($notification['comment_preview']) ?>..."
+                                                    <br><strong>Reactie:</strong> "<?= htmlspecialchars($notification['comment_preview']) ?>"
                                                 <?php endif; ?>
                                             </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
 
-                                <!-- Timestamp en actie -->
+                                <!-- Timestamp en acties -->
                                 <div class="notification-footer">
                                     <span class="notification-time text-sm text-gray-500">
                                         <?= $notification['formatted_date'] ?>
                                     </span>
                                     
-                                    <?php if (!empty($notification['action_url'])): ?>
-                                        <a href="<?= $notification['action_url'] ?>" 
-                                           class="notification-action text-sm text-blue-600 hover:underline ml-4">
-                                            Bekijken →
-                                        </a>
-                                    <?php endif; ?>
+                                    <div class="notification-actions">
+                                        <?php if (!empty($notification['action_url'])): ?>
+                                            <a href="<?= $notification['action_url'] ?>" 
+                                               class="notification-action text-sm text-blue-600 hover:underline">
+                                                Bekijken →
+                                            </a>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (!$notification['is_read']): ?>
+                                            <button class="mark-read-btn text-sm text-green-600 hover:underline ml-3" 
+                                                    data-id="<?= $notification['id'] ?>">
+                                                Als gelezen markeren
+                                            </button>
+                                        <?php endif; ?>
+                                        
+                                        <button class="delete-notification-btn text-sm text-red-600 hover:underline ml-3" 
+                                                data-id="<?= $notification['id'] ?>">
+                                            Verwijderen
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -93,11 +119,15 @@
                 <?php endforeach; ?>
             </div>
 
-            <!-- Paginering (later te implementeren) -->
-            <div class="notifications-pagination p-4 border-t">
-                <p class="text-center text-gray-500">
-                    <?= count($notifications) ?> recente meldingen getoond
-                </p>
+            <!-- Statistieken -->
+            <div class="notifications-pagination p-4 border-t bg-gray-50">
+                <div class="flex justify-between items-center text-sm text-gray-600">
+                    <span><?= count($notifications) ?> recente meldingen getoond</span>
+                    <span>
+                        <?= $unread_count ?> ongelezen • 
+                        <?= count($notifications) - $unread_count ?> gelezen
+                    </span>
+                </div>
             </div>
 
         <?php else: ?>
@@ -118,7 +148,7 @@
 </div>
 
 <style>
-/* Notificaties styling */
+/* Verbeterde notificaties styling */
 .notifications-container {
     max-width: 800px;
     margin: 0 auto;
@@ -128,7 +158,7 @@
 .notification-item {
     border-bottom: 1px solid #e5e7eb;
     padding: 1rem;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
 }
 
 .notification-item:hover {
@@ -140,9 +170,13 @@
     border-left: 4px solid #3b82f6;
 }
 
+.notification-item.read {
+    opacity: 0.8;
+}
+
 .notification-content {
     display: flex;
-    space-x: 0.75rem;
+    gap: 0.75rem;
 }
 
 .notification-avatar {
@@ -151,13 +185,12 @@
 
 .notification-body {
     flex-grow: 1;
-    margin-left: 0.75rem;
 }
 
 .notification-header {
     display: flex;
     align-items: flex-start;
-    space-x: 0.5rem;
+    gap: 0.5rem;
 }
 
 .notification-icon {
@@ -169,80 +202,291 @@
     flex-grow: 1;
 }
 
+.notification-title h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
 .notification-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .notification-preview {
     font-style: italic;
+    border-left: 3px solid #d1d5db;
 }
 
+/* Loading states */
+.notification-item.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Success states */
+.notification-item.marked-read {
+    animation: fadeToRead 0.5s ease-in-out;
+}
+
+@keyframes fadeToRead {
+    0% { background-color: #eff6ff; }
+    100% { background-color: transparent; }
+}
+
+.notification-item.deleted {
+    animation: slideOut 0.3s ease-in-out forwards;
+}
+
+@keyframes slideOut {
+    0% { 
+        opacity: 1;
+        max-height: 200px;
+        padding: 1rem;
+    }
+    100% { 
+        opacity: 0;
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+        border: none;
+    }
+}
+
+/* Responsive aanpassingen */
 @media (max-width: 768px) {
     .notification-footer {
         flex-direction: column;
         align-items: flex-start;
-        space-y: 0.25rem;
     }
     
-    .notification-action {
-        margin-left: 0 !important;
+    .notification-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .notifications-pagination {
+        text-align: center;
+    }
+    
+    .notifications-pagination .flex {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }
 </style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Markeer alle notificaties als gelezen
     const markAllReadBtn = document.getElementById('markAllReadBtn');
-    
     if (markAllReadBtn) {
         markAllReadBtn.addEventListener('click', function() {
-            // Vraag bevestiging
-            if (confirm('Wil je alle meldingen als gelezen markeren? Dit verbergt de badge in de navigatie.')) {
-                
-                // Toon loading state
-                markAllReadBtn.textContent = 'Bezig...';
-                markAllReadBtn.disabled = true;
-                
-                // AJAX call
-                fetch('<?= base_url("notifications/mark-all-read") ?>', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update de knop
-                        markAllReadBtn.textContent = '✓ Gemarkeerd als gelezen';
-                        markAllReadBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        markAllReadBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-                        
-                        // Verberg de badge in de navigatie
-                        const badge = document.querySelector('.notification-badge');
-                        if (badge) {
-                            badge.style.display = 'none';
-                        }
-                        
-                        // Toon success message
-                        showNotification('Alle meldingen zijn als gelezen gemarkeerd!', 'success');
-                        
-                    } else {
-                        markAllReadBtn.textContent = '✓ Alles als gelezen markeren';
-                        markAllReadBtn.disabled = false;
-                        showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    markAllReadBtn.textContent = '✓ Alles als gelezen markeren';
-                    markAllReadBtn.disabled = false;
-                    showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
-                });
+            if (confirm('Wil je alle meldingen als gelezen markeren?')) {
+                markAllAsRead();
             }
         });
+    }
+    
+    // Markeer individuele notificatie als gelezen
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const notificationId = this.dataset.id;
+            markAsRead(notificationId);
+        });
+    });
+    
+    // Verwijder notificatie
+    document.querySelectorAll('.delete-notification-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm('Wil je deze melding verwijderen?')) {
+                const notificationId = this.dataset.id;
+                deleteNotification(notificationId);
+            }
+        });
+    });
+    
+    // Markeer alle als gelezen functie
+    function markAllAsRead() {
+        const button = document.getElementById('markAllReadBtn');
+        if (button) {
+            button.textContent = 'Bezig...';
+            button.disabled = true;
+        }
+        
+        fetch('<?= base_url("notifications/mark-all-read") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update alle unread items naar read
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                    item.classList.add('read', 'marked-read');
+                    
+                    // Verberg "markeer als gelezen" knop
+                    const markBtn = item.querySelector('.mark-read-btn');
+                    if (markBtn) {
+                        markBtn.remove();
+                    }
+                });
+                
+                // Verberg de "markeer alle" knop
+                if (button) {
+                    button.style.display = 'none';
+                }
+                
+                // Update navigatie badge
+                if (window.hideNotificationBadge) {
+                    window.hideNotificationBadge();
+                }
+                
+                // Update header tekst
+                const headerText = document.querySelector('.notifications-header p');
+                if (headerText) {
+                    headerText.textContent = 'Alle meldingen zijn gelezen';
+                }
+                
+                showNotification('Alle meldingen zijn als gelezen gemarkeerd!', 'success');
+            } else {
+                if (button) {
+                    button.textContent = '✓ Alles als gelezen markeren';
+                    button.disabled = false;
+                }
+                showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (button) {
+                button.textContent = '✓ Alles als gelezen markeren';
+                button.disabled = false;
+            }
+            showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
+        });
+    }
+    
+    // Markeer individuele notificatie als gelezen
+    function markAsRead(notificationId) {
+        const item = document.querySelector(`[data-id="${notificationId}"]`);
+        if (item) {
+            item.classList.add('loading');
+        }
+        
+        fetch('<?= base_url("notifications/mark-read") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `notification_id=${notificationId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && item) {
+                item.classList.remove('unread', 'loading');
+                item.classList.add('read', 'marked-read');
+                
+                // Verwijder de "markeer als gelezen" knop
+                const markBtn = item.querySelector('.mark-read-btn');
+                if (markBtn) {
+                    markBtn.remove();
+                }
+                
+                // Update notification count in navigatie
+                updateNotificationCountInNav();
+                
+                showNotification('Melding gemarkeerd als gelezen', 'success');
+            } else {
+                if (item) {
+                    item.classList.remove('loading');
+                }
+                showNotification('Er ging iets mis', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (item) {
+                item.classList.remove('loading');
+            }
+            showNotification('Er ging iets mis', 'error');
+        });
+    }
+    
+    // Verwijder notificatie
+    function deleteNotification(notificationId) {
+        const item = document.querySelector(`[data-id="${notificationId}"]`);
+        if (item) {
+            item.classList.add('loading');
+        }
+        
+        fetch('<?= base_url("notifications/delete") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `notification_id=${notificationId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && item) {
+                item.classList.add('deleted');
+                
+                // Verwijder element na animatie
+                setTimeout(() => {
+                    item.remove();
+                    
+                    // Check of er nog notificaties zijn
+                    const remainingNotifications = document.querySelectorAll('.notification-item');
+                    if (remainingNotifications.length === 0) {
+                        location.reload(); // Toon empty state
+                    }
+                }, 300);
+                
+                // Update notification count
+                updateNotificationCountInNav();
+                
+                showNotification('Melding verwijderd', 'success');
+            } else {
+                if (item) {
+                    item.classList.remove('loading');
+                }
+                showNotification('Er ging iets mis', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (item) {
+                item.classList.remove('loading');
+            }
+            showNotification('Er ging iets mis', 'error');
+        });
+    }
+    
+    // Update notification count in navigatie
+    function updateNotificationCountInNav() {
+        fetch('<?= base_url("notifications/count") ?>')
+            .then(response => response.json())
+            .then(data => {
+                if (window.updateNotificationBadge) {
+                    window.updateNotificationBadge(data.count);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating nav count:', error);
+            });
     }
     
     // Helper functie voor feedback berichten
@@ -255,8 +499,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(notification);
         
+        // Fade in
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
         setTimeout(() => {
-            notification.remove();
+            notification.style.transition = 'all 0.3s ease';
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Fade out en verwijderen
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
 });

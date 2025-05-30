@@ -412,14 +412,6 @@ return [
         'middleware' => [AuthMiddleware::class]
     ],
 
-    'meldingen' => [
-    'callback' => function () {
-        $notificationsController = new NotificationsController();
-        $notificationsController->index();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
     'notifications' => [
         'callback' => function () {
             $notificationsController = new NotificationsController();
@@ -431,39 +423,34 @@ return [
     'notifications/count' => [
         'callback' => function () {
             $notificationsController = new NotificationsController();
-            $count = $notificationsController->getUnreadCount();
-            
-            header('Content-Type: application/json');
-            echo json_encode(['count' => $count]);
-            exit;
+            $notificationsController->getCountApi();
         },
         'middleware' => [AuthMiddleware::class]
     ],
 
     'notifications/mark-read' => [
-    'callback' => function () {
-        $notificationsController = new NotificationsController();
-        $notificationsController->markAsRead();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
+        'callback' => function () {
+            $notificationsController = new NotificationsController();
+            $notificationsController->markAsRead();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
 
-'notifications/mark-all-read' => [
-    'callback' => function () {
-        if (!isset($_SESSION['user_id'])) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Not logged in']);
-            return;
-        }
+    'notifications/mark-all-read' => [
+        'callback' => function () {
+            $notificationsController = new NotificationsController();
+            $notificationsController->markAllAsRead();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
 
-        // Sla een "gelezen" timestamp op in de sessie
-        $_SESSION['notifications_read_at'] = time();
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'message' => 'Marked as read']);
-    },
-    'middleware' => [AuthMiddleware::class]
-],
+    'notifications/delete' => [
+        'callback' => function () {
+            $notificationsController = new NotificationsController();
+            $notificationsController->delete();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
     
     // Eventuele andere routes...
 ];

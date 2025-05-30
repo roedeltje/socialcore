@@ -4,7 +4,6 @@
 // Voeg dit toe boven je navigatie HTML:
 $userAvatar = '';
 if (isset($_SESSION['avatar']) && !empty($_SESSION['avatar'])) {
-    // Controleer of het een upload is of een theme asset
     if (str_starts_with($_SESSION['avatar'], 'theme-assets')) {
         $userAvatar = base_url($_SESSION['avatar']);
     } else {
@@ -45,13 +44,11 @@ echo "<!-- Debug: Final count = " . $notificationCount . " -->";
 // Haal notificatie count op
 $notificationCount = 0;
 if (isset($_SESSION['user_id'])) {
-    // Gebruik de NotificationsController om het aantal op te halen
     try {
-        require_once BASE_PATH . '/app/Controllers/NotificationsController.php';
         $notificationsController = new \App\Controllers\NotificationsController();
         $notificationCount = $notificationsController->getUnreadCount();
     } catch (Exception $e) {
-        error_log("Error getting notification count: " . $e->getMessage());
+        error_log("Error getting notification count in navigation: " . $e->getMessage());
         $notificationCount = 0;
     }
 }
@@ -59,7 +56,7 @@ if (isset($_SESSION['user_id'])) {
 
 <nav class="main-navigation">
     <div class="nav-container">
-        <!-- Navigatielinks (nu links geplaatst) -->
+        <!-- Navigatielinks -->
         <div class="nav-links">
             <a href="/home" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/home') !== false ? 'active' : '' ?>">
                 <i class="fas fa-home"></i>
@@ -68,7 +65,7 @@ if (isset($_SESSION['user_id'])) {
             
             <a href="/feed" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/feed') !== false ? 'active' : '' ?>">
                 <i class="fas fa-stream"></i>
-                <span>feed</span>
+                <span>Feed</span>
             </a>
             
             <a href="/berichten" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/berichten') !== false ? 'active' : '' ?>">
@@ -76,12 +73,12 @@ if (isset($_SESSION['user_id'])) {
                 <span>Berichten</span>
             </a>
             
-            <a href="<?= base_url('meldingen') ?>" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/meldingen') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('notifications') ?>" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/notifications') !== false ? 'active' : '' ?>">
                 <i class="fas fa-bell"></i>
                 <span>Meldingen</span>
-                <?php if ($notificationCount > 0): ?>
-                    <span class="notification-badge"><?= $notificationCount > 99 ? '99+' : $notificationCount ?></span>
-                <?php endif; ?>
+                <span id="notificationBadge" class="notification-badge" style="<?= $notificationCount > 0 ? '' : 'display: none;' ?>">
+                    <?= $notificationCount > 99 ? '99+' : $notificationCount ?>
+                </span>
             </a>
         </div>
         
@@ -98,7 +95,6 @@ if (isset($_SESSION['user_id'])) {
         <!-- Gebruikersmenu -->
         <div class="nav-user">
             <?php if (isset($_SESSION['user_id'])): ?>
-                <!-- Gebruikersmenu voor ingelogde gebruikers -->
                 <div class="user-nav-right">
                     <?php if (function_exists('is_admin') && is_admin()): ?>
                         <a href="<?= base_url('admin/dashboard') ?>" class="dashboard-button">
@@ -109,8 +105,7 @@ if (isset($_SESSION['user_id'])) {
                     
                     <div class="user-dropdown">
                         <div class="user-avatar" id="profileDropdown">
-                            <img src="<?= isset($_SESSION['avatar']) && $_SESSION['avatar'] ? base_url('uploads/' . $_SESSION['avatar']) : base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                 alt="Profielfoto">
+                            <img src="<?= $userAvatar ?>" alt="Profielfoto">
                             <span class="dropdown-arrow">
                                 <i class="fas fa-chevron-down"></i>
                             </span>
@@ -131,10 +126,9 @@ if (isset($_SESSION['user_id'])) {
                     </div>
                 </div>
             <?php else: ?>
-                <!-- Links voor niet-ingelogde gebruikers -->
                 <div class="auth-buttons">
-                    <a href="<?= base_url('login') ?>" class="login-button">login</a>
-                    <a href="<?= base_url('register') ?>" class="register-button">register</a>
+                    <a href="<?= base_url('login') ?>" class="login-button">Login</a>
+                    <a href="<?= base_url('register') ?>" class="register-button">Register</a>
                 </div>
             <?php endif; ?>
         </div>
@@ -142,7 +136,43 @@ if (isset($_SESSION['user_id'])) {
 </nav>
 
 <style>
-/* Extra CSS voor de nieuwe elementen */
+/* Verbeterde notification badge styling */
+.nav-link {
+    position: relative;
+    display: inline-block;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ef4444;
+    color: white;
+    border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    animation: pulse 2s infinite;
+    padding: 0 4px;
+}
+
+.notification-badge.hidden {
+    display: none !important;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* User navigation styling */
 .user-nav-right {
     display: flex;
     align-items: center;
@@ -160,6 +190,7 @@ if (isset($_SESSION['user_id'])) {
     font-size: 0.9rem;
     font-weight: 500;
     transition: background-color 0.2s;
+    text-decoration: none;
 }
 
 .dashboard-button:hover {
@@ -177,36 +208,6 @@ if (isset($_SESSION['user_id'])) {
     margin: 0.5rem 0;
 }
 
-.nav-link {
-    position: relative;
-    display: inline-block;
-}
-
-.notification-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background-color: #ef4444;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: bold;
-    border: 2px solid white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
 /* Voor mobiele weergave */
 @media (max-width: 768px) {
     .notification-badge {
@@ -216,26 +217,89 @@ if (isset($_SESSION['user_id'])) {
         top: -6px;
         right: -6px;
     }
+    
+    .user-nav-right {
+        gap: 0.5rem;
+    }
+    
+    .dashboard-button span {
+        display: none;
+    }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Dropdown functionaliteit
     const dropdownToggle = document.getElementById('profileDropdown');
     const dropdownMenu = document.getElementById('profileDropdownMenu');
     
     if (dropdownToggle && dropdownMenu) {
-        // Toggle dropdown on click
         dropdownToggle.addEventListener('click', function(e) {
             dropdownMenu.classList.toggle('show');
         });
         
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
             if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
                 dropdownMenu.classList.remove('show');
             }
         });
     }
+    
+    // Real-time notification count updates
+    function updateNotificationCount() {
+        <?php if (isset($_SESSION['user_id'])): ?>
+        fetch('<?= base_url("notifications/count") ?>')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    if (data.count > 0) {
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'flex';
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.style.display = 'none';
+                        badge.classList.add('hidden');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error updating notification count:', error);
+            });
+        <?php endif; ?>
+    }
+    
+    // Update notification count elke 30 seconden
+    <?php if (isset($_SESSION['user_id'])): ?>
+    setInterval(updateNotificationCount, 30000);
+    
+    // Update ook na focus op window (als gebruiker terugkomt van andere tab)
+    window.addEventListener('focus', updateNotificationCount);
+    <?php endif; ?>
+    
+    // Global functie om badge te verbergen (voor gebruik door andere scripts)
+    window.hideNotificationBadge = function() {
+        const badge = document.getElementById('notificationBadge');
+        if (badge) {
+            badge.style.display = 'none';
+            badge.classList.add('hidden');
+        }
+    };
+    
+    // Global functie om badge te updaten (voor gebruik door andere scripts)
+    window.updateNotificationBadge = function(count) {
+        const badge = document.getElementById('notificationBadge');
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'flex';
+                badge.classList.remove('hidden');
+            } else {
+                badge.style.display = 'none';
+                badge.classList.add('hidden');
+            }
+        }
+    };
 });
 </script>

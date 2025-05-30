@@ -288,52 +288,12 @@
                                         <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
                                     </div>
                                     <div class="p-4">
-                                        <form action="<?= base_url('feed/create') ?>" method="post" enctype="multipart/form-data" id="profilePostForm">
-                                            <div class="flex space-x-3">
-                                                <img src="<?= $user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                                     alt="<?= htmlspecialchars($user['name']) ?>" 
-                                                     class="w-10 h-10 rounded-full border-2 border-blue-200">
-                                                <textarea name="content" rows="2" 
-                                                          class="flex-1 p-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                                                          placeholder="Wat is er aan de hand, <?= htmlspecialchars($user['name']) ?>?"
-                                                          maxlength="1000"
-                                                          id="profilePostContent"></textarea>
-                                            </div>
-                                            
-                                            <!-- Afbeelding preview container -->
-                                            <div id="profileImagePreview" class="mt-3 relative rounded-lg border border-blue-200 bg-blue-50 hidden">
-                                                <img src="" alt="Preview" class="max-h-64 rounded-lg mx-auto">
-                                                <button type="button" id="profileRemoveImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">×</button>
-                                            </div>
-                                            
-                                            <!-- Karakterteller -->
-                                            <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
-                                                <span></span>
-                                                <span id="profileCharCounter">0/1000</span>
-                                            </div>
-                                            
-                                            <div class="flex justify-between mt-3">
-                                                <div class="flex space-x-2">
-                                                    <!-- Afbeelding upload button -->
-                                                    <label for="profileImageUpload" class="hyves-tool-button cursor-pointer" title="Voeg foto toe">
-                                                        <span class="icon">📷</span>
-                                                        <input type="file" id="profileImageUpload" name="image" accept="image/*" class="hidden">
-                                                    </label>
-                                                    <button type="button" class="hyves-tool-button" title="Voeg video toe">
-                                                        <span class="icon">🎬</span>
-                                                    </button>
-                                                    <button type="button" class="hyves-tool-button" title="Voeg link toe">
-                                                        <span class="icon">🔗</span>
-                                                    </button>
-                                                    <button type="button" class="hyves-tool-button" title="Voeg emoji toe">
-                                                        <span class="icon">😊</span>
-                                                    </button>
-                                                </div>
-                                                <button type="submit" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-4" id="profileSubmitBtn">
-                                                    Plaatsen
-                                                </button>
-                                            </div>
-                                        </form>
+                                        <?php 
+                                        $form_id = 'profilePostForm';
+                                        $context = 'profile';
+                                        // $user = $user; (al beschikbaar)
+                                        include __DIR__ . '/../partials/post-form.php'; 
+                                        ?>
                                     </div>
                                 </div>
                             <?php endif; ?>

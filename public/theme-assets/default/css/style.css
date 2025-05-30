@@ -964,3 +964,195 @@ a {
         transform: scale(1);
     }
 }
+
+/* Emoji Picker Styling - Hyves Theme */
+
+.post-form-container {
+    position: relative;
+    z-index: 10; /* Zorgt dat de container een stacking context heeft */
+}
+
+.emoji-picker-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9999; /* Verhoogd van 1000 naar 9999 */
+    background: white;
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 8px;
+    animation: emojiPickerFadeIn 0.2s ease-out;
+    /* Forceer dat het boven alles staat */
+    transform: translateZ(0);
+    isolation: isolate;
+}
+
+/* Extra CSS om ervoor te zorgen dat berichten niet interfereren */
+.post-card, 
+.bg-white.p-4.rounded-lg.shadow.mb-4 {
+    position: relative;
+    z-index: 1; /* Lager dan emoji picker */
+}
+
+/* Alternatieve positioning als absolute niet werkt */
+.emoji-picker-panel.fixed-position {
+    position: fixed !important;
+    z-index: 99999 !important;
+    /* JavaScript zal de exacte positie bepalen */
+}
+
+@keyframes emojiPickerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) translateZ(0);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) translateZ(0);
+    }
+}
+
+.emoji-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border-radius: 10px 10px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 1; /* Relatief binnen de panel */
+}
+
+.emoji-picker-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.emoji-picker-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.emoji-categories {
+    padding: 8px;
+    z-index: 1; /* Relatief binnen de panel */
+}
+
+.emoji-category {
+    margin-bottom: 12px;
+}
+
+.emoji-category:last-child {
+    margin-bottom: 0;
+}
+
+.emoji-category-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    padding: 0 4px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 4px;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 4px;
+}
+
+.emoji-item {
+    font-size: 20px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+}
+
+.emoji-item:hover {
+    background-color: #eff6ff;
+    transform: scale(1.2);
+    border: 1px solid #3b82f6;
+}
+
+.emoji-item:active {
+    transform: scale(1.1);
+    background-color: #dbeafe;
+}
+
+/* Responsive aanpassingen */
+@media (max-width: 640px) {
+    .emoji-picker-panel {
+        left: -10px;
+        right: -10px;
+        max-height: 250px;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 3px;
+    }
+    
+    .emoji-item {
+        font-size: 18px;
+        padding: 4px;
+        min-height: 28px;
+    }
+}
+
+/* Verbeterde tool button styling voor emoji picker */
+.hyves-tool-button.emoji-picker-trigger {
+    position: relative;
+    z-index: 2; /* Hoger dan post content maar lager dan picker */
+}
+
+.hyves-tool-button.emoji-picker-trigger.active {
+    background-color: #dbeafe;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    z-index: 9998; /* Net onder de picker */
+}
+
+/* Smooth scrollbar voor emoji panel */
+.emoji-picker-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.emoji-picker-panel::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.emoji-picker-panel::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 3px;
+}
+
+.emoji-picker-panel::-webkit-scrollbar-thumb:hover {
+    background: #1d4ed8;
+}
