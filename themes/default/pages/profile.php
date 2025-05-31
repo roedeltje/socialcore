@@ -361,56 +361,21 @@
                                             </div>
 
                                             <!-- Comments container -->
-                                            <div class="comments-section border-t border-gray-200 pt-3 mt-3">
-                                                <!-- Bestaande comments -->
-                                                <div class="existing-comments space-y-3 mb-4">
-                                                    <?php if (!empty($post['comments_list'])): ?>
-                                                        <?php foreach ($post['comments_list'] as $comment): ?>
-                                                            <div class="comment-item flex space-x-3 p-2 bg-blue-50 rounded-lg">
-                                                                <img src="<?= htmlspecialchars($comment['avatar']) ?>" 
-                                                                    alt="<?= htmlspecialchars($comment['user_name']) ?>" 
-                                                                    class="w-8 h-8 rounded-full border border-blue-200 flex-shrink-0">
-                                                                <div class="flex-grow">
-                                                                    <div class="comment-header flex items-center space-x-2 mb-1">
-                                                                        <a href="<?= base_url('profile/' . $comment['username']) ?>" class="font-medium text-blue-800 hover:underline text-sm">
-                                                                            <?= htmlspecialchars($comment['user_name']) ?>
-                                                                        </a>
-                                                                        <span class="text-xs text-gray-500"><?= htmlspecialchars($comment['time_ago']) ?></span>
-                                                                    </div>
-                                                                    <p class="text-gray-700 text-sm"><?= nl2br(htmlspecialchars($comment['content'])) ?></p>
-                                                                </div>
-                                                            </div>
-                                                        <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                        <!-- Toon alleen als er geen comments zijn -->
-                                                        <div class="no-comments text-center text-gray-500 text-sm py-2">
-                                                            Nog geen reacties. Wees de eerste!
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                                
-                                                <!-- Comment formulier -->
-                                                <form class="add-comment-form flex space-x-3" data-post-id="<?= $post['id'] ?>">
-                                                    <img src="<?= $user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                                         alt="<?= htmlspecialchars($user['name']) ?>" 
-                                                         class="w-8 h-8 rounded-full border border-blue-200 flex-shrink-0">
-                                                    <div class="flex-grow">
-                                                        <textarea name="comment_content" 
-                                                                  class="w-full p-2 text-sm border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" 
-                                                                  rows="2" 
-                                                                  placeholder="Schrijf een reactie..."
-                                                                  maxlength="500"></textarea>
-                                                        <div class="flex justify-between items-center mt-2">
-                                                            <span class="text-xs text-gray-500 comment-char-counter">0/500</span>
-                                                            <button type="submit" 
-                                                                    class="hyves-button bg-blue-500 hover:bg-blue-600 text-xs px-3 py-1">
-                                                                Reageren
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-
+                                            
+                                            <?php 
+                                            // Bereid variabelen voor comments sectie
+                                            $comments_data = [
+                                                'post_id' => $post['id'],
+                                                'comments_list' => $post['comments_list'] ?? [],
+                                                'current_user' => $user, // Op profielpagina gebruiken we $user in plaats van $current_user
+                                                'show_comment_form' => true,
+                                                'show_likes' => true
+                                            ];
+                                            
+                                            // Include de comments sectie partial
+                                            extract($comments_data);
+                                            include THEME_PATH . '/partials/comments-section.php';
+                                            ?>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>

@@ -71,6 +71,22 @@ return [
     'middleware' => [FeedMiddleware::class]  
 ],
 
+    'feed/comment/like' => [
+        'callback' => function () {
+            $feedController = new FeedController();
+            $feedController->toggleCommentLike();
+        },
+        'middleware' => [FeedMiddleware::class]
+    ],
+
+    'feed/comment/delete' => [
+        'callback' => function () {
+            $feedController = new FeedController();
+            $feedController->deleteComment();
+        },
+        'middleware' => [FeedMiddleware::class]
+    ],
+
     'about' => [
         'callback' => function () {
             $aboutController = new AboutController();

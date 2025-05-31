@@ -1058,6 +1058,9 @@ class FeedController extends Controller
      * Voeg deze methode toe aan je FeedController.php
      * Deze haalt alle comments op voor posts
      */
+    /**
+     * UPDATE: Verbeterde getCommentsForPosts met like status
+     */
     private function getCommentsForPosts($posts)
     {
         if (empty($posts)) {
@@ -1067,27 +1070,35 @@ class FeedController extends Controller
         // Haal alle post IDs op
         $postIds = array_column($posts, 'id');
         $placeholders = str_repeat('?,', count($postIds) - 1) . '?';
+        $currentUserId = $_SESSION['user_id'] ?? 0;
         
         try {
-            // Haal alle comments op voor deze posts
+            // Haal alle comments op voor deze posts MET like informatie
             $stmt = $this->db->prepare("
                 SELECT 
                     c.id,
                     c.post_id,
                     c.content,
                     c.created_at,
-                    u.id as user_id,
+                    c.likes_count,
+                    c.user_id,
                     u.username,
-                    COALESCE(up.display_name, u.username) as user_name
+                    COALESCE(up.display_name, u.username) as user_name,
+                    CASE WHEN cl.user_id IS NOT NULL THEN 1 ELSE 0 END as is_liked
                 FROM post_comments c
                 JOIN users u ON c.user_id = u.id
                 LEFT JOIN user_profiles up ON u.id = up.user_id
+                LEFT JOIN comment_likes cl ON c.id = cl.comment_id AND cl.user_id = ?
                 WHERE c.post_id IN ($placeholders) 
                 AND c.is_deleted = 0
                 ORDER BY c.created_at ASC
             ");
-            $stmt->execute($postIds);
+            
+            // Voeg current user ID toe aan het begin van de parameters
+            $params = array_merge([$currentUserId], $postIds);
+            $stmt->execute($params);
             $allComments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
             
             // Groepeer comments per post
             $commentsByPost = [];
@@ -1116,6 +1127,208 @@ class FeedController extends Controller
             
             return $posts;
         }
+    }
+
+    /**
+     * Toggle like op een comment (like/unlike)
+     */
+    public function toggleCommentLike()
+    {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
+            exit;
+        }
+        
+        // Controleer of het een POST request is
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
+            exit;
+        }
+        
+        $commentId = $_POST['comment_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        
+        if (!$commentId) {
+            echo json_encode(['success' => false, 'message' => 'Comment ID is verplicht']);
+            exit;
+        }
+        
+        try {
+            // Controleer of comment bestaat
+            $stmt = $this->db->prepare("SELECT id FROM post_comments WHERE id = ? AND is_deleted = 0");
+            $stmt->execute([$commentId]);
+            $comment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$comment) {
+                echo json_encode(['success' => false, 'message' => 'Reactie niet gevonden']);
+                exit;
+            }
+            
+            // Controleer of gebruiker deze comment al heeft geliked
+            $stmt = $this->db->prepare("SELECT id FROM comment_likes WHERE comment_id = ? AND user_id = ?");
+            $stmt->execute([$commentId, $userId]);
+            $existingLike = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($existingLike) {
+                // Unlike: verwijder de like
+                $this->removeCommentLike($commentId, $userId);
+                $action = 'unliked';
+            } else {
+                // Like: voeg like toe
+                $this->addCommentLike($commentId, $userId);
+                $action = 'liked';
+            }
+            
+            // Haal nieuwe like count op
+            $newLikeCount = $this->getCommentLikeCount($commentId);
+
+
+            echo json_encode([
+                'success' => true,
+                'action' => $action,
+                'like_count' => $newLikeCount,
+                'debug' => $debugData  // Debug data in response
+            ]);
+            
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Er ging iets mis: ' . $e->getMessage()]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * Voeg een comment like toe
+     */
+    private function addCommentLike($commentId, $userId)
+    {
+        // Begin transaction
+        $this->db->beginTransaction();
+        
+        try {
+            // Voeg like toe aan comment_likes tabel
+            $stmt = $this->db->prepare("INSERT INTO comment_likes (comment_id, user_id) VALUES (?, ?)");
+            $stmt->execute([$commentId, $userId]);
+            
+            $this->db->commit();
+            
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Verwijder een comment like
+     */
+    private function removeCommentLike($commentId, $userId)
+    {
+        // Begin transaction
+        $this->db->beginTransaction();
+        
+        try {
+            // Verwijder like uit comment_likes tabel
+            $stmt = $this->db->prepare("DELETE FROM comment_likes WHERE comment_id = ? AND user_id = ?");
+            $stmt->execute([$commentId, $userId]);
+            
+            // Update likes_count in post_comments tabel (maar niet onder 0)
+            $stmt = $this->db->prepare("UPDATE post_comments SET likes_count = GREATEST(0, likes_count - 1) WHERE id = ?");
+            $stmt->execute([$commentId]);
+            
+            $this->db->commit();
+            
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Haal het aantal likes op voor een comment
+     */
+    private function getCommentLikeCount($commentId)
+    {
+        $stmt = $this->db->prepare("SELECT likes_count FROM post_comments WHERE id = ?");
+        $stmt->execute([$commentId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result ? (int)$result['likes_count'] : 0;
+    }
+
+    /**
+     * Verwijder een comment
+     */
+    public function deleteComment()
+    {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
+            exit;
+        }
+        
+        // Controleer of het een POST request is
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
+            exit;
+        }
+        
+        $commentId = $_POST['comment_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        $userRole = $_SESSION['role'] ?? 'user';
+        
+        if (!$commentId) {
+            echo json_encode(['success' => false, 'message' => 'Comment ID is verplicht']);
+            exit;
+        }
+        
+        try {
+            // Haal comment op met eigenaar info
+            $stmt = $this->db->prepare("SELECT user_id, post_id FROM post_comments WHERE id = ? AND is_deleted = 0");
+            $stmt->execute([$commentId]);
+            $comment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$comment) {
+                echo json_encode(['success' => false, 'message' => 'Reactie niet gevonden']);
+                exit;
+            }
+            
+            // Controleer toestemming (eigenaar of admin)
+            $isOwner = ($comment['user_id'] == $userId);
+            $isAdmin = ($userRole === 'admin');
+            
+            if (!$isOwner && !$isAdmin) {
+                echo json_encode(['success' => false, 'message' => 'Je hebt geen toestemming om deze reactie te verwijderen']);
+                exit;
+            }
+            
+            // Begin transaction
+            $this->db->beginTransaction();
+            
+            // Soft delete de comment
+            $stmt = $this->db->prepare("UPDATE post_comments SET is_deleted = 1 WHERE id = ?");
+            $stmt->execute([$commentId]);
+            
+            // Update comment count in post
+            $stmt = $this->db->prepare("UPDATE posts SET comments_count = GREATEST(0, comments_count - 1) WHERE id = ?");
+            $stmt->execute([$comment['post_id']]);
+            
+            $this->db->commit();
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Reactie succesvol verwijderd'
+            ]);
+            
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            
+            echo json_encode(['success' => false, 'message' => 'Er ging iets mis: ' . $e->getMessage()]);
+        }
+        
+        exit;
     }
 
 }

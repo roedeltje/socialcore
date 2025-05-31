@@ -1156,3 +1156,387 @@ a {
 .emoji-picker-panel::-webkit-scrollbar-thumb:hover {
     background: #1d4ed8;
 }
+
+/* Comment Like Styling - Voeg toe aan style.css */
+
+/* Comment sectie algemeen */
+.comments-section {
+    position: relative;
+    z-index: 1; /* Lager dan emoji picker */
+}
+
+/* Comment items */
+.comment-item {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.comment-item:hover {
+    background-color: #f0f9ff !important; /* Lichtere blauw bij hover */
+}
+
+/* Comment header styling */
+.comment-header {
+    min-height: 20px;
+}
+
+/* Comment menu styling */
+.comment-menu {
+    position: relative;
+}
+
+.comment-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.comment-menu-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.comment-menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 0.25rem;
+    width: 8rem;
+    background-color: white;
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 50;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.comment-menu-dropdown:not(.hidden) {
+    animation: commentMenuFadeIn 0.15s ease;
+}
+
+@keyframes commentMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Comment actions styling */
+.comment-actions {
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+}
+
+.comment-like-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+}
+
+.comment-like-button:hover:not(:disabled) {
+    background-color: #eff6ff;
+    transform: translateY(-1px);
+}
+
+.comment-like-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.comment-like-button.liked {
+    color: #3b82f6 !important;
+    background-color: #eff6ff;
+}
+
+.comment-like-button .like-icon {
+    margin-right: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.comment-like-button.liked .like-icon {
+    transform: scale(1.1);
+}
+
+/* Comment reply button styling */
+.comment-reply-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.comment-reply-button:hover {
+    background-color: #f3f4f6;
+}
+
+/* Comment form textarea container */
+.comment-textarea-container {
+    position: relative;
+    z-index: 5; /* Hoger dan comment items maar lager dan emoji picker */
+}
+
+/* Delete button styling */
+.delete-comment-button {
+    width: 100%;
+    text-align: left;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    color: #ef4444;
+    transition: all 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.delete-comment-button:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+/* Login to comment styling */
+.login-to-comment {
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.login-to-comment p {
+    margin-bottom: 0.5rem;
+}
+
+/* No comments styling */
+.no-comments {
+    background-color: #f8fafc;
+    border-radius: 0.375rem;
+    font-style: italic;
+}
+
+/* Comment count animations */
+.comment-like-button .like-count {
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.comment-like-button.liked .like-count {
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+/* Responsive aanpassingen voor comments */
+@media (max-width: 640px) {
+    .comment-item {
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .comment-actions {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .comment-like-button,
+    .comment-reply-button {
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.375rem;
+    }
+    
+    .comment-menu-dropdown {
+        width: 7rem;
+        font-size: 0.6875rem;
+    }
+}
+
+/* Smooth scrolling voor comment sectie */
+.comments-section {
+    scroll-behavior: smooth;
+}
+
+/* Focus styling voor accessibility */
+.comment-like-button:focus,
+.comment-reply-button:focus,
+.comment-menu-button:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Loading state voor comment buttons */
+.comment-like-button.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.comment-like-button.loading .like-icon {
+    animation: commentLikeLoading 0.5s linear infinite;
+}
+
+@keyframes commentLikeLoading {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Comment form container positioning */
+.comment-textarea-container {
+    position: relative;
+    z-index: 100; /* Hoger dan andere elementen */
+}
+
+/* Emoji picker panel - VERBETERDE VERSIE */
+.emoji-picker-panel {
+    position: fixed !important; /* Fixed in plaats van absolute */
+    z-index: 99999 !important; /* Heel hoog z-index */
+    background: white;
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 8px;
+    animation: emojiPickerFadeIn 0.2s ease-out;
+    width: 320px;
+    max-width: 90vw; /* Responsive width */
+    
+    /* Forceer dat het boven alles staat */
+    transform: translateZ(0);
+    isolation: isolate;
+    backdrop-filter: blur(1px); /* Subtiel blur effect */
+}
+
+/* Zorg dat posts een lagere z-index hebben */
+.post-card, 
+.bg-white.p-4.rounded-lg.shadow.mb-4,
+.comments-section {
+    position: relative;
+    z-index: 1; /* Veel lager dan emoji picker */
+}
+
+/* Comment form specifiek */
+.add-comment-form {
+    position: relative;
+    z-index: 10; /* Hoger dan posts maar lager dan emoji picker */
+}
+
+/* Emoji picker trigger button */
+.emoji-picker-trigger {
+    position: relative;
+    z-index: 15;
+    background-color: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 4px;
+    transition: all 0.2s ease;
+}
+
+.emoji-picker-trigger:hover {
+    background-color: #f3f4f6;
+    border-color: #3b82f6;
+}
+
+.emoji-picker-trigger.active {
+    background-color: #dbeafe;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+}
+
+/* Responsive aanpassingen */
+@media (max-width: 640px) {
+    .emoji-picker-panel {
+        width: 280px;
+        max-height: 250px;
+        left: 10px !important;
+        right: 10px !important;
+        width: calc(100vw - 20px) !important;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 3px;
+    }
+    
+    .emoji-item {
+        font-size: 18px;
+        padding: 4px;
+        min-height: 28px;
+    }
+}
+
+/* Comment like button fixes */
+.comment-like-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.comment-like-button:hover:not(:disabled) {
+    background-color: #eff6ff;
+    transform: translateY(-1px);
+}
+
+.comment-like-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.comment-like-button.liked {
+    color: #3b82f6 !important;
+    background-color: #eff6ff;
+    font-weight: 600;
+}
+
+.comment-like-button .like-icon {
+    font-size: 0.875rem;
+}
+
+.comment-like-button.liked .like-icon {
+    transform: scale(1.1);
+}
+
+/* Anti-flicker CSS voor emoji picker */
+.emoji-picker-panel {
+    pointer-events: auto !important;
+    position: fixed !important;
+    z-index: 99999 !important;
+    transition: none !important;
+    transform: none !important;
+    will-change: auto !important;
+}
+
+.emoji-picker-panel * {
+    pointer-events: auto !important;
+}
+
+/* Voorkom hover effecten die kunnen interfereren */
+.emoji-picker-trigger:hover ~ .emoji-picker-panel,
+.emoji-picker-trigger.active ~ .emoji-picker-panel {
+    display: block !important;
+}
