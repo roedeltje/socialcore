@@ -1183,12 +1183,10 @@ class FeedController extends Controller
             // Haal nieuwe like count op
             $newLikeCount = $this->getCommentLikeCount($commentId);
 
-
             echo json_encode([
                 'success' => true,
                 'action' => $action,
-                'like_count' => $newLikeCount,
-                'debug' => $debugData  // Debug data in response
+                'like_count' => $newLikeCount
             ]);
             
         } catch (Exception $e) {

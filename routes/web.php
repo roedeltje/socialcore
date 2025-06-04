@@ -1,4 +1,8 @@
 <?php
+
+//error_log("Requested route: " . ($_GET['route'] ?? 'none'));
+//var_dump("Route:", $_GET['route'] ?? 'none'); // Tijdelijk voor debug
+
 // Bovenaan het bestand
 use App\Auth\Auth;
 use App\Controllers\HomeController;
@@ -11,6 +15,10 @@ use App\Controllers\FriendsController;
 use App\Controllers\NotificationsController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
+use App\Controllers\Admin\AppearanceController;
+use App\Controllers\Admin\ContentController;
+use App\Controllers\Admin\AdminSettingsController;
+use App\Controllers\Admin\AdminStatisticsController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\AdminMiddleware;
@@ -182,6 +190,202 @@ return [
     },
     'middleware' => [AdminMiddleware::class]
 ],
+
+    'admin/appearance/themes' => [
+    'callback' => function () {
+        try {
+            $controller = new AppearanceController();
+            $controller->themes();
+        } catch (\Exception $e) {
+            echo "<div style='padding: 20px; background: #f8d7da; color: #721c24; border-radius: 4px;'>";
+            echo "<h3>Fout bij laden thema beheer:</h3>";
+            echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
+            echo "<p><strong>Debug info:</strong> " . $e->getFile() . " op regel " . $e->getLine() . "</p>";
+            echo "</div>";
+        }
+    },
+    'middleware' => [AdminMiddleware::class]
+],
+
+    'admin/appearance/activate-theme' => [
+    'callback' => function () {
+        $controller = new AppearanceController();
+        $controller->activateTheme();
+    },
+    'middleware' => [AdminMiddleware::class]
+],
+
+    'admin/appearance/widgets' => [
+    'callback' => function () {
+        $controller = new AppearanceController();
+        $controller->widgets();
+    },
+    'middleware' => [AdminMiddleware::class]
+],
+
+    'admin/appearance/menus' => [
+        'callback' => function () {
+            $controller = new AppearanceController();
+            $controller->menus();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/appearance/customize' => [
+        'callback' => function () {
+            $controller = new AppearanceController();
+            $controller->customize();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/appearance/install-theme' => [
+        'callback' => function () {
+            $controller = new AppearanceController();
+            $controller->installTheme();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/appearance/delete-theme' => [
+        'callback' => function () {
+            $controller = new AppearanceController();
+            $controller->deleteTheme();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/appearance/preview-theme' => [
+        'callback' => function () {
+            $controller = new AppearanceController();
+            $controller->previewTheme();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // Content beheer routes
+    'admin/content/posts' => [
+        'callback' => function () {
+            $controller = new ContentController();
+            $controller->posts();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/content/comments' => [
+        'callback' => function () {
+            $controller = new \App\Controllers\Admin\ContentController();
+            $controller->comments();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/content/media' => [
+        'callback' => function () {
+            $controller = new ContentController();
+            $controller->media();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/content/reported' => [
+        'callback' => function () {
+            $controller = new ContentController();
+            $controller->reported();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // Content actie routes
+    'admin/content/delete-post' => [
+        'callback' => function () {
+            $controller = new ContentController();
+            $controller->deletePost();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/content/delete-comment' => [
+        'callback' => function () {
+            $controller = new ContentController();
+            $controller->deleteComment();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/content/delete-media' => [
+        'callback' => function () {
+            $controller = new ContentController();
+            $controller->deleteMedia();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/settings' => [
+        'callback' => function () {
+            $controller = new AdminSettingsController();
+            $controller->index();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/settings/general' => [
+        'callback' => function () {
+            $controller = new AdminSettingsController();
+            $controller->general();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/settings/email' => [
+        'callback' => function () {
+            $controller = new AdminSettingsController();
+            $controller->email();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/settings/media' => [
+        'callback' => function () {
+            $controller = new AdminSettingsController();
+            $controller->media();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/settings/security' => [
+        'callback' => function () {
+            $controller = new AdminSettingsController();
+            $controller->security();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/settings/performance' => [
+        'callback' => function () {
+            $controller = new AdminSettingsController();
+            $controller->performance();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/settings/social' => [
+        'callback' => function () {
+            $controller = new AdminSettingsController();
+            $controller->social();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/statistics' => [
+        'callback' => function () {
+            $controller = new AdminStatisticsController();
+            $controller->index();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+
     'setup_uploads' => [
     'callback' => function () {
         // Definieer base path

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'Admin Dashboard' ?> - SocialCore</title>
     
-    <!-- Admin CSS direct laden zonder thema-functies -->
+    <!-- Admin CSS met correcte base_url -->
     <link rel="stylesheet" href="/assets/admin/css/admin.css">
     
     <!-- Font Awesome voor iconen -->
@@ -27,92 +27,8 @@
             </div>
         </header>
         
-        <!-- Sidebar -->
-        <aside class="admin-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <a href="<?= base_url('') ?>">
-                        <span>SocialCore</span>
-                    </a>
-                </div>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <ul class="menu">
-                    <li class="menu-item active">
-                        <a href="<?= base_url('admin/dashboard') ?>">
-                            <span class="icon"><i class="fas fa-tachometer-alt"></i></span>
-                            <span class="menu-text">Dashboard</span>
-                        </a>
-                    </li>
-                    
-                    <li class="menu-item has-submenu">
-                        <a href="#" class="submenu-toggle">
-                            <span class="icon"><i class="fas fa-users"></i></span>
-                            <span class="menu-text">Gebruikers</span>
-                            <span class="dropdown-icon"><i class="fas fa-chevron-down"></i></span>
-                        </a>
-                        <ul class="submenu">
-                            <li class="submenu-item">
-                                <a href="<?= base_url('admin/users') ?>">
-                                    <span class="icon"><i class="fas fa-list"></i></span>
-                                    <span class="menu-text">Gebruikers overzicht</span>
-                                </a>
-                            </li>
-                            <li class="submenu-item">
-                                <a href="<?= base_url('?route=admin/users&action=create') ?>">
-                                    <span class="icon"><i class="fas fa-user-plus"></i></span>
-                                    <span class="menu-text">Gebruiker toevoegen</span>
-                                </a>
-                            </li>
-                            <li class="submenu-item">
-                                <a href="<?= base_url('?route=admin/roles') ?>">
-                                    <span class="icon"><i class="fas fa-user-tag"></i></span>
-                                    <span class="menu-text">Rollen beheren</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <li class="menu-item">
-                        <a href="<?= base_url('?route=admin/content') ?>">
-                            <span class="icon"><i class="fas fa-file-alt"></i></span>
-                            <span class="menu-text">Content</span>
-                        </a>
-                    </li>
-                    
-                    <li class="menu-item">
-                        <a href="<?= base_url('?route=admin/settings') ?>">
-                            <span class="icon"><i class="fas fa-cog"></i></span>
-                            <span class="menu-text">Instellingen</span>
-                        </a>
-                    </li>
-                    
-                    <li class="menu-item">
-                        <a href="<?= base_url('?route=admin/plugins') ?>">
-                            <span class="icon"><i class="fas fa-puzzle-piece"></i></span>
-                            <span class="menu-text">Plugins</span>
-                        </a>
-                    </li>
-                    
-                    <li class="menu-item">
-                        <a href="<?= base_url('?route=admin/themes') ?>">
-                            <span class="icon"><i class="fas fa-paint-brush"></i></span>
-                            <span class="menu-text">Thema's</span>
-                        </a>
-                    </li>
-                    
-                    <li class="menu-item separator"></li>
-                    
-                    <li class="menu-item">
-                        <a href="<?= base_url('?route=home') ?>">
-                            <span class="icon"><i class="fas fa-home"></i></span>
-                            <span class="menu-text">Naar de site</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </aside>
+        <!-- Sidebar - Laad externe sidebar.php -->
+        <?php include __DIR__ . '/sidebar.php'; ?>
         
         <!-- Content -->
         <main class="admin-content">
@@ -130,8 +46,7 @@
         </footer>
     </div>
     
-    <!-- Admin JavaScript -->
+    <!-- Admin JavaScript met correcte base_url -->
     <script src="/assets/admin/js/admin.js"></script>
-    <script src="<?= base_url('admin/assets/js/user-form.js') ?>"></script>
 </body>
 </html>
