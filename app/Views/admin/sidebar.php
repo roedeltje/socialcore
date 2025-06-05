@@ -142,6 +142,12 @@ function isSubmenuActive($exactRoute) {
                     <span class="dropdown-icon">▼</span>
                 </a>
                 <ul class="submenu">
+                    <li class="submenu-item <?= (($_GET['route'] ?? '') === 'admin/plugins') ? 'active' : '' ?>">
+                        <a href="<?= base_url('?route=admin/plugins') ?>">
+                            <span class="icon">📋</span>
+                            <span class="menu-text">Overzicht</span>
+                        </a>
+                    </li>
                     <li class="submenu-item <?= (($_GET['route'] ?? '') === 'admin/plugins/installed') ? 'active' : '' ?>">
                         <a href="<?= base_url('?route=admin/plugins/installed') ?>">
                             <span class="icon">📦</span>
@@ -231,6 +237,13 @@ function isSubmenuActive($exactRoute) {
                     <span class="menu-text">Onderhoud</span>
                     <span class="dropdown-icon">▼</span>
                 </a>
+                <ul class="submenu">
+                    <li class="submenu-item <?= (($_GET['route'] ?? '') === 'admin/maintenance') ? 'active' : '' ?>">
+                        <a href="<?= base_url('?route=admin/maintenance') ?>">
+                            <span class="icon">📋</span>
+                            <span class="menu-text">Overzicht</span>
+                        </a>
+                    </li>
                 <ul class="submenu">
                     <li class="submenu-item <?= (($_GET['route'] ?? '') === 'admin/maintenance/database') ? 'active' : '' ?>">
                         <a href="<?= base_url('?route=admin/maintenance/database') ?>">

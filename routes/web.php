@@ -19,6 +19,8 @@ use App\Controllers\Admin\AppearanceController;
 use App\Controllers\Admin\ContentController;
 use App\Controllers\Admin\AdminSettingsController;
 use App\Controllers\Admin\AdminStatisticsController;
+use App\Controllers\Admin\AdminMaintenanceController;
+use App\Controllers\Admin\AdminPluginController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\AdminMiddleware;
@@ -274,7 +276,7 @@ return [
 
     'admin/content/comments' => [
         'callback' => function () {
-            $controller = new \App\Controllers\Admin\ContentController();
+            $controller = new ContentController();
             $controller->comments();
         },
         'middleware' => [AdminMiddleware::class]
@@ -381,6 +383,134 @@ return [
         'callback' => function () {
             $controller = new AdminStatisticsController();
             $controller->index();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/maintenance' => [
+        'callback' => function () {
+            $controller = new AdminMaintenanceController();
+            $controller->index();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/maintenance/database' => [
+        'callback' => function () {
+            $controller = new AdminMaintenanceController();
+            $controller->database();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/maintenance/cache' => [
+        'callback' => function () {
+            $controller = new AdminMaintenanceController();
+            $controller->cache();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/maintenance/logs' => [
+        'callback' => function () {
+            $controller = new AdminMaintenanceController();
+            $controller->logs();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/maintenance/backup' => [
+        'callback' => function () {
+            $controller = new AdminMaintenanceController();
+            $controller->backup();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/maintenance/updates' => [
+        'callback' => function () {
+            $controller = new AdminMaintenanceController();
+            $controller->updates();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->index();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/add-new' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->addNew();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/upload' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->upload();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/installed' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->installed();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/editor' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->editor();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/save-file' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->saveFile();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/activate' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->activate();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/deactivate' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->deactivate();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/delete' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->delete();
+        },
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    'admin/plugins/bulk-action' => [
+        'callback' => function () {
+            $controller = new AdminPluginController();
+            $controller->bulkAction();
         },
         'middleware' => [AdminMiddleware::class]
     ],
