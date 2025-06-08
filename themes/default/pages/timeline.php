@@ -101,13 +101,22 @@
                     <div class="post-header flex justify-between items-center bg-blue-100 p-3 border-b border-blue-200">
                         <div class="flex items-center space-x-3">
                             <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                 alt="<?= htmlspecialchars($post['user_name']) ?>" 
-                                 class="w-8 h-8 rounded-full border-2 border-blue-200">
+                                alt="<?= htmlspecialchars($post['user_name']) ?>" 
+                                class="w-8 h-8 rounded-full border-2 border-blue-200">
                             <div>
-                                <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="font-bold text-blue-800 hover:underline">
-                                    <?= htmlspecialchars($post['user_name']) ?>
-                                </a>
-                                <div class="text-xs text-blue-600"><?= $post['created_at'] ?></div>
+                                <?php if ($post['is_wall_message'] && !empty($post['wall_message_header'])): ?>
+                                    <!-- Wall message header: Sender → Receiver -->
+                                    <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="font-bold text-blue-800 hover:underline">
+                                        <?= htmlspecialchars($post['wall_message_header']) ?>
+                                    </a>
+                                    <div class="text-xs text-blue-600">plaatste een krabbel • <?= $post['created_at'] ?></div>
+                                <?php else: ?>
+                                    <!-- Regular timeline post -->
+                                    <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="font-bold text-blue-800 hover:underline">
+                                        <?= htmlspecialchars($post['user_name']) ?>
+                                    </a>
+                                    <div class="text-xs text-blue-600"><?= $post['created_at'] ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <?php if (isset($_SESSION['user_id']) && ($post['user_id'] == $_SESSION['user_id'] || isset($_SESSION['role']) && $_SESSION['role'] === 'admin')): ?>

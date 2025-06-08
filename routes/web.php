@@ -13,6 +13,7 @@ use App\Controllers\FeedController;
 use App\Controllers\AboutController;
 use App\Controllers\FriendsController;
 use App\Controllers\NotificationsController;
+use App\Controllers\MessagesController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\AppearanceController;
@@ -801,6 +802,99 @@ return [
         },
         'middleware' => [AuthMiddleware::class]
     ],
+
+    'messages' => [
+        'callback' => function () {
+            $messagesController = new MessagesController();
+            $messagesController->index();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/conversation' => [
+        'callback' => function () {
+            $otherUserId = $_GET['user'] ?? null;
+            
+            if (!$otherUserId || !is_numeric($otherUserId)) {
+                $_SESSION['error_message'] = 'Ongeldige gebruiker.';
+                redirect('messages');
+                return;
+            }
+            
+            $messagesController = new MessagesController();
+            $messagesController->conversation($otherUserId);
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/compose' => [
+        'callback' => function () {
+            $messagesController = new MessagesController();
+            $messagesController->compose();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/new' => [
+        'callback' => function () {
+            // Haal username uit URL segmenten voor direct naar gebruiker
+            $uri = $_SERVER['REQUEST_URI'];
+            $segments = explode('/', trim($uri, '/'));
+            
+            // Zoek naar 'new' in de segmenten
+            $newIndex = array_search('new', $segments);
+            $username = null;
+            
+            // Als er een segment na 'new' is, gebruik dit als username
+            if ($newIndex !== false && isset($segments[$newIndex + 1])) {
+                $username = $segments[$newIndex + 1];
+            }
+            
+            $messagesController = new MessagesController();
+            $messagesController->compose($username);
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/send' => [
+        'callback' => function () {
+            $messagesController = new MessagesController();
+            $messagesController->send();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/reply' => [
+        'callback' => function () {
+            $messagesController = new MessagesController();
+            $messagesController->reply();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/mark-read' => [
+        'callback' => function () {
+            $messagesController = new MessagesController();
+            $messagesController->markAsRead();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/check-new' => [
+        'callback' => function () {
+            $messagesController = new MessagesController();
+            $messagesController->checkNewMessages();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    'messages/get-new' => [
+    'callback' => function () {
+        $messagesController = new MessagesController();
+        $messagesController->getNewMessages();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
     
     // Eventuele andere routes...
 ];

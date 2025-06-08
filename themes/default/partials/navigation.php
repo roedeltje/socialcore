@@ -68,7 +68,7 @@ if (isset($_SESSION['user_id'])) {
                 <span>Feed</span>
             </a>
             
-            <a href="/berichten" class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/berichten') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('?route=messages') ?>" class="nav-link <?= ($_GET['route'] ?? '') === 'messages' || strpos(($_GET['route'] ?? ''), 'messages') === 0 ? 'active' : '' ?>">
                 <i class="fas fa-envelope"></i>
                 <span>Berichten</span>
             </a>

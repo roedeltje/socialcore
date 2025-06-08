@@ -306,10 +306,17 @@
                                         <div class="bg-white p-4 rounded-lg shadow mb-4">
                                             <div class="flex items-center mb-3">
                                                 <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                                    alt="<?= htmlspecialchars($user['name']) ?>" 
+                                                    alt="<?= htmlspecialchars($post['user_name']) ?>" 
                                                     class="w-10 h-10 rounded-full mr-3">
                                                 <div class="flex-grow">
-                                                    <div class="font-bold text-blue-600"><?= htmlspecialchars($user['name']) ?></div>
+                                                    <?php if ($post['is_wall_message'] && !empty($post['wall_message_header'])): ?>
+                                                        <!-- Wall message header: Sender → Receiver -->
+                                                        <div class="font-bold text-blue-600"><?= htmlspecialchars($post['wall_message_header']) ?></div>
+                                                        <div class="text-sm text-gray-600">plaatste een krabbel</div>
+                                                    <?php else: ?>
+                                                        <!-- Regular timeline post -->
+                                                        <div class="font-bold text-blue-600"><?= htmlspecialchars($post['user_name']) ?></div>
+                                                    <?php endif; ?>
                                                     <div class="text-gray-500 text-sm"><?= $post['created_at'] ?></div>
                                                 </div>
                                                 
@@ -381,39 +388,21 @@
                                 </div>
                             <?php endif; ?>
                             
-                            <!-- Krabbels van vrienden -->
-                            <?php if (!empty($krabbels)): ?>
-                                <div class="mb-6">
-                                    <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Krabbels van vrienden</h4>
-                                    <?php foreach ($krabbels as $krabbel): ?>
-                                        <div class="krabbel-item bg-white p-4 rounded-lg shadow mb-4">
-                                            <div class="flex items-center mb-2">
-                                                <img src="<?= base_url('theme-assets/default/images/' . 
-                                                          (strpos($krabbel['sender_name'], 'Jan') !== false || 
-                                                           strpos($krabbel['sender_name'], 'Thomas') !== false || 
-                                                           strpos($krabbel['sender_name'], 'Lucas') !== false || 
-                                                           strpos($krabbel['sender_name'], 'Tim') !== false || 
-                                                           strpos($krabbel['sender_name'], 'Robin') !== false ? 
-                                                           'default-avatar-male.png' : 
-                                                           (strpos($krabbel['sender_name'], 'Petra') !== false || 
-                                                            strpos($krabbel['sender_name'], 'Emma') !== false || 
-                                                            strpos($krabbel['sender_name'], 'Sophie') !== false || 
-                                                            strpos($krabbel['sender_name'], 'Nina') !== false || 
-                                                            strpos($krabbel['sender_name'], 'Laura') !== false ? 
-                                                            'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                                       alt="<?= htmlspecialchars($krabbel['sender_name']) ?>" class="w-10 h-10 rounded-full mr-2">
-                                                <div class="flex-grow">
-                                                    <a href="<?= base_url('profile/' . $krabbel['sender_username']) ?>" class="font-bold text-blue-600"><?= htmlspecialchars($krabbel['sender_name']) ?></a>
-                                                    <div class="text-gray-500 text-sm"><?= date('d-m-Y H:i', strtotime($krabbel['created_at'])) ?></div>
-                                                </div>
-                                            </div>
-                                            <p class="text-gray-700"><?= nl2br(htmlspecialchars($krabbel['message'])) ?></p>
-                                        </div>
-                                    <?php endforeach; ?>
+                            <!-- DEBUG: Check krabbels data -->
+                            <?php if (isset($_GET['debug'])): ?>
+                                <div class="bg-yellow-100 p-3 mb-4 rounded">
+                                    <strong>Debug Krabbels:</strong><br>
+                                    Aantal krabbels: <?= count($krabbels ?? []) ?><br>
+                                    <?php if (!empty($krabbels)): ?>
+                                        Eerste krabbel: <?= htmlspecialchars($krabbels[0]['message'] ?? 'geen message') ?><br>
+                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                             
-                            <!-- Als er geen content is -->
+                            <!-- Krabbels van vrienden -->
+                            
+
+                            <!-- Als er geen content is - ALLEEN ALS ER ECHT NIKS IS -->
                             <?php if (empty($posts) && empty($krabbels)): ?>
                                 <div class="bg-white p-6 rounded-lg shadow text-center">
                                     <div class="text-6xl mb-4">📭</div>
@@ -430,74 +419,165 @@
                         </div>
 
                     <!-- Vrienden tab -->
-                    <?php elseif ($active_tab == 'vrienden'): ?>
-                        <!-- Vrienden tab content -->
-                        <div class="friends-container mt-4">
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                <?php if (!empty($friends)): ?>
-                                    <?php foreach ($friends as $friend): ?>
-                                        <div class="friend-card text-center">
-                                            <a href="<?= base_url('profile/' . $friend['username']) ?>" class="block">
-                                                <img src="<?= base_url('theme-assets/default/images/' . 
-                                                          (strpos($friend['name'], 'Jan') !== false || 
-                                                           strpos($friend['name'], 'Thomas') !== false || 
-                                                           strpos($friend['name'], 'Lucas') !== false || 
-                                                           strpos($friend['name'], 'Tim') !== false || 
-                                                           strpos($friend['name'], 'Robin') !== false ? 
-                                                           'default-avatar-male.png' : 
-                                                           (strpos($friend['name'], 'Petra') !== false || 
-                                                            strpos($friend['name'], 'Emma') !== false || 
-                                                            strpos($friend['name'], 'Sophie') !== false || 
-                                                            strpos($friend['name'], 'Nina') !== false || 
-                                                            strpos($friend['name'], 'Laura') !== false ? 
-                                                            'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                                   alt="<?= htmlspecialchars($friend['name']) ?>" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
-                                                <div class="font-medium"><?= htmlspecialchars($friend['name']) ?></div>
-                                            </a>
-                                        </div>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen vrienden.</p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
+            <?php elseif ($active_tab == 'vrienden'): ?>
+                <!-- Vrienden tab content -->
+                <div class="friends-container mt-4">
+                    <div class="section-header mb-4">
+                        <h3 class="text-lg font-bold text-blue-800">Vrienden (<?= count($friends) ?>)</h3>
+                    </div>
                     
-                    <!-- Foto's tab -->
-                    <?php elseif ($active_tab == 'fotos'): ?>
-                        <!-- Foto's tab content -->
-                        <div class="photos-container mt-4">
-                            <?php if ($viewer_is_owner): ?>
-                                <form action="<?= base_url('profile/upload-foto') ?>" method="post" enctype="multipart/form-data" class="bg-blue-50 p-4 rounded-lg mb-4">
-                                    <div class="mb-3">
-                                        <label for="photo" class="block mb-1 font-medium">Foto uploaden:</label>
-                                        <input type="file" name="photo" id="photo" accept="image/*" required class="block w-full">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="description" class="block mb-1 font-medium">Beschrijving:</label>
-                                        <input type="text" name="description" id="description" class="w-full p-2 border rounded">
-                                    </div>
-                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Uploaden</button>
-                                </form>
-                            <?php endif; ?>
-                            
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                <?php if (!empty($fotos)): ?>
-                                    <?php foreach ($fotos as $foto): ?>
-                                        <div class="photo-card overflow-hidden rounded-lg shadow">
-                                            <div class="h-32 overflow-hidden">
-                                                <img src="<?= base_url('public/assets/images/' . $foto['filename']) ?>" alt="<?= htmlspecialchars($foto['description']) ?>" class="w-full h-full object-cover">
-                                            </div>
-                                            <div class="p-2 bg-white">
-                                                <p class="text-sm"><?= htmlspecialchars($foto['description']) ?></p>
-                                                <span class="text-xs text-gray-500"><?= date('d-m-Y', strtotime($foto['uploaded_at'])) ?></span>
-                                            </div>
+                    <?php if (!empty($friends)): ?>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            <?php foreach ($friends as $friend): ?>
+                                <div class="friend-card bg-white rounded-lg p-4 shadow-sm border hover:shadow-md transition-shadow text-center">
+                                    <a href="<?= base_url('?route=profile&username=' . $friend['username']) ?>" class="block">
+                                        <img src="<?= $friend['avatar_url'] ?>" 
+                                            alt="<?= htmlspecialchars($friend['display_name']) ?>" 
+                                            class="w-16 h-16 rounded-full mx-auto mb-2 object-cover border-2 border-blue-200">
+                                        <div class="font-medium text-gray-900 text-sm">
+                                            <?= htmlspecialchars($friend['display_name']) ?>
                                         </div>
-                                    <?php endforeach; ?>
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            @<?= htmlspecialchars($friend['username']) ?>
+                                        </div>
+                                    </a>
+                                    
+                                    <!-- Actie knoppen -->
+                                    <div class="mt-3 flex space-x-2">
+                                        <a href="<?= base_url('?route=messages/compose&user=' . $friend['username']) ?>" 
+                                        class="flex-1 bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600 text-center transition-colors">
+                                            💬 Bericht
+                                        </a>
+                                        <a href="<?= base_url('?route=profile&username=' . $friend['username']) ?>" 
+                                        class="flex-1 bg-gray-500 text-white text-xs px-2 py-1 rounded hover:bg-gray-600 text-center transition-colors">
+                                            👤 Profiel
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-friends text-center py-12">
+                            <div class="text-6xl mb-4">👥</div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Nog geen vrienden</h3>
+                            <p class="text-gray-600">
+                                <?php if ($viewer_is_owner): ?>
+                                    Zoek mensen op om vrienden mee te worden!
                                 <?php else: ?>
-                                    <p class="text-gray-500 italic text-center p-4 col-span-full">Deze gebruiker heeft nog geen foto's geüpload.</p>
+                                    <?= htmlspecialchars($user['display_name']) ?> heeft nog geen vrienden.
                                 <?php endif; ?>
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                                
+                                <?php elseif ($active_tab == 'fotos'): ?>
+                                    <!-- Foto's tab content -->
+                                    <div class="photos-container mt-4">
+                                        <?php if ($viewer_is_owner): ?>
+                                            <form action="<?= base_url('?route=profile/upload-foto') ?>" method="post" enctype="multipart/form-data" class="bg-blue-50 p-4 rounded-lg mb-4">
+                                                <h4 class="font-bold text-blue-700 mb-3">Foto uploaden</h4>
+                                                <div class="mb-3">
+                                                    <label for="photo" class="block mb-1 font-medium">Foto uploaden:</label>
+                                                    <input type="file" name="photo" id="photo" accept="image/*" required class="block w-full border rounded p-2">
+                                                    <small class="text-gray-500">Toegestane formaten: JPG, PNG, GIF, WebP. Max 5MB.</small>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="description" class="block mb-1 font-medium">Beschrijving:</label>
+                                                    <input type="text" name="description" id="description" placeholder="Optionele beschrijving..." class="w-full p-2 border rounded">
+                                                </div>
+                                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                                    📸 Uploaden
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Foto grid -->
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            <?php if (!empty($fotos)): ?>
+                                                <?php foreach ($fotos as $foto): ?>
+                                                    <div class="photo-card overflow-hidden rounded-lg shadow-md bg-white">
+                                                        <div class="h-32 overflow-hidden">
+                                                            <img src="<?= htmlspecialchars($foto['full_url']) ?>" 
+                                                                alt="<?= htmlspecialchars($foto['description']) ?>" 
+                                                                class="w-full h-full object-cover hover:scale-105 transition-transform duration-200 cursor-pointer"
+                                                                onclick="openPhotoModal('<?= htmlspecialchars($foto['full_url']) ?>', '<?= htmlspecialchars($foto['description']) ?>')">
+                                                        </div>
+                                                        <div class="p-2">
+                                                            <p class="text-sm text-gray-700"><?= htmlspecialchars($foto['description']) ?></p>
+                                                            <div class="flex justify-between items-center mt-2">
+                                                                <span class="text-xs text-gray-500"><?= date('d-m-Y', strtotime($foto['uploaded_at'])) ?></span>
+                                                                
+                                                                <!-- Verwijder knop (alleen voor eigenaar) -->
+                                                                <?php if ($viewer_is_owner): ?>
+                                                                    <button onclick="deletePhoto(<?= intval($foto['post_id']) ?>)" 
+                                                                            class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded">
+                                                                        🗑️
+                                                                    </button>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <div class="col-span-full text-center py-12">
+                                                    <div class="text-6xl mb-4">📷</div>
+                                                    <h3 class="text-xl font-bold text-blue-800 mb-2">Nog geen foto's</h3>
+                                                    <p class="text-gray-600">
+                                                        <?php if ($viewer_is_owner): ?>
+                                                            Upload je eerste foto om je herinneringen te delen!
+                                                        <?php else: ?>
+                                                            Deze gebruiker heeft nog geen foto's geüpload.
+                                                        <?php endif; ?>
+                                                    </p>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
+                        <!-- Foto modal -->
+                        <div id="photoModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center" onclick="closePhotoModal()">
+                            <div class="max-w-4xl max-h-full p-4 relative">
+                                <img id="modalImage" src="" alt="" class="max-w-full max-h-full object-contain">
+                                <div id="modalDescription" class="text-white text-center mt-4"></div>
+                                <button onclick="closePhotoModal()" class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300">×</button>
                             </div>
                         </div>
+
+                        <script>
+                        function openPhotoModal(imageUrl, description) {
+                            document.getElementById('modalImage').src = imageUrl;
+                            document.getElementById('modalDescription').textContent = description;
+                            document.getElementById('photoModal').classList.remove('hidden');
+                        }
+
+                        function closePhotoModal() {
+                            document.getElementById('photoModal').classList.add('hidden');
+                        }
+
+                        function deletePhoto(postId) {
+                            if (confirm('Weet je zeker dat je deze foto wilt verwijderen?')) {
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = '<?= base_url("?route=feed/delete") ?>';
+                                
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'post_id';
+                                input.value = postId;
+                                
+                                form.appendChild(input);
+                                document.body.appendChild(form);
+                                form.submit();
+                            }
+                        }
+
+                        document.addEventListener('keydown', function(e) {
+                            if (e.key === 'Escape') {
+                                closePhotoModal();
+                            }
+                        });
+                        </script>
                     <?php endif; ?>
                 </div> <!-- Sluit .tab-content -->
             </div> <!-- Sluit .w-full md:w-2/3 p-4 -->

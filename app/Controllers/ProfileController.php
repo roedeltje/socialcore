@@ -96,13 +96,9 @@ class ProfileController extends Controller
 
     // Laadt comments
     $posts = $this->getCommentsForPosts($posts);
-    
-    // Laad specifieke data op basis van de geselecteerde tab
-    $krabbels = [];
     $fotos = [];
     
     if ($activeTab === 'krabbels') {
-        $krabbels = $this->getKrabbels($user['id']);
     } elseif ($activeTab === 'fotos') {
         $fotos = $this->getFotos($user['id']);
     }
@@ -112,7 +108,7 @@ class ProfileController extends Controller
         'user' => $user,
         'friends' => $friends,
         'posts' => $posts,
-        'krabbels' => $krabbels,
+        'krabbels' => [],
         'fotos' => $fotos,
         'viewer_is_owner' => $viewerIsOwner,
         'active_tab' => $activeTab,
@@ -260,54 +256,42 @@ class ProfileController extends Controller
      */
     private function getFriends($userId)
     {
-        // Later vervangen door echte database query
-        // In de tussentijd gebruiken we deze dummy data
-        return [
-            ['id' => 3, 'name' => 'Daan de Vries', 'username' => 'daanvr', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 4, 'name' => 'Sophie Bakker', 'username' => 'sophieb', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 5, 'name' => 'Tim Jansen', 'username' => 'timj', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 6, 'name' => 'Emma Visser', 'username' => 'emmav', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 7, 'name' => 'Luuk Smit', 'username' => 'luuks', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-            ['id' => 8, 'name' => 'Isa van Dijk', 'username' => 'isad', 'avatar' => 'avatars/2025/05/default-avatar.png'],
-        ];
-    }
-
-    /**
-     * Haal krabbels op voor een gebruiker
-     */
-    private function getKrabbels($userId)
-    {
-        // Later vervangen door echte database query
-        // In de tussentijd gebruiken we deze dummy data
-        return [
-            [
-                'id' => 1,
-                'sender_id' => 3,
-                'sender_username' => 'daanvr',
-                'sender_name' => 'Daan de Vries',
-                'sender_avatar' => 'avatars/2025/05/default-avatar.png',
-                'message' => 'Hey! Leuk profiel heb je. Zullen we eens afspreken voor koffie?',
-                'created_at' => '2025-05-17 14:23:45'
-            ],
-            [
-                'id' => 2,
-                'sender_id' => 4,
-                'sender_username' => 'sophieb',
-                'sender_name' => 'Sophie Bakker',
-                'sender_avatar' => 'avatars/2025/05/default-avatar.png',
-                'message' => 'Bedankt voor het accepteren van mijn vriendschapsverzoek! Ik ben benieuwd naar je posts.',
-                'created_at' => '2025-05-16 10:12:30'
-            ],
-            [
-                'id' => 3,
-                'sender_id' => 5,
-                'sender_username' => 'timj',
-                'sender_name' => 'Tim Jansen',
-                'sender_avatar' => 'avatars/2025/05/default-avatar.png',
-                'message' => 'Het was super gezellig gisteren! Moeten we vaker doen. Groetjes, Tim',
-                'created_at' => '2025-05-15 22:08:17'
-            ]
-        ];
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    u.id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as display_name,
+                    up.avatar,
+                    f.created_at as friend_since
+                FROM friendships f
+                JOIN users u ON (
+                    CASE 
+                        WHEN f.user_id = ? THEN u.id = f.friend_id
+                        ELSE u.id = f.user_id
+                    END
+                )
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE (f.user_id = ? OR f.friend_id = ?) 
+                AND f.status = 'accepted'
+                ORDER BY up.display_name ASC, u.username ASC
+            ");
+            
+            $stmt->execute([$userId, $userId, $userId]);
+            $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Voeg avatar URLs toe
+            foreach ($friends as &$friend) {
+                $friend['avatar_url'] = $this->getAvatarUrl($friend['avatar']);
+                $friend['friend_since_formatted'] = $this->formatDate($friend['friend_since']);
+            }
+            
+            return $friends;
+            
+        } catch (Exception $e) {
+            error_log("Error getting friends: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -315,34 +299,54 @@ class ProfileController extends Controller
      */
     private function getFotos($userId)
     {
-        // Later vervangen door echte database query
-        // In de tussentijd gebruiken we deze dummy data
-        return [
-            [
-                'id' => 1,
-                'filename' => 'default-avatar.png',
-                'description' => 'Mijn profielfoto',
-                'uploaded_at' => '2025-05-16 09:30:00'
-            ],
-            [
-                'id' => 2,
-                'filename' => 'default-avatar.png',
-                'description' => 'Een leuke dag in het park',
-                'uploaded_at' => '2025-05-15 15:45:22'
-            ],
-            [
-                'id' => 3,
-                'filename' => 'default-avatar.png',
-                'description' => 'Vakantiekiekje van vorige zomer',
-                'uploaded_at' => '2025-05-14 11:20:18'
-            ]
-        ];
+        try {
+            // Haal alle foto's op die deze gebruiker heeft geüpload via posts
+            $stmt = $this->db->prepare("
+                SELECT 
+                    pm.id,
+                    pm.file_path,
+                    pm.file_name,
+                    pm.created_at,
+                    p.content as description,
+                    p.id as post_id,
+                    p.created_at as uploaded_at
+                FROM post_media pm
+                JOIN posts p ON pm.post_id = p.id
+                WHERE p.user_id = ? 
+                AND pm.media_type = 'image'
+                AND p.is_deleted = 0
+                ORDER BY pm.created_at DESC
+            ");
+            
+            $stmt->execute([$userId]);
+            $photos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Format de foto's voor weergave
+            $formattedPhotos = [];
+            foreach ($photos as $photo) {
+                $formattedPhotos[] = [
+                    'id' => $photo['id'],
+                    'filename' => $photo['file_path'], // Volledige path voor weergave
+                    'original_filename' => $photo['file_name'],
+                    'description' => $photo['description'] ?: 'Geen beschrijving',
+                    'uploaded_at' => $photo['uploaded_at'],
+                    'post_id' => $photo['post_id'],
+                    'full_url' => base_url('uploads/' . $photo['file_path'])
+                ];
+            }
+            
+            return $formattedPhotos;
+            
+        } catch (\Exception $e) {
+            error_log("Error getting user photos: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
      * Haal posts op van een specifieke gebruiker
      */
-    private function getUserPosts($userId, $limit = 10)
+    private function getUserPosts($userId, $limit = 20)
     {
         try {
             $query = "
@@ -350,39 +354,50 @@ class ProfileController extends Controller
                     p.id,
                     p.content,
                     p.type,
+                    p.post_type,
+                    p.target_user_id,
                     p.created_at,
                     p.likes_count AS likes,
                     p.comments_count AS comments,
                     u.id as user_id,
                     u.username,
                     COALESCE(up.display_name, u.username) as user_name,
+                    target_user.username as target_username,
+                    COALESCE(target_profile.display_name, target_user.username) as target_name,
                     (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
                 FROM posts p
                 JOIN users u ON p.user_id = u.id
                 LEFT JOIN user_profiles up ON u.id = up.user_id
-                WHERE p.user_id = ? AND p.is_deleted = 0
+                LEFT JOIN users target_user ON p.target_user_id = target_user.id
+                LEFT JOIN user_profiles target_profile ON target_user.id = target_profile.user_id
+                WHERE (p.user_id = ? OR p.target_user_id = ?) 
+                AND p.is_deleted = 0
                 ORDER BY p.created_at DESC
                 LIMIT ?
             ";
             
             $stmt = $this->db->prepare($query);
-            $stmt->execute([$userId, $limit]);
+            $stmt->execute([$userId, $userId, $limit]);
             $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             // Format de data voor de view
             foreach ($posts as &$post) {
                 $post['created_at'] = $this->formatDate($post['created_at']);
-                
-                // Controleer of gebruiker de post heeft geliked
                 $post['is_liked'] = $this->hasUserLikedPost($post['id']);
-
                 $post['avatar'] = $this->getUserAvatar($post['user_id']);
+                
+                // Bepaal of dit een krabbel is
+                $post['is_wall_message'] = ($post['post_type'] === 'wall_message');
+                
+                // Voor wall messages: maak sender -> receiver string
+                if ($post['is_wall_message'] && !empty($post['target_name'])) {
+                    $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
+                }
             }
             
             return $posts;
             
         } catch (\Exception $e) {
-            // Bij een fout, return lege array
             error_log("Error getting user posts: " . $e->getMessage());
             return [];
         }
@@ -660,35 +675,55 @@ class ProfileController extends Controller
      */
     public function postKrabbel()
     {
-        // Controleer of de gebruiker is ingelogd
+        // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
+            $_SESSION['error'] = 'Je moet ingelogd zijn om een krabbel te plaatsen.';
             redirect('login');
             return;
         }
-        
-        $senderId = $_SESSION['user_id'];
-        $receiverId = $_POST['receiver_id'] ?? null;
-        $receiverUsername = $_POST['receiver_username'] ?? '';
-        $message = $_POST['message'] ?? '';
-        
-        if (!$receiverId || trim($message) === '') {
-            set_flash_message('error', 'Alle velden zijn verplicht.');
-            redirect('profile/' . $receiverUsername . '?tab=krabbels');
+
+        // Controleer POST request
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('home');
             return;
         }
-        
-        // Hier later de echte database implementatie
-        // Voor nu simuleren we een succesvolle operatie
-        $success = true;
-        
-        if ($success) {
-            set_flash_message('success', 'Krabbel is geplaatst!');
-        } else {
-            set_flash_message('error', 'Er is iets misgegaan bij het plaatsen van de krabbel.');
+
+        $senderId = $_SESSION['user_id'];
+        $receiverId = $_POST['receiver_id'] ?? null;
+        $receiverUsername = $_POST['receiver_username'] ?? null;
+        $message = trim($_POST['message'] ?? '');
+
+        // Validatie
+        if (empty($receiverId) || empty($message)) {
+            $_SESSION['error'] = 'Alle velden zijn verplicht.';
+            redirect('?route=profile&username=' . $receiverUsername);
+            return;
         }
-        
-        // Redirect terug naar het profiel met de krabbels-tab
-        redirect('?route=profile&username=' . urlencode($receiverUsername) . '&tab=krabbels');
+
+        if (strlen($message) > 500) {
+            $_SESSION['error'] = 'Krabbel mag maximaal 500 karakters bevatten.';
+            redirect('?route=profile&username=' . $receiverUsername);
+            return;
+        }
+
+        try {
+            // NIEUWE CODE: Sla krabbel op in posts tabel
+            $stmt = $this->db->prepare("
+                INSERT INTO posts (user_id, content, post_type, target_user_id, created_at)
+                VALUES (?, ?, 'wall_message', ?, NOW())
+            ");
+            
+            $stmt->execute([$senderId, $message, $receiverId]);
+            
+            $_SESSION['success'] = 'Krabbel succesvol geplaatst!';
+            
+        } catch (Exception $e) {
+            error_log("Error posting krabbel: " . $e->getMessage());
+            $_SESSION['error'] = 'Er ging iets mis bij het plaatsen van de krabbel.';
+        }
+
+        // Redirect terug naar profiel
+        redirect('?route=profile&username=' . $receiverUsername . '&tab=krabbels');
     }
     
     /**
@@ -698,6 +733,7 @@ class ProfileController extends Controller
     {
         // Controleer of de gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
+            $_SESSION['error_message'] = 'Je moet ingelogd zijn om foto\'s te uploaden.';
             redirect('login');
             return;
         }
@@ -707,24 +743,88 @@ class ProfileController extends Controller
         
         // Controleer of er een bestand is geüpload
         if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
-            set_flash_message('error', 'Er is een fout opgetreden bij het uploaden van de foto.');
+            $_SESSION['error_message'] = 'Er is een fout opgetreden bij het uploaden van de foto.';
             redirect('profile?tab=fotos');
             return;
         }
         
-        // Hier komen later de echte upload-logica en database-opslag
-        // Voor nu simuleren we een succesvolle operatie
-        $success = true;
-        
-        if ($success) {
-            set_flash_message('success', 'Foto is succesvol geüpload!');
-        } else {
-            set_flash_message('error', 'Er is een fout opgetreden bij het uploaden van de foto.');
+        try {
+            // Gebruik de bestaande upload_file functie met correcte parameter volgorde:
+            // upload_file($file, $type, $allowedTypes, $maxSize, $prefix)
+            $allowedTypes = [
+                'image/jpeg',
+                'image/png', 
+                'image/gif',
+                'image/webp'
+            ];
+            
+            $maxSize = 5 * 1024 * 1024; // 5MB voor foto's
+            
+            $uploadResult = upload_file(
+                $_FILES['photo'],    // $file
+                'posts',            // $type - Upload naar posts directory
+                $allowedTypes,      // $allowedTypes
+                $maxSize,           // $maxSize
+                'post_'             // $prefix voor bestandsnaam
+            );
+            
+            if ($uploadResult['success']) {
+                // Start database transactie
+                $this->db->beginTransaction();
+                
+                // Maak eerst een post aan voor de foto
+                $stmt = $this->db->prepare("
+                    INSERT INTO posts (user_id, content, type, privacy, created_at) 
+                    VALUES (?, ?, 'photo', 'public', NOW())
+                ");
+                $stmt->execute([$userId, $description]);
+                $postId = $this->db->lastInsertId();
+                
+                // Voeg de foto toe aan post_media
+                $stmt = $this->db->prepare("
+                    INSERT INTO post_media (
+                        post_id, media_type, file_path, file_name, 
+                        file_size, alt_text, created_at
+                    ) VALUES (?, 'image', ?, ?, ?, ?, NOW())
+                ");
+                
+                $stmt->execute([
+                    $postId,
+                    $uploadResult['path'],      // Dit is het relatieve pad
+                    $_FILES['photo']['name'],
+                    $_FILES['photo']['size'],
+                    $description
+                ]);
+                
+                // Commit transactie
+                $this->db->commit();
+                
+                $_SESSION['success_message'] = 'Foto is succesvol geüpload!';
+                
+            } else {
+                $_SESSION['error_message'] = $uploadResult['message'];
+            }
+            
+        } catch (\Exception $e) {
+            // Rollback bij fout
+            if ($this->db->inTransaction()) {
+                $this->db->rollback();
+            }
+            
+            // Verwijder geüploade bestand als database update mislukt
+            if (isset($uploadResult['path'])) {
+                delete_uploaded_file($uploadResult['path']);
+            }
+            
+            error_log("Photo upload error: " . $e->getMessage());
+            $_SESSION['error_message'] = 'Er is een fout opgetreden bij het opslaan van de foto. Probeer het opnieuw.';
         }
         
         // Redirect terug naar het profiel met de foto's-tab
         redirect('profile?tab=fotos');
     }
+
+
 
     private function getCommentsForPosts($posts)
     {
@@ -1052,6 +1152,16 @@ class ProfileController extends Controller
         // Voor uploads: gebruik base_url zonder extra 'public'
         // Want de upload path bevat al de juiste structuur
         return base_url('uploads/' . $avatarPath);
+    }
+
+    private function deleteUploadedFile($filePath)
+    {
+        if (!empty($filePath)) {
+            $fullPath = __DIR__ . '/../../public/uploads/' . $filePath;
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+        }
     }
 
 

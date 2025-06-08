@@ -79,16 +79,22 @@ class FeedController extends Controller
                 p.id,
                 p.content,
                 p.type,
+                p.post_type,
+                p.target_user_id,
                 p.created_at,
                 p.likes_count,
                 p.comments_count,
                 u.id as user_id,
                 u.username,
                 COALESCE(up.display_name, u.username) as user_name,
+                target_user.username as target_username,
+                COALESCE(target_profile.display_name, target_user.username) as target_name,
                 (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
             FROM posts p
             JOIN users u ON p.user_id = u.id
             LEFT JOIN user_profiles up ON u.id = up.user_id
+            LEFT JOIN users target_user ON p.target_user_id = target_user.id
+            LEFT JOIN user_profiles target_profile ON target_user.id = target_profile.user_id
             WHERE p.is_deleted = 0
             ORDER BY p.created_at DESC
             LIMIT ?
@@ -117,6 +123,14 @@ class FeedController extends Controller
             
             // Controleer of de huidige gebruiker de post heeft geliked
             $post['is_liked'] = $this->hasUserLikedPost($post['id']);
+            
+            // Bepaal of dit een krabbel is en maak header
+            $post['is_wall_message'] = ($post['post_type'] === 'wall_message');
+            
+            // Voor wall messages: maak sender -> receiver string
+            if ($post['is_wall_message'] && !empty($post['target_name'])) {
+                $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
+            }
         }
         
         // Voeg comments toe aan alle posts
