@@ -1,264 +1,365 @@
-<?php /* SocialCore nieuwsfeed in Hyves-stijl */ ?>
+<!-- <?php /* SocialCore nieuwsfeed in authentieke Hyves-stijl */ ?>
+<?php
+// Voeg deze code TIJDELIJK toe aan het begin van een werkende pagina
+// Bijvoorbeeld in /themes/default/pages/timeline.php of home.php
+
+echo "<div style='background: #f0f0f0; padding: 20px; margin: 20px; border: 2px solid #ccc;'>";
+echo "<h2>🔍 Theme Debug Info</h2>";
+
+try {
+    // Check database direct
+    $db = App\Database\Database::getInstance()->getPdo();
+    $stmt = $db->prepare("SELECT setting_value FROM site_settings WHERE setting_name = 'active_theme'");
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    echo "<strong>Database active_theme:</strong> " . ($result ? $result['setting_value'] : 'NIET GEVONDEN') . "<br>";
+    
+    // Check ThemeManager
+    $themeManager = App\Core\ThemeManager::getInstance();
+    echo "<strong>ThemeManager actieve theme:</strong> " . $themeManager->getActiveTheme() . "<br>";
+    
+    // Check if Twitter theme exists
+    echo "<strong>Twitter theme bestaat:</strong> " . ($themeManager->themeExists('twitter') ? 'JA' : 'NEE') . "<br>";
+    
+    // Check paths
+    echo "<strong>Twitter templates pad:</strong> " . BASE_PATH . "/themes/twitter/<br>";
+    echo "<strong>Twitter assets pad:</strong> " . BASE_PATH . "/public/theme-assets/twitter/<br>";
+    
+    // Check actual directories
+    $twitterThemePath = BASE_PATH . "/themes/twitter";
+    $twitterAssetsPath = BASE_PATH . "/public/theme-assets/twitter";
+    
+    echo "<strong>Twitter theme dir bestaat:</strong> " . (is_dir($twitterThemePath) ? 'JA' : 'NEE') . "<br>";
+    echo "<strong>Twitter assets dir bestaat:</strong> " . (is_dir($twitterAssetsPath) ? 'JA' : 'NEE') . "<br>";
+    
+    if (is_dir($twitterAssetsPath)) {
+        $cssPath = $twitterAssetsPath . "/css/style.css";
+        echo "<strong>Twitter CSS bestaat:</strong> " . (file_exists($cssPath) ? 'JA' : 'NEE') . "<br>";
+    }
+    
+} catch (Exception $e) {
+    echo "<strong>Error:</strong> " . $e->getMessage();
+}
+
+echo "</div>";
+?>
+<?php
+// Voeg deze code toe ONDER de vorige debug code in timeline.php
+
+echo "<div style='background: #ffe6e6; padding: 20px; margin: 20px; border: 2px solid #ff9999;'>";
+echo "<h2>🎨 Template & CSS Debug</h2>";
+
+try {
+    $themeManager = App\Core\ThemeManager::getInstance();
+    
+    // Check welke template file wordt gebruikt
+    echo "<strong>Huidige template bestand:</strong> " . __FILE__ . "<br>";
+    
+    // Check CSS URL's
+    echo "<strong>Actieve theme CSS URL:</strong> " . $themeManager->getThemeCssUrl() . "<br>";
+    echo "<strong>Twitter CSS URL:</strong> " . $themeManager->getThemeCssUrl('style.css', 'twitter') . "<br>";
+    
+    // Check template path
+    $timelinePath = $themeManager->getThemeTemplatePath('pages/timeline.php');
+    echo "<strong>Timeline template path:</strong> " . $timelinePath . "<br>";
+    echo "<strong>Timeline template bestaat:</strong> " . (file_exists($timelinePath) ? 'JA' : 'NEE') . "<br>";
+    
+    // Check of er Twitter templates zijn
+    $twitterTimelinePath = BASE_PATH . "/themes/twitter/pages/timeline.php";
+    echo "<strong>Twitter timeline template:</strong> " . $twitterTimelinePath . "<br>";
+    echo "<strong>Twitter timeline bestaat:</strong> " . (file_exists($twitterTimelinePath) ? 'JA' : 'NEE') . "<br>";
+    
+    // Check header template (waar CSS wordt geladen)
+    $headerPath = $themeManager->getThemeTemplatePath('layouts/header.php');
+    echo "<strong>Header template path:</strong> " . $headerPath . "<br>";
+    echo "<strong>Header template bestaat:</strong> " . (file_exists($headerPath) ? 'JA' : 'NEE') . "<br>";
+    
+    // Check Twitter header
+    $twitterHeaderPath = BASE_PATH . "/themes/twitter/layouts/header.php";
+    echo "<strong>Twitter header template:</strong> " . $twitterHeaderPath . "<br>";
+    echo "<strong>Twitter header bestaat:</strong> " . (file_exists($twitterHeaderPath) ? 'JA' : 'NEE') . "<br>";
+    
+} catch (Exception $e) {
+    echo "<strong>Error:</strong> " . $e->getMessage();
+}
+
+echo "</div>";
+
+// Check welke CSS daadwerkelijk wordt geladen in de HTML
+echo "<div style='background: #e6f3ff; padding: 20px; margin: 20px; border: 2px solid #66ccff;'>";
+echo "<h2>💻 HTML Debug</h2>";
+echo "<strong>Check je browser Developer Tools → Elements tab om te zien welke CSS files worden geladen!</strong><br>";
+echo "Verwacht: <code>/theme-assets/twitter/css/style.css</code><br>";
+echo "</div>";
+echo "<div style='background: #ffe6cc; padding: 20px; margin: 20px; border: 2px solid #ff9900;'>";
+echo "<h2>🔄 Theme Loader Debug</h2>";
+$themeDebug = debug_theme_system();
+foreach ($themeDebug as $key => $value) {
+    echo "<strong>{$key}:</strong> {$value}<br>";
+}
+echo "</div>";
+?> -->
 <?php echo "<!-- Timeline.php geladen -->"; ?>
-<div class="feed-container">
-    <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Linker zijbalk (ongewijzigd) -->
-        <div class="w-full lg:w-1/4">
-            <!-- Gebruikerskaart (ongewijzigd) -->
-            <div class="user-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-                <!-- Inhoud ongewijzigd -->
-                <div class="bg-blue-100 p-4 border-b border-blue-200">
-                    <h2 class="text-xl font-bold text-blue-800"><?= htmlspecialchars($current_user['name']) ?></h2>
-                    <p class="text-sm text-blue-600">@<?= htmlspecialchars($current_user['username']) ?></p>
-                </div>
-                <div class="p-4">
-                    <div class="flex items-center space-x-4">
-                        <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                             alt="<?= htmlspecialchars($current_user['name']) ?>" 
-                             class="w-16 h-16 rounded-full border-2 border-blue-200">
-                        <div>
-                            <a href="<?= base_url('profile') ?>" class="hyves-button bg-blue-500 hover:bg-blue-600 text-sm px-3 py-1">
-                                Ga naar profiel
-                            </a>
-                        </div>
-                    </div>
-                    <div class="flex justify-between mt-4 text-center">
-                        <div class="stats-item">
-                            <div class="font-bold text-blue-800"><?= $current_user['post_count'] ?? 0 ?></div>
-                            <div class="text-xs text-gray-500">Posts</div>
-                        </div>
-                        <div class="stats-item">
-                            <div class="font-bold text-blue-800"><?= $current_user['following'] ?? 0 ?></div>
-                            <div class="text-xs text-gray-500">Volgend</div>
-                        </div>
-                        <div class="stats-item">
-                            <div class="font-bold text-blue-800"><?= $current_user['followers'] ?? 0 ?></div>
-                            <div class="text-xs text-gray-500">Volgers</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Navigatie menu in Hyves-stijl (ongewijzigd) -->
-            <div class="hyves-menu bg-white rounded-lg shadow-md overflow-hidden">
-                <!-- Inhoud ongewijzigd -->
-                <div class="hyves-menu-header bg-blue-100 p-3 border-b border-blue-200">
-                    <h3 class="font-bold text-blue-800">Menu</h3>
-                </div>
-                <div class="hyves-menu-items">
-                    <a href="<?= base_url('') ?>" class="hyves-menu-item active">
-                        <span class="icon">🏠</span>
-                        <span class="text">Nieuwsfeed</span>
-                    </a>
-                    <a href="<?= base_url('profile') ?>" class="hyves-menu-item">
-                        <span class="icon">👤</span>
-                        <span class="text">Mijn profiel</span>
-                    </a>
-                    <a href="<?= base_url('messages') ?>" class="hyves-menu-item">
-                        <span class="icon">✉️</span>
-                        <span class="text">Berichten</span>
-                    </a>
-                    <a href="<?= base_url('profile/photos') ?>" class="hyves-menu-item">
-                        <span class="icon">📷</span>
-                        <span class="text">Foto's</span>
-                    </a>
-                    <a href="<?= base_url('friends') ?>" class="hyves-menu-item">
-                        <span class="icon">👥</span>
-                        <span class="text">Vrienden</span>
-                    </a>
-                    <a href="<?= base_url('games') ?>" class="hyves-menu-item">
-                        <span class="icon">🎮</span>
-                        <span class="text">Games</span>
-                    </a>
-                </div>
-            </div>
-        </div>
+
+<!-- Hyves-stijl homepage container -->
+<div class="hyves-homepage">
+    <div class="homepage-layout">
         
-        <!-- Midden gedeelte - Posts feed -->
-        <div class="w-full lg:w-2/4">
-            <!-- Post creator - BIJGEWERKT MET AFBEELDING UPLOAD -->
-            <div class="post-composer bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-                <div class="bg-blue-100 p-3 border-b border-blue-200">
-                    <h3 class="font-bold text-blue-800">Plaats een bericht</h3>
+        <!-- HOOFDCONTENT GEBIED (Links - 65% breedte) -->
+        <div class="main-content-area">
+            
+            <!-- Hyves-stijl welkomstbericht -->
+            <div class="hyves-welcome-message">
+                <div class="welcome-header">
+                    <h2>👋 Hallo <?= htmlspecialchars($current_user['name']) ?>!</h2>
+                    <p>Wat is er aan de hand? Deel het met je vrienden!</p>
                 </div>
-                <div class="p-4">
-                    
+            </div>
+
+            <!-- POST FORMULIER - Prominent bovenaan zoals Hyves -->
+            <div class="hyves-post-composer">
+                <div class="composer-header">
+                    <span class="icon">✏️</span>
+                    <h3>Wat doe je?</h3>
+                </div>
+                <div class="composer-body">
                     <?php include THEME_PATH . '/partials/messages.php'; ?>
                     
-                    <!-- Formulier aangepast naar de juiste route -->
                     <?php 
                         $form_id = 'postForm';
                         $context = 'timeline';
                         $user = $current_user;
                         include __DIR__ . '/../partials/post-form.php';
-                        ?>
+                    ?>
                 </div>
             </div>
             
-            <!-- Posts feed - BIJGEWERKT OM AFBEELDINGEN TE TONEN -->
-            <?php foreach ($posts as $post): ?>
-                <div class="post-card bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-                    <div class="post-header flex justify-between items-center bg-blue-100 p-3 border-b border-blue-200">
-                        <div class="flex items-center space-x-3">
-                            <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                alt="<?= htmlspecialchars($post['user_name']) ?>" 
-                                class="w-8 h-8 rounded-full border-2 border-blue-200">
-                            <div>
-                                <?php if ($post['is_wall_message'] && !empty($post['wall_message_header'])): ?>
-                                    <!-- Wall message header: Sender → Receiver -->
-                                    <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="font-bold text-blue-800 hover:underline">
-                                        <?= htmlspecialchars($post['wall_message_header']) ?>
-                                    </a>
-                                    <div class="text-xs text-blue-600">plaatste een krabbel • <?= $post['created_at'] ?></div>
-                                <?php else: ?>
-                                    <!-- Regular timeline post -->
-                                    <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="font-bold text-blue-800 hover:underline">
-                                        <?= htmlspecialchars($post['user_name']) ?>
-                                    </a>
-                                    <div class="text-xs text-blue-600"><?= $post['created_at'] ?></div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php if (isset($_SESSION['user_id']) && ($post['user_id'] == $_SESSION['user_id'] || isset($_SESSION['role']) && $_SESSION['role'] === 'admin')): ?>
-                                <div class="relative post-menu">
-                                    <button type="button" class="post-menu-button text-blue-600 hover:text-blue-800 p-1 rounded-full">
-                                        <span class="icon">⋯</span>
-                                    </button>
-                                    <div class="post-menu-dropdown absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden">
-                                        <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
-                                            <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
-                                            <button type="button" class="delete-post-button block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                                Bericht verwijderen
+            <!-- BERICHTEN TIJDLIJN -->
+            <div class="hyves-timeline">
+                <div class="timeline-header">
+                    <span class="icon">📰</span>
+                    <h3>Nieuwsfeed van je vrienden</h3>
+                    <div class="timeline-filters">
+                        <button class="filter-btn active">Alle berichten</button>
+                        <button class="filter-btn">Foto's</button>
+                        <button class="filter-btn">Video's</button>
+                    </div>
+                </div>
+                
+                <div class="timeline-posts">
+                    <?php if (!empty($posts)): ?>
+                        <?php foreach ($posts as $post): ?>
+                            <div class="hyves-post-card" data-post-id="<?= $post['id'] ?>">
+                                <!-- Post Header -->
+                                <div class="post-header">
+                                    <div class="post-author">
+                                        <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                             alt="<?= htmlspecialchars($post['user_name']) ?>" 
+                                             class="author-avatar">
+                                        <div class="author-info">
+                                            <?php if ($post['is_wall_message'] && !empty($post['wall_message_header'])): ?>
+                                                <!-- Krabbel header: Afzender → Ontvanger -->
+                                                <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="author-name">
+                                                    <?= htmlspecialchars($post['wall_message_header']) ?>
+                                                </a>
+                                                <div class="post-type">plaatste een krabbel</div>
+                                            <?php else: ?>
+                                                <!-- Gewoon tijdlijn bericht -->
+                                                <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="author-name">
+                                                    <?= htmlspecialchars($post['user_name']) ?>
+                                                </a>
+                                                <div class="post-type">plaatste een bericht</div>
+                                            <?php endif; ?>
+                                            <div class="post-time"><?= $post['created_at'] ?></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Post menu voor eigenaar/admin -->
+                                    <?php if (isset($_SESSION['user_id']) && ($post['user_id'] == $_SESSION['user_id'] || isset($_SESSION['role']) && $_SESSION['role'] === 'admin')): ?>
+                                        <div class="post-menu">
+                                            <button type="button" class="post-menu-button">
+                                                <span class="menu-dots">⋯</span>
                                             </button>
-                                        </form>
+                                            <div class="post-menu-dropdown">
+                                                <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
+                                                    <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                                                    <button type="button" class="delete-post-button">
+                                                        🗑️ Bericht verwijderen
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Post Content -->
+                                <div class="post-content">
+                                    <?php if (!empty($post['content'])): ?>
+                                        <div class="post-text">
+                                            <?= nl2br(htmlspecialchars($post['content'])) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Media (foto/video) -->
+                                    <?php if (!empty($post['media_path'])): ?>
+                                        <div class="post-media">
+                                            <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
+                                                 alt="Post afbeelding" 
+                                                 class="media-image">
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Post Footer - Hyves-stijl interactie knoppen -->
+                                <div class="post-footer">
+                                    <div class="post-stats">
+                                        <span class="stats-likes"><?= $post['likes'] ?> respect</span>
+                                        <span class="stats-separator">•</span>
+                                        <span class="stats-comments"><?= $post['comments'] ?> reacties</span>
+                                    </div>
+                                    
+                                    <div class="post-actions">
+                                        <button class="hyves-action-btn like-button <?= $post['is_liked'] ? 'liked' : '' ?>" 
+                                                data-post-id="<?= $post['id'] ?>">
+                                            <span class="action-icon">👍</span>
+                                            <span class="action-text">
+                                                <span class="like-count"><?= $post['likes'] ?? 0 ?></span> Respect!
+                                            </span>
+                                        </button>
+                                        <button class="hyves-action-btn comment-button">
+                                            <span class="action-icon">💬</span>
+                                            <span class="action-text">Reageren</span>
+                                        </button>
+                                        <button class="hyves-action-btn share-button">
+                                            <span class="action-icon">📤</span>
+                                            <span class="action-text">Delen</span>
+                                        </button>
                                     </div>
                                 </div>
-                            <?php else: ?>
-                                <!-- Toon de drie puntjes voor niet-eigenaars, maar zonder menu functionaliteit -->
-                                <button class="text-blue-600 hover:text-blue-800">
-                                    <span class="icon">⋯</span>
-                                </button>
-                            <?php endif; ?>
-                    </div>
-                    <div class="p-4">
-                        <div class="post-content mb-4">
-                            <?php if (!empty($post['content'])): ?>
-                                <p><?= nl2br(htmlspecialchars($post['content'])) ?></p>
-                            <?php endif; ?>
-                            
-                            <!-- Afbeelding weergave - NIEUW -->
-                            <?php if (!empty($post['media_path'])): ?>
-                                <div class="mt-3 post-media rounded-lg overflow-hidden border border-blue-200">
-                                    <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
-                                         alt="Post afbeelding" 
-                                         class="w-full h-auto max-h-96 object-contain">
-                                </div>
-                            <?php endif; ?>
+
+                                <!-- Comments sectie -->
+                                <?php 
+                                $comments_data = [
+                                    'post_id' => $post['id'],
+                                    'comments_list' => $post['comments_list'] ?? [],
+                                    'current_user' => $current_user,
+                                    'show_comment_form' => true,
+                                    'show_likes' => true
+                                ];
+                                extract($comments_data);
+                                include THEME_PATH . '/partials/comments-section.php';
+                                ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <!-- Lege staat -->
+                        <div class="empty-timeline">
+                            <div class="empty-icon">📭</div>
+                            <h3>Nog geen berichten!</h3>
+                            <p>Voeg vrienden toe om hun berichten te zien, of plaats je eerste bericht.</p>
+                            <button class="hyves-btn primary">Vrienden zoeken</button>
                         </div>
-                        
-                        <!-- Post actions -->
-                        <div class="flex justify-between text-sm border-t border-blue-100 pt-3">
-                            <button class="hyves-action-button like-button <?= $post['is_liked'] ? 'liked' : '' ?>" data-post-id="<?= $post['id'] ?>">
-                                <span class="like-icon">👍</span>
-                                <span class="text"><span class="like-count"><?= $post['likes'] ?></span> Respect!</span>
-                            </button>
-                            <button class="hyves-action-button">
-                                <span class="icon">💬</span>
-                                <span class="text"><?= $post['comments'] ?> Reacties</span>
-                            </button>
-                            <button class="hyves-action-button">
-                                <span class="icon">🔄</span>
-                                <span class="text">Delen</span>
-                            </button>
-                        </div>
-
-                        <?php 
-                        // Bereid variabelen voor comments sectie
-                        $comments_data = [
-                            'post_id' => $post['id'],
-                            'comments_list' => $post['comments_list'] ?? [],
-                            'current_user' => $current_user,
-                            'show_comment_form' => true,
-                            'show_likes' => true
-                        ];
-
-                        // Include de comments sectie partial
-                        extract($comments_data);
-                        include THEME_PATH . '/partials/comments-section.php';
-                        ?>
-
-                    </div>
+                    <?php endif; ?>
                 </div>
-            <?php endforeach; ?>
-            
-            <?php if (empty($posts)): ?>
-                <div class="empty-state bg-white rounded-lg shadow-md p-6 text-center">
-                    <div class="text-6xl mb-4">📭</div>
-                    <h3 class="text-xl font-bold text-blue-800 mb-2">Nog geen berichten</h3>
-                    <p class="text-gray-600">Begin met het volgen van vrienden of plaats je eerste bericht!</p>
-                </div>
-            <?php endif; ?>
+            </div>
         </div>
         
-        <!-- Rechter zijbalk (ongewijzigd) -->
-        <div class="w-full lg:w-1/4">
-            <!-- Inhoud ongewijzigd -->
-            <!-- Online vrienden -->
-            <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-                <div class="bg-blue-100 p-3 border-b border-blue-200 flex justify-between items-center">
-                    <h3 class="font-bold text-blue-800">Online vrienden</h3>
-                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                        <?= count($online_friends) ?>
-                    </span>
+        <!-- WIDGETS GEBIED (Rechts - 35% breedte) -->
+        <div class="widgets-sidebar">
+            
+            <!-- Gebruikersprofiel widget -->
+            <div class="hyves-widget user-widget">
+                <div class="widget-header">
+                    <span class="icon">👤</span>
+                    <h4>Mijn profiel</h4>
                 </div>
-                <div class="p-4">
-                    <?php if (empty($online_friends)): ?>
-                        <div class="text-center text-gray-500 py-2">
-                            Geen vrienden online
+                <div class="widget-body">
+                    <div class="user-mini-profile">
+                        <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                             alt="<?= htmlspecialchars($current_user['name']) ?>" 
+                             class="user-avatar">
+                        <div class="user-info">
+                            <h5><?= htmlspecialchars($current_user['name']) ?></h5>
+                            <p>@<?= htmlspecialchars($current_user['username']) ?></p>
                         </div>
-                    <?php else: ?>
-                        <div class="space-y-3">
+                    </div>
+                    <div class="user-stats">
+                        <div class="stat-item">
+                            <span class="stat-number"><?= $current_user['post_count'] ?? 0 ?></span>
+                            <span class="stat-label">Berichten</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number"><?= $current_user['followers'] ?? 0 ?></span>
+                            <span class="stat-label">Vrienden</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number"><?= $current_user['following'] ?? 0 ?></span>
+                            <span class="stat-label">Volgend</span>
+                        </div>
+                    </div>
+                    <a href="<?= base_url('profile') ?>" class="hyves-btn secondary full-width">
+                        Bekijk profiel
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Online vrienden widget -->
+            <div class="hyves-widget friends-widget">
+                <div class="widget-header">
+                    <span class="icon">🟢</span>
+                    <h4>Wie is er online?</h4>
+                    <span class="online-count"><?= count($online_friends) ?></span>
+                </div>
+                <div class="widget-body">
+                    <?php if (!empty($online_friends)): ?>
+                        <div class="friends-list">
                             <?php foreach ($online_friends as $friend): ?>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <div class="relative">
-                                            <img src="<?= base_url('theme-assets/default/images/' . (strpos($friend['name'], 'Lucas') !== false ? 
-                                                                            'default-avatar-male.png' : 
-                                                                            (strpos($friend['name'], 'Emma') !== false || strpos($friend['name'], 'Sophie') !== false ? 
-                                                                             'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                                 alt="<?= htmlspecialchars($friend['name']) ?>" 
-                                                 class="w-8 h-8 rounded-full border border-blue-200">
-                                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
-                                        </div>
-                                        <a href="<?= base_url('profile/' . $friend['id']) ?>" class="text-sm font-medium text-blue-800 hover:underline">
+                                <div class="friend-item">
+                                    <div class="friend-avatar-wrapper">
+                                        <img src="<?= base_url('theme-assets/default/images/' . (strpos($friend['name'], 'Lucas') !== false ? 
+                                                                        'default-avatar-male.png' : 
+                                                                        (strpos($friend['name'], 'Emma') !== false || strpos($friend['name'], 'Sophie') !== false ? 
+                                                                         'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
+                                             alt="<?= htmlspecialchars($friend['name']) ?>" 
+                                             class="friend-avatar">
+                                        <span class="online-indicator"></span>
+                                    </div>
+                                    <div class="friend-info">
+                                        <a href="<?= base_url('profile/' . $friend['id']) ?>" class="friend-name">
                                             <?= htmlspecialchars($friend['name']) ?>
                                         </a>
+                                        <span class="friend-status">Online</span>
                                     </div>
-                                    <a href="<?= base_url('messages/chat/' . $friend['id']) ?>" class="text-blue-600 hover:text-blue-800">
-                                        <span class="icon">✉️</span>
+                                    <a href="<?= base_url('messages/chat/' . $friend['id']) ?>" class="message-btn">
+                                        💬
                                     </a>
                                 </div>
                             <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-widget">
+                            <p>Geen vrienden online</p>
                         </div>
                     <?php endif; ?>
                 </div>
             </div>
             
-            <!-- Trending hashtags -->
-            <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
-                <div class="bg-blue-100 p-3 border-b border-blue-200">
-                    <h3 class="font-bold text-blue-800">Populair op SocialCore</h3>
+            <!-- Trending/Populair widget -->
+            <div class="hyves-widget trending-widget">
+                <div class="widget-header">
+                    <span class="icon">🔥</span>
+                    <h4>Populair nu</h4>
                 </div>
-                <div class="p-4">
-                    <div class="space-y-3">
+                <div class="widget-body">
+                    <div class="trending-list">
                         <?php foreach ($trending_hashtags as $hashtag): ?>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-red-500 text-lg">📈</span>
-                                <div>
-                                    <a href="<?= base_url('search?q=%23' . $hashtag['tag']) ?>" class="text-sm font-medium text-blue-800 hover:underline">
+                            <div class="trending-item">
+                                <span class="trending-icon">📈</span>
+                                <div class="trending-info">
+                                    <a href="<?= base_url('search?q=%23' . $hashtag['tag']) ?>" class="trending-tag">
                                         #<?= htmlspecialchars($hashtag['tag']) ?>
                                     </a>
-                                    <div class="text-xs text-gray-500"><?= number_format($hashtag['count']) ?> posts</div>
+                                    <span class="trending-count"><?= number_format($hashtag['count']) ?> berichten</span>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -266,35 +367,67 @@
                 </div>
             </div>
             
-            <!-- Suggesties voor vrienden -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="bg-blue-100 p-3 border-b border-blue-200">
-                    <h3 class="font-bold text-blue-800">Mensen die je misschien kent</h3>
+            <!-- Mensen die je misschien kent widget -->
+            <div class="hyves-widget suggestions-widget">
+                <div class="widget-header">
+                    <span class="icon">✨</span>
+                    <h4>Misschien ken je</h4>
                 </div>
-                <div class="p-4">
-                    <div class="grid grid-cols-2 gap-3">
+                <div class="widget-body">
+                    <div class="suggestions-list">
                         <?php foreach ($suggested_users as $user): ?>
-                            <div class="text-center">
-                                <a href="<?= base_url('profile/' . $user['id']) ?>" class="block">
-                                    <img src="<?= base_url('theme-assets/default/images/' . (strpos($user['name'], 'Tim') !== false || 
-                                                                    strpos($user['name'], 'Robin') !== false ? 
-                                                                    'default-avatar-male.png' : 
-                                                                    (strpos($user['name'], 'Nina') !== false || strpos($user['name'], 'Laura') !== false ? 
-                                                                     'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                         alt="<?= htmlspecialchars($user['name']) ?>" 
-                                         class="w-12 h-12 mx-auto rounded-full border-2 border-blue-200">
-                                    <div class="mt-1 text-sm font-medium text-blue-800 truncate">
+                            <div class="suggestion-item">
+                                <img src="<?= base_url('theme-assets/default/images/' . (strpos($user['name'], 'Tim') !== false || 
+                                                                strpos($user['name'], 'Robin') !== false ? 
+                                                                'default-avatar-male.png' : 
+                                                                (strpos($user['name'], 'Nina') !== false || strpos($user['name'], 'Laura') !== false ? 
+                                                                 'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
+                                     alt="<?= htmlspecialchars($user['name']) ?>" 
+                                     class="suggestion-avatar">
+                                <div class="suggestion-info">
+                                    <a href="<?= base_url('profile/' . $user['id']) ?>" class="suggestion-name">
                                         <?= htmlspecialchars($user['name']) ?>
-                                    </div>
-                                </a>
-                                <button class="hyves-button bg-blue-500 hover:bg-blue-600 text-xs mt-1 py-1 px-2">
-                                    + Volgen
-                                </button>
+                                    </a>
+                                    <button class="hyves-btn mini primary">+ Toevoegen</button>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
             </div>
+            
+            <!-- Navigatie widget (mobiel-vriendelijk) -->
+            <div class="hyves-widget nav-widget">
+                <div class="widget-header">
+                    <span class="icon">🧭</span>
+                    <h4>Snelle navigatie</h4>
+                </div>
+                <div class="widget-body">
+                    <div class="nav-items">
+                        <a href="<?= base_url('') ?>" class="nav-item active">
+                            <span class="nav-icon">🏠</span>
+                            <span class="nav-text">Nieuwsfeed</span>
+                        </a>
+                        <a href="<?= base_url('profile') ?>" class="nav-item">
+                            <span class="nav-icon">👤</span>
+                            <span class="nav-text">Mijn profiel</span>
+                        </a>
+                        <a href="<?= base_url('friends') ?>" class="nav-item">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Vrienden</span>
+                        </a>
+                        <a href="<?= base_url('messages') ?>" class="nav-item">
+                            <span class="nav-icon">✉️</span>
+                            <span class="nav-text">Berichten</span>
+                        </a>
+                        <a href="<?= base_url('photos') ?>" class="nav-item">
+                            <span class="nav-icon">📷</span>
+                            <span class="nav-text">Foto's</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
         </div>
     </div>
 </div>
@@ -305,17 +438,3 @@ if (isset($_SESSION['old_content'])) {
     unset($_SESSION['old_content']);
 }
 ?>
-<script>
-// Op de nieuwsfeed pagina:
-console.log('=== NIEUWSFEED DEBUG ===');
-console.log('Post forms:', document.querySelectorAll('.add-comment-form').length);
-console.log('Emoji triggers:', document.querySelectorAll('.emoji-picker-trigger').length);
-console.log('Emoji panels:', document.querySelectorAll('.emoji-picker-panel').length);
-
-// Kijk naar de parent containers
-document.querySelectorAll('.emoji-picker-panel').forEach((panel, index) => {
-    console.log(`Panel ${index}:`, panel);
-    console.log(`Panel ${index} parent:`, panel.parentElement);
-    console.log(`Panel ${index} computed style:`, window.getComputedStyle(panel));
-});
-</script>

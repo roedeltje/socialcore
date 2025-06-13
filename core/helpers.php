@@ -1,11 +1,17 @@
 <?php
- /**
+/**
+ * SocialCore Global Helper Functions
+ * 
+ * Deze helper functies zijn beschikbaar in het hele project en bieden
+ * een consistente API voor theme management, URL generatie en utilities.
+ */
+
+/**
  * Genereer een absolute URL
  *
  * @param string $path Optioneel pad om toe te voegen aan de basis URL
  * @return string Volledige URL
  */
-
 function base_url(string $path = ''): string
 {
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
@@ -47,21 +53,27 @@ function is_logged_in(): bool
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
 
+/**
+ * Controleert of gebruiker admin is
+ * 
+ * @return bool True als gebruiker admin is
+ */
 function is_admin(): bool
 {
     return \App\Auth\Auth::isAdmin();
 }
 
-// Nieuwe view helper functie
+/**
+ * View helper functie (voor niet-theme views zoals admin)
+ * 
+ * @param string $path Pad naar view bestand
+ * @param array $data Data voor view
+ */
 function view(string $path, array $data = []): void
 {
-    // Extracteer variabelen zodat ze beschikbaar zijn in de view
     extract($data);
-    
-    // Volledig pad naar view bestand
     $viewPath = __DIR__ . '/../app/Views/' . $path . '.php';
     
-    // Controleer of het bestand bestaat
     if (file_exists($viewPath)) {
         require $viewPath;
     } else {
@@ -70,138 +82,320 @@ function view(string $path, array $data = []): void
 }
 
 /**
- * Theme Helper Functions
- * Deze functies maken het werken met thema's eenvoudiger
+ * ============================================================================
+ * THEME SYSTEM FUNCTIONS
+ * ============================================================================
  */
 
 /**
- * Laadt de header van het thema
+ * Haalt de actieve theme configuratie op
  * 
- * @param array $data Optionele data voor het header template
- * @return bool True als het laden is gelukt, anders false
+ * @return array Theme configuratie
  */
-function get_header($data = []) {
-    return load_theme_part('header', $data);
+function get_theme_config(): array
+{
+    static $config = null;
+    
+    if ($config === null) {
+        $config = require __DIR__ . '/../config/theme.php';
+    }
+    
+    return $config;
 }
 
 /**
- * Laadt de footer van het thema
+ * Haalt de naam van het actieve theme op
  * 
- * @param array $data Optionele data voor het footer template
- * @return bool True als het laden is gelukt, anders false
+ * @return string Naam van het actieve theme
  */
-function get_footer($data = []) {
-    return load_theme_part('footer', $data);
+function get_active_theme(): string
+{
+    // Check session override first (voor theme switching)
+    if (isset($_SESSION['active_theme'])) {
+        return $_SESSION['active_theme'];
+    }
+    
+    // Check ThemeManager (database/cache) - NIEUWE TOEVOEGING
+    try {
+        if (class_exists('App\Core\ThemeManager')) {
+            $themeManager = \App\Core\ThemeManager::getInstance();
+            $dbTheme = $themeManager->getActiveTheme();
+            if ($dbTheme && $dbTheme !== 'default') {
+                return $dbTheme;
+            }
+        }
+    } catch (\Exception $e) {
+        // Log error but continue with fallback
+        error_log('ThemeManager error in get_active_theme: ' . $e->getMessage());
+    }
+    
+    // Fallback naar config file
+    $config = get_theme_config();
+    return $config['active_theme'] ?? 'default';
 }
 
 /**
- * Laadt de sidebar van het thema
+ * Set het actieve theme (opgeslagen in sessie)
  * 
- * @param array $data Optionele data voor het sidebar template
- * @return bool True als het laden is gelukt, anders false
+ * @param string $theme_name Naam van het theme
+ * @return bool True als theme bestaat en is gezet
  */
-function get_sidebar($data = []) {
-    return load_theme_part('sidebar', $data);
+function set_active_theme(string $theme_name): bool
+{
+    if (theme_exists($theme_name)) {
+        $_SESSION['active_theme'] = $theme_name;
+        return true;
+    }
+    
+    return false;
 }
 
 /**
- * Laadt de navigatie van het thema
+ * Controleert of een theme bestaat
  * 
- * @param array $data Optionele data voor het navigatie template
- * @return bool True als het laden is gelukt, anders false
+ * @param string $theme_name Naam van het theme
+ * @return bool True als theme bestaat
  */
-function get_navigation($data = []) {
-    echo "<!-- Debug: Probeer navigatie te laden -->";
-    return load_theme_part('navigation', $data);
-    echo "<!-- Debug: Resultaat van laden: " . ($result ? "Succes" : "Mislukt") . " -->";
-
+function theme_exists(string $theme_name): bool
+{
+    $config = get_theme_config();
+    $theme_path = __DIR__ . '/../' . $config['themes_directory'] . '/' . $theme_name;
+    
+    return is_dir($theme_path) && file_exists($theme_path . '/theme.json');
 }
 
 /**
- * Laadt een component uit het thema
+ * Haalt het pad naar het actieve theme op
  * 
- * @param string $component Naam van het component
- * @param array $data Data voor het component
- * @return bool True als het laden is gelukt, anders false
+ * @param string $subpath Optioneel subpad binnen theme
+ * @return string Volledig pad naar theme directory
  */
-function get_component($component, $data = []) {
-    return load_theme_component($component, $data);
+function get_theme_path(string $subpath = ''): string
+{
+    $config = get_theme_config();
+    $theme_name = get_active_theme();
+    $base_path = __DIR__ . '/../' . $config['themes_directory'] . '/' . $theme_name;
+    
+    if ($subpath) {
+        $base_path .= '/' . ltrim($subpath, '/');
+    }
+    
+    return $base_path;
 }
 
 /**
- * Genereert de URL voor een CSS bestand in het actieve thema
+ * Genereert URL voor theme asset (CSS, JS, images)
  * 
- * @param string $file Bestandsnaam of pad binnen de css map
- * @return string URL naar het CSS bestand
+ * @param string $asset_path Pad naar asset binnen theme/assets/
+ * @param string|null $theme Specifiek theme (null = actief theme)
+ * @return string URL naar asset
+ */
+function theme_asset(string $asset_path = '', string $theme = null): string
+{
+    $theme_name = $theme ?? get_active_theme();
+    $asset_path = ltrim($asset_path, '/');
+    
+    return base_url("theme-assets/{$theme_name}/{$asset_path}");
+}
+
+/**
+ * Genereert URL voor theme stylesheet
+ * 
+ * @param string $file CSS bestandsnaam (default: style.css)
+ * @param string|null $theme Specifiek theme
+ * @return string URL naar CSS bestand
+ */
+function theme_style(string $file = 'style.css', string $theme = null): string
+{
+    return theme_asset("css/{$file}", $theme);
+}
+
+/**
+ * Genereert URL voor theme JavaScript
+ * 
+ * @param string $file JS bestandsnaam (default: theme.js)
+ * @param string|null $theme Specifiek theme
+ * @return string URL naar JS bestand
+ */
+function theme_script(string $file = 'theme.js', string $theme = null): string
+{
+    return theme_asset("js/{$file}", $theme);
+}
+
+/**
+ * Genereert URL voor theme afbeelding
+ * 
+ * @param string $file Afbeeldingsbestandsnaam
+ * @param string|null $theme Specifiek theme
+ * @return string URL naar afbeelding
+ */
+function theme_image(string $file, string $theme = null): string
+{
+    return theme_asset("images/{$file}", $theme);
+}
+
+/**
+ * Laadt een theme template bestand
+ * 
+ * @param string $template Template pad (bijv. 'pages/home' of 'partials/navigation')
+ * @param array $data Data beschikbaar in template
+ * @param bool $require_once Of require_once gebruikt moet worden
+ * @return bool True als template succesvol geladen
+ */
+function load_theme_template(string $template, array $data = [], bool $require_once = false): bool
+{
+    // Maak data beschikbaar in template
+    extract($data);
+    
+    $template_path = get_theme_path($template . '.php');
+    
+    // Check of template bestaat in actief theme
+    if (file_exists($template_path)) {
+        if ($require_once) {
+            require_once $template_path;
+        } else {
+            require $template_path;
+        }
+        return true;
+    }
+    
+    // Fallback naar default theme
+    $config = get_theme_config();
+    $fallback_path = __DIR__ . '/../' . $config['themes_directory'] . '/' . $config['fallback_theme'] . '/' . $template . '.php';
+    
+    if (file_exists($fallback_path)) {
+        if ($require_once) {
+            require_once $fallback_path;
+        } else {
+            require $fallback_path;
+        }
+        return true;
+    }
+    
+    // Template niet gevonden
+    trigger_error("Template niet gevonden: {$template}", E_USER_WARNING);
+    return false;
+}
+
+/**
+ * Laadt theme header
+ * 
+ * @param array $data Data voor header
+ * @return bool True als header geladen
+ */
+function get_header(array $data = []): bool
+{
+    return load_theme_template('layouts/header', $data);
+}
+
+/**
+ * Laadt theme footer
+ * 
+ * @param array $data Data voor footer
+ * @return bool True als footer geladen
+ */
+function get_footer(array $data = []): bool
+{
+    return load_theme_template('layouts/footer', $data);
+}
+
+/**
+ * Laadt theme sidebar
+ * 
+ * @param array $data Data voor sidebar
+ * @return bool True als sidebar geladen
+ */
+function get_sidebar(array $data = []): bool
+{
+    return load_theme_template('layouts/sidebar', $data);
+}
+
+/**
+ * Laadt theme navigatie
+ * 
+ * @param array $data Data voor navigatie
+ * @return bool True als navigatie geladen
+ */
+function get_navigation(array $data = []): bool
+{
+    return load_theme_template('partials/navigation', $data);
+}
+
+/**
+ * Laadt een theme component
+ * 
+ * @param string $component Component naam (bijv. 'post-card', 'user-menu')
+ * @param array $data Data voor component
+ * @return bool True als component geladen
+ */
+function get_component(string $component, array $data = []): bool
+{
+    return load_theme_template("components/{$component}", $data);
+}
+
+/**
+ * Laadt een theme pagina template
+ * 
+ * @param string $page Pagina naam (bijv. 'home', 'profile', 'timeline')
+ * @param array $data Data voor pagina
+ * @return bool True als pagina geladen
+ */
+function load_theme_page(string $page, array $data = []): bool
+{
+    return load_theme_template("pages/{$page}", $data);
+}
+
+/**
+ * Rendert een complete theme pagina met header en footer
+ * 
+ * @param string $page Pagina naam
+ * @param array $data Data voor pagina
+ * @param bool $with_header Of header getoond moet worden
+ * @param bool $with_footer Of footer getoond moet worden
+ * @return bool True als succesvol gerenderd
+ */
+function render_theme_page(string $page, array $data = [], bool $with_header = true, bool $with_footer = true): bool
+{
+    $success = true;
+    
+    if ($with_header) {
+        $success = get_header($data) && $success;
+    }
+    
+    $success = load_theme_page($page, $data) && $success;
+    
+    if ($with_footer) {
+        $success = get_footer($data) && $success;
+    }
+    
+    return $success;
+}
+
+/**
+ * ============================================================================
+ * DEPRECATED FUNCTIONS (voor backwards compatibility)
+ * ============================================================================
+ */
+
+/**
+ * @deprecated Gebruik theme_style() instead
  */
 function theme_css_url($file) {
-    return get_theme_asset_url('css/' . $file);
+    return theme_style($file);
 }
 
 /**
- * Genereert de URL voor een JavaScript bestand in het actieve thema
- * 
- * @param string $file Bestandsnaam of pad binnen de js map
- * @return string URL naar het JavaScript bestand
+ * @deprecated Gebruik theme_script() instead
  */
 function theme_js_url($file) {
-    return get_theme_asset_url('js/' . $file);
+    return theme_script($file);
 }
 
 /**
- * Genereert de URL voor een afbeelding in het actieve thema
- * 
- * @param string $file Bestandsnaam of pad binnen de images map
- * @return string URL naar de afbeelding
+ * @deprecated Gebruik theme_image() instead
  */
 function theme_image_url($file) {
-    return get_theme_asset_url('images/' . $file);
-}
-
-/**
- * Laadt een thema-pagina met header en footer
- * 
- * @param string $page Naam van de pagina
- * @param array $data Data voor de pagina
- * @param bool $with_header Of de header moet worden getoond
- * @param bool $with_footer Of de footer moet worden getoond
- * @return bool True als het laden is gelukt, anders false
- */
-function render_theme_page($page, $data = [], $with_header = true, $with_footer = true) {
-    if ($with_header) {
-        get_header($data);
-    }
-    
-    $result = load_theme_page($page, $data);
-    
-    if ($with_footer) {
-        get_footer($data);
-    }
-    
-    return $result;
-}
-
-/**
- * Laadt een thema-template met header en footer
- * 
- * @param string $template Naam van het template
- * @param array $data Data voor het template
- * @param bool $with_header Of de header moet worden getoond
- * @param bool $with_footer Of de footer moet worden getoond
- * @return bool True als het laden is gelukt, anders false
- */
-function render_theme_template($template, $data = [], $with_header = true, $with_footer = true) {
-    if ($with_header) {
-        get_header($data);
-    }
-    
-    $result = load_theme_template($template, $data);
-    
-    if ($with_footer) {
-        get_footer($data);
-    }
-    
-    return $result;
+    return theme_image($file);
 }
 
 /**

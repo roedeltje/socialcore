@@ -1,0 +1,618 @@
+[2025-06-12 13:11:00] FeedController index() called
+[2025-06-12 13:11:00] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:11:00] testNewTheme: FALSE
+[2025-06-12 13:11:57] FeedController index() called
+[2025-06-12 13:11:57] GET parameters: Array
+(
+    [route] => home
+    [preview_theme] => twitter
+)
+
+[2025-06-12 13:11:57] testNewTheme: FALSE
+[2025-06-12 13:12:06] FeedController index() called
+[2025-06-12 13:12:06] GET parameters: Array
+(
+    [route] => home
+    [preview] => 1
+)
+
+[2025-06-12 13:12:06] testNewTheme: FALSE
+[2025-06-12 13:16:22] FeedController index() called
+[2025-06-12 13:16:22] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:16:22] testNewTheme: FALSE
+[2025-06-12 13:44:54] FeedController index() called
+[2025-06-12 13:44:54] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:44:54] testNewTheme: FALSE
+[2025-06-12 13:44:56] FeedController index() called
+[2025-06-12 13:44:56] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:44:56] testNewTheme: FALSE
+[2025-06-12 13:56:55] FeedController index() called
+[2025-06-12 13:56:55] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:56:55] testNewTheme: FALSE
+[2025-06-12 13:56:58] FeedController index() called
+[2025-06-12 13:56:58] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:56:58] testNewTheme: FALSE
+[2025-06-12 13:58:22] FeedController index() called
+[2025-06-12 13:58:22] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:58:22] testNewTheme: FALSE
+[2025-06-12 13:58:30] FeedController index() called
+[2025-06-12 13:58:30] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 13:58:30] testNewTheme: FALSE
+[2025-06-12 14:00:02] FeedController index() called
+[2025-06-12 14:00:02] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:00:02] testNewTheme: FALSE
+[2025-06-12 14:07:23] FeedController index() called
+[2025-06-12 14:07:23] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:07:23] testNewTheme: FALSE
+[2025-06-12 14:08:28] FeedController index() called
+[2025-06-12 14:08:28] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:08:28] testNewTheme: FALSE
+[2025-06-12 14:08:31] FeedController index() called
+[2025-06-12 14:08:31] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:08:31] testNewTheme: FALSE
+[2025-06-12 14:08:46] FeedController index() called
+[2025-06-12 14:08:46] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:08:46] testNewTheme: FALSE
+[2025-06-12 14:16:50] FeedController index() called
+[2025-06-12 14:16:50] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:16:50] testNewTheme: FALSE
+[2025-06-12 14:20:30] FeedController index() called
+[2025-06-12 14:20:30] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:20:30] testNewTheme: FALSE
+[2025-06-12 14:20:35] FeedController index() called
+[2025-06-12 14:20:35] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:20:35] testNewTheme: FALSE
+[2025-06-12 14:20:58] FeedController index() called
+[2025-06-12 14:20:58] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:20:58] testNewTheme: FALSE
+[2025-06-12 14:21:04] FeedController index() called
+[2025-06-12 14:21:04] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:21:04] testNewTheme: FALSE
+[2025-06-12 14:33:12] FeedController index() called
+[2025-06-12 14:33:12] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:33:12] testNewTheme: FALSE
+[2025-06-12 14:33:16] FeedController index() called
+[2025-06-12 14:33:16] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:33:16] testNewTheme: FALSE
+[2025-06-12 14:35:00] FeedController index() called
+[2025-06-12 14:35:00] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:35:00] testNewTheme: FALSE
+[2025-06-12 14:36:20] FeedController index() called
+[2025-06-12 14:36:20] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 14:36:20] testNewTheme: FALSE
+[2025-06-12 14:36:34] FeedController index() called
+[2025-06-12 14:36:34] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:36:34] testNewTheme: FALSE
+[2025-06-12 14:37:40] FeedController index() called
+[2025-06-12 14:37:40] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 14:37:40] testNewTheme: FALSE
+[2025-06-12 15:13:15] FeedController index() called
+[2025-06-12 15:13:15] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:13:15] testNewTheme: FALSE
+[2025-06-12 15:13:19] FeedController index() called
+[2025-06-12 15:13:19] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:13:19] testNewTheme: FALSE
+[2025-06-12 15:13:23] FeedController index() called
+[2025-06-12 15:13:23] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:13:23] testNewTheme: FALSE
+[2025-06-12 15:18:13] FeedController index() called
+[2025-06-12 15:18:13] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:18:13] testNewTheme: FALSE
+[2025-06-12 15:35:45] FeedController index() called
+[2025-06-12 15:35:45] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:35:45] testNewTheme: FALSE
+[2025-06-12 15:36:00] FeedController index() called
+[2025-06-12 15:36:00] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:36:00] testNewTheme: FALSE
+[2025-06-12 15:51:20] FeedController index() called
+[2025-06-12 15:51:20] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:51:20] testNewTheme: FALSE
+[2025-06-12 15:51:25] FeedController index() called
+[2025-06-12 15:51:25] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:51:25] testNewTheme: FALSE
+[2025-06-12 15:54:56] FeedController index() called
+[2025-06-12 15:54:56] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:54:56] testNewTheme: FALSE
+[2025-06-12 15:55:05] FeedController index() called
+[2025-06-12 15:55:05] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:55:05] testNewTheme: FALSE
+[2025-06-12 15:55:24] FeedController index() called
+[2025-06-12 15:55:24] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:55:24] testNewTheme: FALSE
+[2025-06-12 15:55:38] FeedController index() called
+[2025-06-12 15:55:38] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:55:38] testNewTheme: FALSE
+[2025-06-12 15:55:57] FeedController index() called
+[2025-06-12 15:55:57] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:55:57] testNewTheme: FALSE
+[2025-06-12 15:56:40] FeedController index() called
+[2025-06-12 15:56:40] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:56:40] testNewTheme: FALSE
+[2025-06-12 15:57:38] FeedController index() called
+[2025-06-12 15:57:38] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 15:57:38] testNewTheme: FALSE
+[2025-06-12 16:05:45] FeedController index() called
+[2025-06-12 16:05:45] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:05:45] testNewTheme: FALSE
+[2025-06-12 16:06:19] FeedController index() called
+[2025-06-12 16:06:19] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:06:19] testNewTheme: FALSE
+[2025-06-12 16:08:27] FeedController index() called
+[2025-06-12 16:08:27] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:08:27] testNewTheme: FALSE
+[2025-06-12 16:15:41] FeedController index() called
+[2025-06-12 16:15:41] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:15:41] testNewTheme: FALSE
+[2025-06-12 16:24:19] FeedController index() called
+[2025-06-12 16:24:19] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:24:19] testNewTheme: FALSE
+[2025-06-12 16:24:32] FeedController index() called
+[2025-06-12 16:24:32] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:24:32] testNewTheme: FALSE
+[2025-06-12 16:24:38] FeedController index() called
+[2025-06-12 16:24:38] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:24:38] testNewTheme: FALSE
+[2025-06-12 16:25:20] FeedController index() called
+[2025-06-12 16:25:20] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:25:20] testNewTheme: FALSE
+[2025-06-12 16:25:26] FeedController index() called
+[2025-06-12 16:25:26] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:25:26] testNewTheme: FALSE
+[2025-06-12 16:28:38] FeedController index() called
+[2025-06-12 16:28:38] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:28:38] testNewTheme: FALSE
+[2025-06-12 16:28:47] FeedController index() called
+[2025-06-12 16:28:47] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:28:47] testNewTheme: FALSE
+[2025-06-12 16:28:55] FeedController index() called
+[2025-06-12 16:28:55] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:28:55] testNewTheme: FALSE
+[2025-06-12 16:29:44] FeedController index() called
+[2025-06-12 16:29:44] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:29:44] testNewTheme: FALSE
+[2025-06-12 16:29:46] FeedController index() called
+[2025-06-12 16:29:46] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:29:46] testNewTheme: FALSE
+[2025-06-12 16:29:49] FeedController index() called
+[2025-06-12 16:29:49] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:29:49] testNewTheme: FALSE
+[2025-06-12 16:30:02] FeedController index() called
+[2025-06-12 16:30:02] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:30:02] testNewTheme: FALSE
+[2025-06-12 16:30:11] FeedController index() called
+[2025-06-12 16:30:11] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:30:11] testNewTheme: FALSE
+[2025-06-12 16:34:10] FeedController index() called
+[2025-06-12 16:34:10] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:34:10] testNewTheme: FALSE
+[2025-06-12 16:34:27] FeedController index() called
+[2025-06-12 16:34:27] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:34:27] testNewTheme: FALSE
+[2025-06-12 16:34:35] FeedController index() called
+[2025-06-12 16:34:35] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:34:35] testNewTheme: FALSE
+[2025-06-12 16:34:36] FeedController index() called
+[2025-06-12 16:34:36] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:34:36] testNewTheme: FALSE
+[2025-06-12 16:57:38] FeedController index() called
+[2025-06-12 16:57:38] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 16:57:38] testNewTheme: FALSE
+[2025-06-12 17:04:52] FeedController index() called
+[2025-06-12 17:04:52] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:04:52] testNewTheme: FALSE
+[2025-06-12 17:05:33] FeedController index() called
+[2025-06-12 17:05:33] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:05:33] testNewTheme: FALSE
+[2025-06-12 17:05:39] FeedController index() called
+[2025-06-12 17:05:39] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:05:39] testNewTheme: FALSE
+[2025-06-12 17:06:34] FeedController index() called
+[2025-06-12 17:06:34] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:06:34] testNewTheme: FALSE
+[2025-06-12 17:08:53] FeedController index() called
+[2025-06-12 17:08:53] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:08:53] testNewTheme: FALSE
+[2025-06-12 17:09:20] FeedController index() called
+[2025-06-12 17:09:20] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:09:20] testNewTheme: FALSE
+[2025-06-12 17:12:27] FeedController index() called
+[2025-06-12 17:12:27] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:12:27] testNewTheme: FALSE
+[2025-06-12 17:13:44] FeedController index() called
+[2025-06-12 17:13:44] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 17:13:44] testNewTheme: FALSE
+[2025-06-12 17:14:21] FeedController index() called
+[2025-06-12 17:14:21] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 17:14:21] testNewTheme: FALSE
+[2025-06-12 18:43:42] FeedController index() called
+[2025-06-12 18:43:42] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 18:43:42] testNewTheme: FALSE
+[2025-06-12 18:44:09] FeedController index() called
+[2025-06-12 18:44:09] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 18:44:09] testNewTheme: FALSE
+[2025-06-12 18:48:35] FeedController index() called
+[2025-06-12 18:48:35] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 18:48:35] testNewTheme: FALSE
+[2025-06-12 18:48:56] FeedController index() called
+[2025-06-12 18:48:56] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 18:48:56] testNewTheme: FALSE
+[2025-06-12 18:51:54] FeedController index() called
+[2025-06-12 18:51:54] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 18:51:54] testNewTheme: FALSE
+[2025-06-12 18:51:57] FeedController index() called
+[2025-06-12 18:51:57] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 18:51:57] testNewTheme: FALSE
+[2025-06-12 18:52:31] FeedController index() called
+[2025-06-12 18:52:31] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 18:52:31] testNewTheme: FALSE
+[2025-06-12 22:18:55] FeedController index() called
+[2025-06-12 22:18:55] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 22:18:55] testNewTheme: FALSE
+[2025-06-12 22:19:17] FeedController index() called
+[2025-06-12 22:19:17] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 22:19:17] testNewTheme: FALSE
+[2025-06-12 22:19:43] FeedController index() called
+[2025-06-12 22:19:43] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 22:19:43] testNewTheme: FALSE
+[2025-06-12 22:19:50] FeedController index() called
+[2025-06-12 22:19:50] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 22:19:50] testNewTheme: FALSE
+[2025-06-12 22:19:59] FeedController index() called
+[2025-06-12 22:19:59] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 22:19:59] testNewTheme: FALSE
+[2025-06-12 22:20:36] FeedController index() called
+[2025-06-12 22:20:36] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 22:20:36] testNewTheme: FALSE
+[2025-06-12 22:20:44] FeedController index() called
+[2025-06-12 22:20:44] GET parameters: Array
+(
+    [route] => feed
+)
+
+[2025-06-12 22:20:44] testNewTheme: FALSE
+[2025-06-12 22:20:56] FeedController index() called
+[2025-06-12 22:20:56] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 22:20:56] testNewTheme: FALSE
+[2025-06-12 22:21:27] FeedController index() called
+[2025-06-12 22:21:27] GET parameters: Array
+(
+    [route] => home
+)
+
+[2025-06-12 22:21:27] testNewTheme: FALSE

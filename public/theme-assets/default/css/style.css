@@ -15,6 +15,15 @@ html, body, div, span, h1, h2, h3, h4, h5, h6, p, a, button, input, select, text
     --text-light: #7c7c7c;           /* Lichte tekst of aanvullende info */
     --border-color: #dce3f0;         /* Subtiele blauwe randkleur */
     --hover-bg: #e8f0fc;             /* Zachte hoverkleur op basis van het blauw */
+    
+    /* Hyves specifieke kleuren */
+    --hyves-header-start: #FFD700;   /* Geel start van gradient */
+    --hyves-header-end: #FFA500;     /* Oranje eind van gradient */
+    --hyves-nav-start: #4A90E2;      /* Lichtblauw start navigatie */
+    --hyves-nav-end: #357ABD;        /* Donkerblauw eind navigatie */
+    --hyves-nav-border: #2C5AA0;     /* Donkere rand navigatie */
+    --hyves-link-blue: #0066CC;      /* Hyves link blauw */
+    --hyves-link-hover: #0052A3;     /* Hyves link hover */
 }
 
 /* Custom styling beyond Tailwind */
@@ -25,8 +34,6 @@ html, body, div, span, h1, h2, h3, h4, h5, h6, p, a, button, input, select, text
 .social-button:hover {
   transform: translateY(-2px);
 }
-
-/* You can add additional custom styles here */
 
 /* Reset & Base */
 * {
@@ -44,9 +51,581 @@ body {
 }
 
 a {
-    color: var(--primary-color);
+    color: var(--hyves-link-blue);
     text-decoration: none;
 }
+
+a:hover {
+    color: var(--hyves-link-hover);
+}
+
+/* ===========================================
+   HYVES HEADER & NAVIGATION STYLING
+   ========================================== */
+
+/* Hyves Header sectie - Gele/oranje achtergrond zoals Hyves */
+.hyves-header {
+    background: linear-gradient(to bottom, var(--hyves-header-start), var(--hyves-header-end));
+    padding: 8px 0;
+    border-bottom: 1px solid #CC8400;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+/* Logo sectie */
+.hyves-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.logo-image {
+    height: 40px;
+    width: auto;
+}
+
+.logo-text-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.hyves-logo-text {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--hyves-link-blue);
+    text-decoration: none;
+    line-height: 1;
+}
+
+.hyves-tagline {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+    font-style: italic;
+}
+
+/* Rechterkant header - taalvlaggen en login */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.language-flags {
+    display: flex;
+    gap: 3px;
+}
+
+.flag {
+    width: 20px;
+    height: 15px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border-radius: 2px;
+}
+
+.flag:hover {
+    transform: scale(1.1);
+    border-color: var(--hyves-link-blue);
+}
+
+/* Login formulier in header */
+.header-login {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.header-login label {
+    color: #333;
+    font-size: 11px;
+    font-weight: normal;
+}
+
+.header-login input[type="text"],
+.header-login input[type="password"] {
+    padding: 3px 5px;
+    border: 1px solid #999;
+    border-radius: 2px;
+    font-size: 11px;
+    width: 80px;
+    background-color: white;
+}
+
+.header-login input[type="text"]:focus,
+.header-login input[type="password"]:focus {
+    border-color: var(--hyves-link-blue);
+    outline: none;
+}
+
+.login-button {
+    background-color: var(--hyves-link-blue);
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.login-button:hover {
+    background-color: var(--hyves-link-hover);
+}
+
+.remember-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+}
+
+.remember-checkbox input[type="checkbox"] {
+    width: 12px;
+    height: 12px;
+}
+
+.remember-checkbox label {
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Ingelogde gebruiker in header */
+.header-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #333;
+}
+
+.header-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    object-fit: cover;
+}
+
+.online-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-select {
+    font-size: 11px;
+    padding: 2px 4px;
+    border: 1px solid #999;
+    border-radius: 2px;
+    background-color: white;
+}
+
+/* Navigatie balk - blauwe balk onder header */
+.hyves-navigation {
+    background: linear-gradient(to bottom, var(--hyves-nav-start), var(--hyves-nav-end));
+    border-bottom: 1px solid var(--hyves-nav-border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    min-height: 35px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    color: white;
+    font-size: 11px;
+    font-weight: normal;
+}
+
+.breadcrumb a {
+    color: #FFD700;
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    color: #FFFF99;
+    text-decoration: underline;
+}
+
+/* Hoofd navigatie links */
+.nav-main {
+    display: flex;
+    gap: 0;
+}
+
+.nav-item {
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    border-right: 1px solid rgba(255,255,255,0.2);
+    display: block;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background-color: rgba(255,255,255,0.15);
+    color: #FFD700;
+}
+
+.nav-item:first-child {
+    border-left: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Rechterkant navigatie */
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Zoekbalk in navigatie */
+.nav-search {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nav-search form {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.nav-search label {
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.nav-search input[type="text"] {
+    padding: 3px 5px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    font-size: 11px;
+    width: 120px;
+    background-color: white;
+}
+
+.nav-search input[type="text"]:focus {
+    border-color: #FFD700;
+    outline: none;
+}
+
+.nav-search button {
+    background-color: var(--hyves-link-blue);
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.nav-search button:hover {
+    background-color: var(--hyves-link-hover);
+}
+
+/* Gebruikersmenu voor ingelogde gebruikers */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Dashboard knop voor admins */
+.dashboard-btn {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dashboard-btn:hover {
+    background-color: rgba(255,255,255,0.3);
+    color: #FFD700;
+}
+
+.dashboard-btn i {
+    font-size: 10px;
+}
+
+/* Gebruiker dropdown */
+.user-dropdown {
+    position: relative;
+}
+
+.user-avatar-nav {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    object-fit: cover;
+    transition: transform 0.2s;
+}
+
+.user-avatar-nav:hover {
+    transform: scale(1.05);
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    min-width: 180px;
+    z-index: 1000;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.dropdown-menu.show {
+    display: block;
+    animation: fadeInDropdown 0.15s ease;
+}
+
+@keyframes fadeInDropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 8px 12px;
+    color: #333;
+    text-decoration: none;
+    font-size: 12px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f0f0f0;
+    color: var(--hyves-link-blue);
+}
+
+.dropdown-menu a:last-child {
+    border-bottom: none;
+}
+
+.dropdown-menu a i {
+    width: 16px;
+    margin-right: 6px;
+    font-size: 11px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 4px 0;
+    border: none;
+}
+
+/* Notificatie badge */
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #FF4444;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Main content aanpassingen */
+.main-content {
+    container: mx-auto;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.main-content-home {
+    padding: 0;
+}
+
+/* Flash messages styling */
+.flash-messages {
+    max-width: 1200px;
+    margin: 10px auto;
+    padding: 0 20px;
+}
+
+/* Responsive aanpassingen voor Hyves header/nav */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 20px;
+    }
+
+    .hyves-logo {
+        justify-content: center;
+    }
+
+    .header-right {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .header-login {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .header-login input[type="text"],
+    .header-login input[type="password"] {
+        width: 70px;
+    }
+
+    .nav-container {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 20px;
+    }
+
+    .nav-main {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .nav-item {
+        border: none;
+        border-radius: 3px;
+        margin: 2px;
+        padding: 6px 12px;
+    }
+
+    .nav-right {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .user-menu {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .dashboard-btn {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+
+    .nav-search input[type="text"] {
+        width: 100px;
+    }
+
+    .main-content {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hyves-logo-text {
+        font-size: 20px;
+    }
+
+    .hyves-tagline {
+        font-size: 10px;
+    }
+
+    .header-login {
+        font-size: 10px;
+    }
+
+    .header-login input[type="text"],
+    .header-login input[type="password"] {
+        width: 60px;
+        padding: 2px 4px;
+    }
+
+    .nav-item {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+
+    .user-avatar-nav {
+        width: 25px;
+        height: 25px;
+    }
+
+    .notification-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
+        top: -6px;
+        right: -6px;
+    }
+}
+
+/* ===========================================
+   BESTAANDE STYLING (ONGEWIJZIGD)
+   ========================================== */
 
 /* Layout */
 .app-container {
@@ -422,31 +1001,9 @@ a {
     10%, 30% { transform: scale(1.2); }
 }
 
-@media (max-width: 768px) {
-    .footer-bottom {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .copyright {
-        margin-right: 0;
-        margin-bottom: 0.5rem;
-    }
-}
-
-/* Navigation */
+/* Legacy Navigation (nu verborgen voor Hyves nav) */
 .main-navigation {
-    background-color: white;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 0.75rem 1.5rem;
-}
-
-.nav-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1200px;
-    margin: 0 auto;
+    display: none; /* Vervangen door Hyves navigatie */
 }
 
 .nav-logo {
@@ -465,36 +1022,6 @@ a {
 .nav-logo img {
     height: 32px;
     width: auto;
-}
-
-.nav-search {
-    flex: 1;
-    max-width: 400px;
-    margin: 0 1.5rem;
-}
-
-.nav-search form {
-    display: flex;
-    position: relative;
-}
-
-.nav-search input {
-    width: 100%;
-    padding: 0.5rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
-    background-color: #f3f4f6;
-}
-
-.nav-search button {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #6b7280;
-    cursor: pointer;
 }
 
 .nav-links {
@@ -523,10 +1050,6 @@ a {
     margin-left: 1.5rem;
 }
 
-.user-dropdown {
-    position: relative;
-}
-
 .user-avatar {
     width: 40px;
     height: 40px;
@@ -541,40 +1064,9 @@ a {
     object-fit: cover;
 }
 
-.dropdown-menu {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 150px;
-    z-index: 10;
-}
-
-.dropdown-menu a {
-    display: block;
-    padding: 0.75rem 1rem;
-    color: #333;
-}
-
-.dropdown-menu a:hover {
-    background-color: #f3f4f6;
-}
-
-.user-dropdown:hover .dropdown-menu {
-    display: block;
-}
-
 .auth-buttons {
     display: flex;
     gap: 0.75rem;
-}
-
-.login-button {
-    color: #3b82f6;
-    font-weight: 500;
 }
 
 .register-button {
@@ -598,7 +1090,7 @@ a {
 .icon-bell:before { content: "🔔"; }
 .icon-search:before { content: "🔍"; }
 
-/* Responsive Aanpassingen */
+/* Responsive Aanpassingen BESTAAND */
 @media (max-width: 768px) {
     .home-container {
         flex-direction: column;
@@ -613,21 +1105,14 @@ a {
         padding: 2rem 1rem;
     }
     
-    .nav-container {
-        flex-wrap: wrap;
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
     }
     
-    .nav-search {
-        order: 3;
-        margin: 1rem 0;
-        max-width: 100%;
-    }
-    
-    .nav-links {
-        order: 2;
-        width: 100%;
-        justify-content: space-around;
-        margin-top: 1rem;
+    .copyright {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
     }
 }
 
@@ -1461,28 +1946,6 @@ a {
     color: #1d4ed8;
 }
 
-/* Responsive aanpassingen */
-@media (max-width: 640px) {
-    .emoji-picker-panel {
-        width: 280px;
-        max-height: 250px;
-        left: 10px !important;
-        right: 10px !important;
-        width: calc(100vw - 20px) !important;
-    }
-    
-    .emoji-grid {
-        grid-template-columns: repeat(6, 1fr);
-        gap: 3px;
-    }
-    
-    .emoji-item {
-        font-size: 18px;
-        padding: 4px;
-        min-height: 28px;
-    }
-}
-
 /* Comment like button fixes */
 .comment-like-button {
     background: none;
@@ -1539,4 +2002,545 @@ a {
 .emoji-picker-trigger:hover ~ .emoji-picker-panel,
 .emoji-picker-trigger.active ~ .emoji-picker-panel {
     display: block !important;
+}
+
+/* ===========================================
+   HYVES FOOTER STYLING
+   ========================================== */
+
+/* Hyves Footer - Hoofdstructuur */
+.hyves-footer {
+    margin-top: 3rem;
+    background-color: #f8fafc;
+    border-top: 3px solid var(--hyves-link-blue);
+}
+
+/* Footer main sectie */
+.hyves-footer-main {
+    background: linear-gradient(135deg, #f8fafc 0%, #e8f2ff 100%);
+    padding: 2.5rem 0 1.5rem 0;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Footer brand sectie */
+.footer-brand {
+    padding-right: 1rem;
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.footer-logo-img {
+    height: 48px;
+    width: auto;
+}
+
+.footer-brand-text h3 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--hyves-link-blue);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.footer-tagline {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+    margin: 2px 0 0 0;
+}
+
+.footer-description {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #555;
+    margin: 1rem 0 1.5rem 0;
+}
+
+/* Social media sectie - Hyves stijl */
+.footer-social {
+    margin-top: 1.5rem;
+}
+
+.social-label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--hyves-link-blue);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.social-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.social-btn.github {
+    background-color: #333;
+}
+
+.social-btn.twitter {
+    background-color: #1DA1F2;
+}
+
+.social-btn.discord {
+    background-color: #5865F2;
+}
+
+.social-btn.youtube {
+    background-color: #FF0000;
+}
+
+.social-btn:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Footer navigatie secties */
+.footer-nav-section h4 {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--hyves-link-blue);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 102, 204, 0.2);
+}
+
+.footer-nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-nav-list li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-nav-list a {
+    color: #555;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    display: inline-block;
+    padding: 2px 0;
+}
+
+.footer-nav-list a:hover {
+    color: var(--hyves-link-blue);
+    padding-left: 8px;
+    font-weight: 500;
+}
+
+.footer-nav-list a.active {
+    color: var(--hyves-link-blue);
+    font-weight: bold;
+}
+
+/* Newsletter sectie - Hyves stijl */
+.footer-newsletter h4 {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--hyves-link-blue);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 102, 204, 0.2);
+}
+
+.footer-newsletter p {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.newsletter-form-hyves {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.newsletter-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.newsletter-input-group input[type="email"] {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    transition: border-color 0.3s ease;
+    background-color: white;
+}
+
+.newsletter-input-group input[type="email"]:focus {
+    border-color: var(--hyves-link-blue);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+.newsletter-btn {
+    background: linear-gradient(135deg, var(--hyves-link-blue), var(--hyves-link-hover));
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.newsletter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.newsletter-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #666;
+    cursor: pointer;
+    line-height: 1.3;
+}
+
+.newsletter-checkbox input[type="checkbox"] {
+    margin: 0;
+    width: 14px;
+    height: 14px;
+    accent-color: var(--hyves-link-blue);
+}
+
+.privacy-link {
+    color: var(--hyves-link-blue);
+    text-decoration: underline;
+}
+
+.privacy-link:hover {
+    color: var(--hyves-link-hover);
+}
+
+/* Footer bottom - Hyves blauw */
+.hyves-footer-bottom {
+    background: linear-gradient(135deg, var(--hyves-nav-start), var(--hyves-nav-end));
+    color: white;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.footer-bottom-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer-bottom-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.copyright {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.9);
+}
+
+.copyright strong {
+    color: #FFD700;
+}
+
+.made-in-nl {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+}
+
+.footer-bottom-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.footer-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.9);
+}
+
+.stat-item {
+    white-space: nowrap;
+}
+
+.stat-item strong {
+    color: #FFD700;
+    font-weight: bold;
+}
+
+.stat-divider {
+    color: rgba(255,255,255,0.6);
+}
+
+.footer-bottom-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.footer-credits {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.credits-item a {
+    color: #FFD700;
+    text-decoration: none;
+}
+
+.credits-item a:hover {
+    text-decoration: underline;
+}
+
+.credits-divider {
+    color: rgba(255,255,255,0.6);
+}
+
+.heart {
+    color: #FF6B6B;
+    animation: heartbeat 2s infinite;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.quick-login,
+.quick-register {
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.quick-login {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.quick-login:hover {
+    background-color: rgba(255,255,255,0.3);
+    color: #FFD700;
+}
+
+.quick-register {
+    background-color: #FFD700;
+    color: var(--hyves-nav-end);
+    border: 1px solid #FFD700;
+}
+
+.quick-register:hover {
+    background-color: #FFED4A;
+    transform: translateY(-1px);
+}
+
+/* Scroll to top button */
+.scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, var(--hyves-link-blue), var(--hyves-link-hover));
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    transition: all 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    z-index: 1000;
+}
+
+.scroll-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-to-top:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+}
+
+/* Responsive aanpassingen voor footer */
+@media (max-width: 768px) {
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+    }
+    
+    .footer-brand {
+        padding-right: 0;
+    }
+    
+    .footer-logo {
+        justify-content: center;
+    }
+    
+    .social-buttons {
+        justify-content: center;
+    }
+    
+    .footer-bottom-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .footer-bottom-right {
+        align-items: center;
+    }
+    
+    .footer-stats {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .quick-actions {
+        justify-content: center;
+    }
+    
+    .newsletter-input-group {
+        gap: 0.75rem;
+    }
+    
+    .scroll-to-top {
+        bottom: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hyves-footer-main {
+        padding: 2rem 0 1rem 0;
+    }
+    
+    .footer-container {
+        padding: 0 15px;
+        gap: 1.5rem;
+    }
+    
+    .footer-bottom-container {
+        padding: 0 15px;
+    }
+    
+    .footer-logo-img {
+        height: 40px;
+    }
+    
+    .footer-brand-text h3 {
+        font-size: 1.3rem;
+    }
+    
+    .footer-tagline {
+        font-size: 10px;
+    }
+    
+    .footer-description {
+        font-size: 0.85rem;
+    }
+    
+    .social-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+    
+    .footer-stats {
+        font-size: 0.75rem;
+    }
+    
+    .quick-login,
+    .quick-register {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+}
+
+/* Animaties */
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Footer hover effecten */
+.footer-nav-section:hover h4 {
+    color: var(--hyves-link-hover);
+    transform: translateX(2px);
+}
+
+.footer-brand:hover .footer-logo-img {
+    transform: rotate(5deg) scale(1.05);
+}
+
+/* Zorg ervoor dat de oude footer verborgen is */
+.site-footer {
+    display: none; /* Verberg de oude footer */
 }

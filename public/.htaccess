@@ -46,6 +46,12 @@
 # Beveiligingsinstellingen
 Options -Indexes
 
+# Allow direct access to theme assets
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
 # Verberg .htaccess bestand
 <Files .htaccess>
     Order Allow,Deny

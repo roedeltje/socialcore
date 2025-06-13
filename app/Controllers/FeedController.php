@@ -15,56 +15,208 @@ class FeedController extends Controller
     
     public function __construct()
     {
-        // Correcte manier - gebruik getPdo()
         $this->db = Database::getInstance()->getPdo();
     }
 
     /**
-     * Toon de hoofdpagina van de nieuwsfeed
+     * Toon de Hyves-stijl homepage/nieuwsfeed
      */
     public function index()
     {
+        // ALTIJD loggen, ook zonder new_theme parameter
+        file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] FeedController index() called\n", 
+            FILE_APPEND | LOCK_EX);
+            
+        file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] GET parameters: " . print_r($_GET, true) . "\n", 
+            FILE_APPEND | LOCK_EX);
+        
+        $testNewTheme = isset($_GET['new_theme']) && $_GET['new_theme'] === '1';
+
+        if ($testNewTheme) {
+            // Test of we überhaupt in dit blok komen
+            file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] ENTERING NEW THEME BLOCK\n", 
+                FILE_APPEND | LOCK_EX);
+                
+            // Test of we kunnen schrijven naar new_theme_debug
+            file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Attempting to write to new_theme_debug...\n", 
+                FILE_APPEND | LOCK_EX);
+                
+            // Direct test
+            $testWrite = file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] TEST WRITE\n", 
+                FILE_APPEND | LOCK_EX);
+                
+            file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Test write result: " . ($testWrite ? 'SUCCESS' : 'FAILED') . "\n", 
+                FILE_APPEND | LOCK_EX);
+        }
+        
+        file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] testNewTheme: " . ($testNewTheme ? 'TRUE' : 'FALSE') . "\n", 
+            FILE_APPEND | LOCK_EX);
+
+        $testNewTheme = isset($_GET['new_theme']) && $_GET['new_theme'] === '1';
+        
+        if ($testNewTheme) {
+            // Debug logging naar ons eigen logsysteem
+            file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] === NEW THEME DEBUG START ===\n", 
+                FILE_APPEND | LOCK_EX);
+                
+            file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Test nieuwe thema systeem geactiveerd\n", 
+                FILE_APPEND | LOCK_EX);
+            
+            try {
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] 1. ThemeFunctions initialiseren...\n", 
+                    FILE_APPEND | LOCK_EX);
+                    
+                \App\Core\ThemeFunctions::init();
+                
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] ✅ ThemeFunctions geïnitialiseerd\n", 
+                    FILE_APPEND | LOCK_EX);
+                
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] 2. ThemeManager instance ophalen...\n", 
+                    FILE_APPEND | LOCK_EX);
+                    
+                $themeManager = \App\Core\ThemeManager::getInstance();
+                $currentTheme = $themeManager->getActiveTheme();
+                
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] Current theme: {$currentTheme}\n", 
+                    FILE_APPEND | LOCK_EX);
+                
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] 3. Template pad zoeken...\n", 
+                    FILE_APPEND | LOCK_EX);
+                    
+                $templatePath = $themeManager->getThemeTemplatePath('pages/timeline.php');
+                
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] Template pad: {$templatePath}\n", 
+                    FILE_APPEND | LOCK_EX);
+                    
+                $templateExists = file_exists($templatePath);
+                
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] Template bestaat: " . ($templateExists ? 'YES' : 'NO') . "\n", 
+                    FILE_APPEND | LOCK_EX);
+                
+                if ($templateExists) {
+                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] 4. Posts ophalen voor template...\n", 
+                        FILE_APPEND | LOCK_EX);
+                }
+                
+            } catch (Exception $e) {
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] ❌ ERROR in setup: " . $e->getMessage() . "\n", 
+                    FILE_APPEND | LOCK_EX);
+                    
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] Error file: " . $e->getFile() . " Line: " . $e->getLine() . "\n", 
+                    FILE_APPEND | LOCK_EX);
+            }
+        }
+
         // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
+            if ($testNewTheme) {
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] ERROR: User not logged in, redirecting\n", 
+                    FILE_APPEND | LOCK_EX);
+            }
             header('Location: /auth/login');
             exit;
         }
 
         try {
+            if ($testNewTheme) {
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] 5. About to call getAllPosts()\n", 
+                    FILE_APPEND | LOCK_EX);
+            }
+
             // Haal echte posts op uit de database
             $posts = $this->getAllPosts();
+
+            if ($testNewTheme) {
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] Retrieved " . count($posts) . " posts\n", 
+                    FILE_APPEND | LOCK_EX);
+            }
             
             // Haal gebruikersinfo op
             $currentUser = $this->getCurrentUser($_SESSION['user_id']);
             
-            // Dummy data voor nu (later vervangen we dit ook)
+            // Haal real-time widget data op
             $onlineFriends = $this->getOnlineFriends();
             $trendingHashtags = $this->getTrendingHashtags();
             $suggestedUsers = $this->getSuggestedUsers();
             
-            
-            // Data doorsturen naar de view
+            // Data doorsturen naar de Hyves-stijl view
             $data = [
                 'posts' => $posts,
                 'current_user' => $currentUser,
                 'online_friends' => $onlineFriends,
                 'trending_hashtags' => $trendingHashtags,
-                'suggested_users' => $suggestedUsers
+                'suggested_users' => $suggestedUsers,
+                'page_title' => 'Nieuwsfeed - SocialCore'
             ];
-
-            // Debug huidige gebruiker
-            //$currentUser = $this->getCurrentUser($_SESSION['user_id']);
-            //var_dump($currentUser);
-
             
-            
-            $this->view('feed/index', $data);
+            if ($testNewTheme) {
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] 6. Data prepared, attempting to load new theme template...\n", 
+                    FILE_APPEND | LOCK_EX);
+                    
+                try {
+                    $this->viewNew('feed/index', $data);
+                    
+                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] ✅ New theme template loaded successfully\n", 
+                        FILE_APPEND | LOCK_EX);
+                        
+                } catch (Exception $e) {
+                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] ❌ ERROR loading new theme: " . $e->getMessage() . "\n", 
+                        FILE_APPEND | LOCK_EX);
+                        
+                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] Error file: " . $e->getFile() . " Line: " . $e->getLine() . "\n", 
+                        FILE_APPEND | LOCK_EX);
+                        
+                    // Fallback naar huidige systeem
+                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] Falling back to current system...\n", 
+                        FILE_APPEND | LOCK_EX);
+                        
+                    $this->view('feed/index', $data);
+                }
+            } else {
+                $this->view('feed/index', $data);
+            }
             
         } catch (Exception $e) {
-            $_SESSION['error_message'] = 'Er ging iets mis bij het laden van de feed: ' . $e->getMessage();
+            if ($testNewTheme) {
+                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] ❌ GENERAL ERROR: " . $e->getMessage() . "\n", 
+                    FILE_APPEND | LOCK_EX);
+            }
+            
+            error_log('Feed error: ' . $e->getMessage());
+            $_SESSION['error_message'] = 'Er ging iets mis bij het laden van de feed.';
+            
+            // Fallback data voor foutafhandeling
             $this->view('feed/index', [
                 'posts' => [],
-                'current_user' => ['name' => 'Gebruiker', 'username' => 'user'],
+                'current_user' => $this->getDefaultUser(),
                 'online_friends' => [],
                 'trending_hashtags' => [],
                 'suggested_users' => []
@@ -72,8 +224,15 @@ class FeedController extends Controller
         }
     }
 
+    /**
+     * Haal alle posts op met verbeterde Hyves-stijl data
+     */
     private function getAllPosts($limit = 20)
     {
+        // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
+        //     "[" . date('Y-m-d H:i:s') . "] getAllPosts() starting\n", 
+        //     FILE_APPEND | LOCK_EX);
+
         $query = "
             SELECT 
                 p.id,
@@ -87,6 +246,7 @@ class FeedController extends Controller
                 u.id as user_id,
                 u.username,
                 COALESCE(up.display_name, u.username) as user_name,
+                up.avatar,
                 target_user.username as target_username,
                 COALESCE(target_profile.display_name, target_user.username) as target_name,
                 (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
@@ -99,45 +259,191 @@ class FeedController extends Controller
             ORDER BY p.created_at DESC
             LIMIT ?
         ";
+
+        // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
+        //     "[" . date('Y-m-d H:i:s') . "] Query prepared, about to execute\n", 
+        //     FILE_APPEND | LOCK_EX);
         
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$limit]);
-        $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([$limit]);
+            $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
+            //     "[" . date('Y-m-d H:i:s') . "] Query executed successfully, got " . count($posts) . " posts\n", 
+            //     FILE_APPEND | LOCK_EX);
+            
+            // Format de data voor Hyves-stijl weergave
+            foreach ($posts as &$post) {
+                $post = $this->formatPostForHyves($post);
+            }
+            
+            // Voeg comments toe aan alle posts
+            $posts = $this->getCommentsForPosts($posts);
+            
+            return $posts;
+            
+        } catch (Exception $e) {
+            // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
+            //     "[" . date('Y-m-d H:i:s') . "] ERROR in getAllPosts(): " . $e->getMessage() . "\n", 
+            //     FILE_APPEND | LOCK_EX);
+            return [];
+        }
+    }
+
+    /**
+     * Format een post voor Hyves-stijl weergave
+     */
+    private function formatPostForHyves($post)
+    {
+        // Basis formatting
+        $post['likes'] = $post['likes_count'];
+        $post['comments'] = $post['comments_count'];
         
-        // Format de data voor de view
-        foreach ($posts as &$post) {
-            $post['likes'] = $post['likes_count'];
-            $post['comments'] = $post['comments_count'];
+        // Hyves-stijl tijdweergave
+        $post['created_at'] = $this->formatHyvesTime($post['created_at']);
+        $post['time_ago'] = $post['created_at'];
+        
+        // Avatar URL met fallbacks
+        $post['avatar'] = $this->getHyvesAvatar($post['user_id'], $post['avatar']);
+        
+        // Like status voor huidige gebruiker
+        $post['is_liked'] = $this->hasUserLikedPost($post['id']);
+        
+        // Krabbel logica (wall messages)
+        $post['is_wall_message'] = ($post['post_type'] === 'wall_message');
+        if ($post['is_wall_message'] && !empty($post['target_name'])) {
+            $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
+        }
+        
+        // Hyves-specifieke eigenschappen
+        $post['is_featured'] = (bool)($post['is_featured'] ?? false);
+        $post['privacy_level'] = $post['privacy_level'] ?? 'public';
+        $post['mood'] = $post['mood'] ?? null;
+        $post['location'] = $post['location'] ?? null;
+        
+        // Post type iconen (Hyves-stijl)
+        $post['type_icon'] = $this->getPostTypeIcon($post['type']);
+        
+        // Media URL voor afbeeldingen
+        if (!empty($post['media_path'])) {
+            $post['media_url'] = base_url('uploads/' . $post['media_path']);
+        }
+        
+        return $post;
+    }
+
+    /**
+     * Hyves-stijl tijdweergave
+     */
+    private function formatHyvesTime($datetime) 
+    {
+        if (empty($datetime) || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $datetime)) {
+            return 'onbekende tijd';
+        }
+        
+        try {
+            $date = new \DateTime($datetime);
+            $now = new \DateTime();
+            $diff = $now->diff($date);
             
-            // Bewaar de originele created_at
-            $original_date = $post['created_at'];
+            // Hyves-stijl tijdformaten
+            if ($diff->days == 0) {
+                if ($diff->h > 0) {
+                    return $diff->h . ' uur geleden';
+                } elseif ($diff->i > 0) {
+                    return $diff->i . ' minuten geleden';
+                } else {
+                    return 'Zojuist';
+                }
+            } elseif ($diff->days == 1) {
+                return 'Gisteren om ' . $date->format('H:i');
+            } elseif ($diff->days < 7) {
+                return $diff->days . ' dagen geleden';
+            } else {
+                return $date->format('d-m-Y om H:i');
+            }
+        } catch (\Exception $e) {
+            return 'onbekende tijd';
+        }
+    }
+
+    /**
+     * Haal Hyves-stijl avatar op met geslacht-specifieke fallbacks
+     */
+    private function getHyvesAvatar($userId, $avatarPath = null)
+    {
+        // Gebruik ThemeManager om het actieve thema te bepalen
+        $themeManager = \App\Core\ThemeManager::getInstance();
+        $activeTheme = $themeManager->getActiveTheme();
+        
+        // Als gebruiker een avatar heeft
+        if (!empty($avatarPath)) {
+            // Als het al een volledige URL is
+            if (str_starts_with($avatarPath, 'http')) {
+                return $avatarPath;
+            }
             
-            // Formatteer de datum correct
-            $post['created_at'] = $this->formatDate($original_date);
+            // Als het een theme asset is
+            if (str_starts_with($avatarPath, 'theme-assets')) {
+                return base_url($avatarPath);
+            }
             
-            // Gebruik dezelfde geformatteerde datum voor time_ago
-            $post['time_ago'] = $post['created_at'];
-            
-            // Voeg avatar toe
-            $post['avatar'] = $this->getUserAvatar($post['user_id']);
-            
-            // Controleer of de huidige gebruiker de post heeft geliked
-            $post['is_liked'] = $this->hasUserLikedPost($post['id']);
-            
-            // Bepaal of dit een krabbel is en maak header
-            $post['is_wall_message'] = ($post['post_type'] === 'wall_message');
-            
-            // Voor wall messages: maak sender -> receiver string
-            if ($post['is_wall_message'] && !empty($post['target_name'])) {
-                $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
+            // Voor uploads - controleer of het geen default avatar is
+            if (!str_contains($avatarPath, 'default-avatar')) {
+                return base_url('uploads/' . $avatarPath);
             }
         }
         
-        // Voeg comments toe aan alle posts
-        $posts = $this->getCommentsForPosts($posts);
+        // Gender-specifieke default avatars op basis van actief thema
+        try {
+            $stmt = $this->db->prepare("
+                SELECT gender FROM user_profiles 
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$userId]);
+            $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($profile) {
+                switch (strtolower($profile['gender'] ?? '')) {
+                    case 'male':
+                    case 'm':
+                    case 'man':
+                        return base_url("theme-assets/{$activeTheme}/images/default-avatar-male.png");
+                    case 'female':
+                    case 'f':
+                    case 'vrouw':
+                        return base_url("theme-assets/{$activeTheme}/images/default-avatar-female.png");
+                }
+            }
+        } catch (Exception $e) {
+            error_log('Avatar error: ' . $e->getMessage());
+        }
         
-        return $posts;
+        // Algemene fallback voor actief thema
+        return base_url("theme-assets/{$activeTheme}/images/default-avatar.png");
     }
+
+    /**
+     * Get post type icon voor Hyves-stijl
+     */
+    private function getPostTypeIcon($type)
+    {
+        $icons = [
+            'text' => '📝',
+            'photo' => '📷',
+            'video' => '🎬',
+            'link' => '🔗',
+            'poll' => '📊',
+            'status' => '💭',
+            'mood' => '😊',
+            'location' => '📍'
+        ];
+        
+        return $icons[$type] ?? '📝';
+    }
+
+
 
     /**
      * Controleer of de huidige gebruiker een post heeft geliked
@@ -216,111 +522,246 @@ class FeedController extends Controller
     }
 }
 
-// Tijdelijke dummy data functies (later vervangen we deze)
+    /**
+     * Verbeterde online vrienden met real-time data
+     */
     private function getOnlineFriends()
-{
-    return [
-        ['id' => 1, 'name' => 'Lucas van der Berg'],
-        ['id' => 2, 'name' => 'Emma Janssen'],
-        ['id' => 3, 'name' => 'Sophie de Vries']
-    ];
-}
+    {
+        if (!isset($_SESSION['user_id'])) {
+            return [];
+        }
+        
+        try {
+            // Haal echte online vrienden op (laatst actief in de laatste 30 minuten)
+            $stmt = $this->db->prepare("
+                SELECT DISTINCT
+                    u.id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as name,
+                    up.avatar,
+                    u.last_activity
+                FROM friendships f
+                JOIN users u ON (
+                    CASE 
+                        WHEN f.user_id = ? THEN f.friend_id = u.id
+                        ELSE f.user_id = u.id
+                    END
+                )
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE f.status = 'accepted'
+                AND (f.user_id = ? OR f.friend_id = ?)
+                AND u.last_activity > DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+                ORDER BY u.last_activity DESC
+                LIMIT 10
+            ");
+            
+            $userId = $_SESSION['user_id'];
+            $stmt->execute([$userId, $userId, $userId]);
+            $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Format avatars
+            foreach ($friends as &$friend) {
+                $friend['avatar_url'] = $this->getHyvesAvatar($friend['id'], $friend['avatar']);
+            }
+            
+            return $friends;
+            
+        } catch (Exception $e) {
+            error_log('Online friends error: ' . $e->getMessage());
+            
+            // Fallback dummy data voor development
+            return [
+                ['id' => 1, 'name' => 'Lucas van der Berg', 'username' => 'lucas', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-male.png')],
+                ['id' => 2, 'name' => 'Emma Janssen', 'username' => 'emma', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')],
+                ['id' => 3, 'name' => 'Sophie de Vries', 'username' => 'sophie', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')]
+            ];
+        }
+    }
 
+    /**
+     * Echte trending hashtags van afgelopen week
+     */
     private function getTrendingHashtags()
-{
-    return [
-        ['tag' => 'socialcore', 'count' => 234],
-        ['tag' => 'nederland', 'count' => 189],
-        ['tag' => 'opensource', 'count' => 156]
-    ];
-}
+    {
+        try {
+            // Haal hashtags uit post content (simpele regex voor nu)
+            $stmt = $this->db->prepare("
+                SELECT 
+                    SUBSTRING_INDEX(SUBSTRING_INDEX(content, '#', -1), ' ', 1) as tag,
+                    COUNT(*) as count
+                FROM posts 
+                WHERE content LIKE '%#%' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
+                AND is_deleted = 0
+                GROUP BY tag
+                HAVING LENGTH(tag) > 1 AND LENGTH(tag) < 30
+                ORDER BY count DESC
+                LIMIT 5
+            ");
+            $stmt->execute();
+            $hashtags = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Als geen hashtags, gebruik fallback
+            if (empty($hashtags)) {
+                return [
+                    ['tag' => 'socialcore', 'count' => 234],
+                    ['tag' => 'hyves', 'count' => 189],
+                    ['tag' => 'nederland', 'count' => 156],
+                    ['tag' => 'nostalgie', 'count' => 98],
+                    ['tag' => 'vrienden', 'count' => 67]
+                ];
+            }
+            
+            return $hashtags;
+            
+        } catch (Exception $e) {
+            error_log('Trending hashtags error: ' . $e->getMessage());
+            return [];
+        }
+    }
 
+    /**
+     * Suggesties gebaseerd op mutual friends en activiteit
+     */
     private function getSuggestedUsers()
-{
-    return [
-        ['id' => 4, 'name' => 'Tim Bakker'],
-        ['id' => 5, 'name' => 'Nina Peters'],
-        ['id' => 6, 'name' => 'Robin de Jong'],
-        ['id' => 7, 'name' => 'Laura Smit']
-    ];
-}
+    {
+        if (!isset($_SESSION['user_id'])) {
+            return [];
+        }
+        
+        try {
+            $userId = $_SESSION['user_id'];
+            
+            // Gebruikers die je nog niet volgt maar wel mutual friends hebben
+            $stmt = $this->db->prepare("
+                SELECT DISTINCT
+                    u.id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as name,
+                    up.avatar,
+                    COUNT(DISTINCT mf.friend_id) as mutual_friends
+                FROM users u
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                LEFT JOIN friendships mf ON (
+                    (mf.user_id = u.id OR mf.friend_id = u.id) 
+                    AND mf.status = 'accepted'
+                    AND (mf.user_id IN (
+                        SELECT friend_id FROM friendships 
+                        WHERE user_id = ? AND status = 'accepted'
+                    ) OR mf.friend_id IN (
+                        SELECT friend_id FROM friendships 
+                        WHERE user_id = ? AND status = 'accepted'
+                    ))
+                )
+                WHERE u.id != ?
+                AND u.id NOT IN (
+                    SELECT friend_id FROM friendships 
+                    WHERE user_id = ? AND status IN ('accepted', 'pending')
+                )
+                AND u.id NOT IN (
+                    SELECT user_id FROM friendships 
+                    WHERE friend_id = ? AND status IN ('accepted', 'pending')
+                )
+                GROUP BY u.id
+                ORDER BY mutual_friends DESC, u.created_at DESC
+                LIMIT 6
+            ");
+            
+            $stmt->execute([$userId, $userId, $userId, $userId, $userId]);
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Format avatars
+            foreach ($users as &$user) {
+                $user['avatar_url'] = $this->getHyvesAvatar($user['id'], $user['avatar']);
+            }
+            
+            // Als geen suggesties, gebruik fallback
+            if (empty($users)) {
+                return [
+                    ['id' => 4, 'name' => 'Tim Bakker', 'username' => 'tim', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-male.png')],
+                    ['id' => 5, 'name' => 'Nina Peters', 'username' => 'nina', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')],
+                    ['id' => 6, 'name' => 'Robin de Jong', 'username' => 'robin', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-male.png')],
+                    ['id' => 7, 'name' => 'Laura Smit', 'username' => 'laura', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')]
+                ];
+            }
+            
+            return $users;
+            
+        } catch (Exception $e) {
+            error_log('Suggested users error: ' . $e->getMessage());
+            return [];
+        }
+    }
 
         /**
-         * Haalt de huidige ingelogde gebruiker op uit de database
-         * 
-         * @param int $userId De gebruikers-ID om op te halen
-         * @return array Array met gebruikersgegevens, met gegarandeerde sleutels
-         */
-        private function getCurrentUser($userId = null)
-        {
-            // Gebruik sessie user_id als geen specifieke ID is gegeven
-            $userId = $userId ?? ($_SESSION['user_id'] ?? null);
-            
-            if (!$userId) {
-                // Geen gebruiker gevonden, retourneer standaardwaarden
-                return [
-                    'id' => 0,
-                    'name' => 'Gast',
-                    'username' => 'gast',
-                    'display_name' => 'Gast',
-                    'post_count' => 0,
-                    'following' => 0,
-                    'followers' => 0
-                ];
-            }
-
-            try {
-                // Haal gebruikersgegevens op
-                $stmt = $this->db->prepare("
-                    SELECT u.*, up.avatar, up.bio, up.location, up.website
-                    FROM users u
-                    LEFT JOIN user_profiles up ON u.id = up.user_id
-                    WHERE u.id = ?
-                ");
-                $stmt->execute([$userId]);
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if (!$user) {
-                    // Gebruiker niet gevonden in database
-                    return [
-                        'id' => 0,
-                        'name' => 'Onbekende gebruiker',
-                        'username' => 'onbekend',
-                        'display_name' => 'Onbekende gebruiker',
-                        'post_count' => 0,
-                        'following' => 0,
-                        'followers' => 0
-                    ];
-                }
-                
-                // Zorg ervoor dat alle benodigde sleutels bestaan
-                $user['avatar_url'] = !empty($user['avatar']) 
-                ? base_url('uploads/' . $user['avatar'])
-                : base_url('theme-assets/default/images/default-avatar.png');
-                    
-                // Voeg 'name' sleutel toe (dit is waar de fout optreedt)
-                $user['name'] = $user['display_name'] ?? $user['username'] ?? 'Gebruiker';
-                
-                // Zorg ervoor dat alle statistieken beschikbaar zijn
-                $user['post_count'] = $this->getUserPostCount($userId);
-                $user['following'] = $user['following'] ?? 0;
-                $user['followers'] = $user['followers'] ?? 0;
-                
-                return $user;
-            } catch (PDOException $e) {
-                error_log('Fout bij ophalen huidige gebruiker: ' . $e->getMessage());
-                // Fallback bij database fout
-                return [
-                    'id' => $userId,
-                    'name' => 'Gebruiker',
-                    'username' => 'gebruiker',
-                    'display_name' => 'Gebruiker',
-                    'post_count' => 0,
-                    'following' => 0,
-                    'followers' => 0
-                ];
-            }
+     * Verbeterde gebruikersgegevens met Hyves-specifieke data
+     */
+    public function getCurrentUser($userId = null)
+    {
+        $userId = $userId ?? ($_SESSION['user_id'] ?? null);
+        
+        if (!$userId) {
+            return $this->getDefaultUser();
         }
+
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    u.*,
+                    up.avatar,
+                    up.bio,
+                    up.location,
+                    up.website,
+                    up.date_of_birth,
+                    up.gender,
+                    up.display_name,
+                    -- Hyves-stijl statistieken
+                    (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_deleted = 0) as post_count,
+                    (SELECT COUNT(*) FROM friendships WHERE (user_id = u.id OR friend_id = u.id) AND status = 'accepted') as friend_count,
+                    (SELECT COUNT(*) FROM post_likes pl JOIN posts p ON pl.post_id = p.id WHERE p.user_id = u.id) as total_likes_received
+                FROM users u
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE u.id = ?
+            ");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$user) {
+                return $this->getDefaultUser();
+            }
+            
+            // Format user data voor Hyves
+            $user['avatar_url'] = $this->getHyvesAvatar($user['id'], $user['avatar']);
+            $user['name'] = $user['display_name'] ?? $user['username'] ?? 'Gebruiker';
+            $user['followers'] = $user['friend_count'] ?? 0;  // In Hyves context
+            $user['following'] = $user['friend_count'] ?? 0;   // Vriendschappen zijn wederzijds
+            $user['respect_received'] = $user['total_likes_received'] ?? 0;
+            
+            return $user;
+            
+        } catch (PDOException $e) {
+            error_log('Get current user error: ' . $e->getMessage());
+            return $this->getDefaultUser();
+        }
+    }
+
+    /**
+     * Default user fallback
+     */
+    private function getDefaultUser()
+    {
+        return [
+            'id' => 0,
+            'name' => 'Gast',
+            'username' => 'gast',
+            'display_name' => 'Gast',
+            'post_count' => 0,
+            'followers' => 0,
+            'following' => 0,
+            'respect_received' => 0,
+            'avatar_url' => base_url('theme-assets/default/images/default-avatar.png')
+        ];
+    }
 
         /**
          * Hulpfunctie om het aantal posts van een gebruiker te tellen
@@ -337,49 +778,39 @@ class FeedController extends Controller
             }
         }
 
-        /**
-         * Verwerk het POST request voor het maken van een nieuwe post
-         */
-        public function create()
-        {
-            // Controleer of gebruiker is ingelogd
-            if (!isset($_SESSION['user_id'])) {
-                if ($this->isJsonRequest()) {
-                    $this->jsonResponse(['success' => false, 'message' => 'Niet ingelogd']);
-                } else {
-                    $_SESSION['error'] = 'Je moet ingelogd zijn om een bericht te plaatsen.';
-                    header('Location: ' . $_SERVER['HTTP_REFERER'] ?? '/');
-                    exit;
-                }
-            }
+    /**
+     * Verbeterde post creation met Hyves-specifieke features
+     */
+    public function create()
+    {
+        // Debug logging
+        file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] === CREATE POST DEBUG ===\n" . 
+            "POST data: " . print_r($_POST, true) . "\n" . 
+            "FILES data: " . print_r($_FILES, true) . "\n", 
+            FILE_APPEND | LOCK_EX);
 
-            // Verwerk het formulier
-            $result = $this->createPost();
-
-            // Return de juiste response
-            if ($this->isJsonRequest()) {
-                // Voeg extra data toe voor AJAX requests
-                if ($result['success'] && isset($result['post_id'])) {
-                    // Haal de volledige post data op voor de frontend
-                    $post = $this->getPostById($result['post_id']);
-                    if ($post) {
-                        $result['post'] = $post;
-                    }
-                }
-                
-                $this->jsonResponse($result);
-            } else {
-                // Voor reguliere form submits
-                if ($result['success']) {
-                    $_SESSION['success'] = $result['message'];
-                } else {
-                    $_SESSION['error'] = $result['message'];
-                }
-                
-                header('Location: ' . $_SERVER['HTTP_REFERER'] ?? '/');
-                exit;
-            }
+        if (!isset($_SESSION['user_id'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.']);
         }
+
+        $result = $this->createPost();
+
+        if ($this->isJsonRequest()) {
+            if ($result['success'] && isset($result['post_id'])) {
+                $post = $this->getPostById($result['post_id']);
+                if ($post) {
+                    $result['post'] = $this->formatPostForHyves($post);
+                }
+            }
+            $this->jsonResponse($result);
+        } else {
+            $_SESSION[$result['success'] ? 'success' : 'error'] = $result['message'];
+            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+            exit;
+        }
+    }
+
 
         // Helper om te controleren of het een JSON request is
         private function isJsonRequest()
@@ -442,186 +873,126 @@ class FeedController extends Controller
             }
         }
     
-        public function createPost($userId = null, $content = null, $type = 'text') 
-        {
-        // Gebruik sessie user_id als deze niet expliciet is doorgegeven
+    /**
+     * Enhanced createPost met Hyves features
+     */
+    public function createPost($userId = null, $content = null, $type = 'text') 
+    {
         $userId = $userId ?? ($_SESSION['user_id'] ?? 0);
-        
-        // Haal content uit POST als deze niet expliciet is doorgegeven
         $content = $content ?? trim($_POST['content'] ?? '');
+        
+        // Hyves-specifieke velden
+        $privacy = $_POST['privacy'] ?? 'public';
+        $mood = $_POST['mood'] ?? null;
+        $location = $_POST['location'] ?? null;
         
         // Validatie
         if (empty($content) && empty($_FILES['image']['name'])) {
-            // Bericht kan niet leeg zijn als er ook geen afbeelding is
-            return [
-                'success' => false,
-                'message' => 'Voeg tekst of een afbeelding toe aan je bericht.'
-            ];
+            return ['success' => false, 'message' => 'Voeg tekst of een afbeelding toe aan je bericht.'];
         }
         
         if (strlen($content) > 1000) {
-            return [
-                'success' => false,
-                'message' => 'Je bericht mag maximaal 1000 tekens bevatten.'
-            ];
+            return ['success' => false, 'message' => 'Je bericht mag maximaal 1000 tekens bevatten.'];
         }
         
         if (!$userId) {
-            return [
-                'success' => false,
-                'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.'
-            ];
+            return ['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.'];
         }
-        
-        // Controleer of user bestaat
-        $stmt = $this->db->prepare("SELECT id FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$user) {
-            return [
-                'success' => false,
-                'message' => "Gebruiker bestaat niet"
-            ];
-        }
-        
-        // Bepaal het type post (text of image)
-        $post_type = $type;  // Default waarde uit de parameter (meestal 'text')
+
+        // Bepaal post type
+        $post_type = $type;
         $image_path = null;
 
-        // Controleer of er een afbeelding is geüpload
+        // Afbeelding upload (bestaande logica behouden)
         if (!empty($_FILES['image']['name'])) {
-            error_log('Afbeelding upload poging: ' . $_FILES['image']['name']);
-            error_log('Bestandsgrootte: ' . $_FILES['image']['size']);
-            error_log('Temp bestand: ' . $_FILES['image']['tmp_name']);
-            error_log('Error code: ' . $_FILES['image']['error']);
-            
-            // Controleer of temp bestand bestaat
-            if (file_exists($_FILES['image']['tmp_name'])) {
-                error_log('Temp bestand bestaat');
-            } else {
-                error_log('Temp bestand bestaat NIET');
+            $uploadResult = $this->handleImageUpload();
+            if (!$uploadResult['success']) {
+                return $uploadResult;
             }
-            
-            // Eenvoudige directe upload zonder helper
-            $year = date('Y');
-            $month = date('m');
-            $upload_dir = BASE_PATH . '/public/uploads/posts/' . $year . '/' . $month;
-            
-            // Maak directory als deze niet bestaat
-            if (!is_dir($upload_dir)) {
-                error_log('Maak directory: ' . $upload_dir);
-                mkdir($upload_dir, 0755, true);
-            }
-            
-            // Genereer unieke bestandsnaam
-            $file_ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-            $file_name = 'post_' . uniqid() . '.' . $file_ext;
-            $upload_path = $upload_dir . '/' . $file_name;
-            
-            error_log('Upload pad: ' . $upload_path);
-            
-            // Verplaats het bestand
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
-                error_log('Bestand succesvol geüpload');
-                $image_path = 'posts/' . $year . '/' . $month . '/' . $file_name;
-                $post_type = 'photo';  // Gebruik 'photo' (een van de toegestane ENUM waarden)
-            } else {
-                $error = error_get_last();
-                error_log('Upload fout: ' . ($error ? $error['message'] : 'Onbekende fout'));
-                return [
-                    'success' => false, 
-                    'message' => 'Fout bij het uploaden van de afbeelding: ' . 
-                                ($error ? $error['message'] : 'Onbekende fout')
-                ];
-            }
+            $image_path = $uploadResult['path'];
+            $post_type = 'photo';
         }
 
-        // Bij het maken van de post, gebruik de correcte ENUM waarde
         try {
-            // Begin een transactie
             $this->db->beginTransaction();
             
-            // Maak eerst de post aan met de juiste ENUM waarde
-            $stmt = $this->db->prepare("INSERT INTO posts (user_id, content, type, created_at) VALUES (?, ?, ?, NOW())");
-            $stmt->execute([$userId, $content, $post_type]);
+            // Verbeterde post insert met Hyves velden
+            $stmt = $this->db->prepare("
+                INSERT INTO posts (
+                    user_id, content, type, privacy_level, mood, location, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([$userId, $content, $post_type, $privacy, $mood, $location]);
             $post_id = $this->db->lastInsertId();
             
-            // Als er een afbeelding is, sla deze op in de post_media tabel
+            // Media opslaan indien aanwezig
             if ($post_type === 'photo' && $image_path) {
-            // Zorg ervoor dat post_media tabel bestaat
-            $this->ensurePostMediaTable();
-            
-            // Bepaal het juiste media_type op basis van MIME type
-            $mime_type = $_FILES['image']['type'];
-            $media_type = 'image'; // Standaard voor afbeeldingen
-            
-            if (strpos($mime_type, 'video/') === 0) {
-                $media_type = 'video';
-            } elseif (strpos($mime_type, 'audio/') === 0) {
-                $media_type = 'audio';
+                $this->savePostMedia($post_id, $image_path, $_FILES['image']);
             }
             
-            // Vul alle verplichte kolommen in
-            $stmt = $this->db->prepare("
-                INSERT INTO post_media (
-                    post_id, 
-                    file_path, 
-                    media_type,
-                    file_name,
-                    file_size,
-                    alt_text,
-                    thumbnail_path,
-                    display_order
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([
-                $post_id,                   // post_id
-                $image_path,                // file_path
-                $media_type,                // media_type (nu een van de toegestane ENUM waarden)
-                $_FILES['image']['name'],   // file_name
-                $_FILES['image']['size'],   // file_size
-                '',                         // alt_text (leeg, maar vereist)
-                '',                         // thumbnail_path (leeg, maar vereist)
-                0                           // display_order
-            ]);
-            }
-            
-            // Commit de transactie
             $this->db->commit();
-            
-            error_log('Post succesvol aangemaakt: ID=' . $post_id);
             
             return [
                 'success' => true,
                 'message' => 'Je bericht is geplaatst!',
                 'post_id' => $post_id
             ];
+            
         } catch (PDOException $e) {
-            // Rollback bij fouten
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
-            
-            error_log('Database fout: ' . $e->getMessage());
-            
+            error_log('Create post error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Er is een fout opgetreden bij het plaatsen van je bericht.'];
+        }
+    }
+
+    /**
+     * Verbeterde image upload handling
+     */
+    private function handleImageUpload()
+    {
+        $year = date('Y');
+        $month = date('m');
+        $upload_dir = BASE_PATH . '/public/uploads/posts/' . $year . '/' . $month;
+        
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        
+        $file_ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $file_name = 'post_' . uniqid() . '.' . $file_ext;
+        $upload_path = $upload_dir . '/' . $file_name;
+        
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
             return [
-                'success' => false,
-                'message' => 'Database fout: ' . $e->getMessage()
-            ];
-        } catch (Exception $e) {
-            // Rollback bij fouten
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            
-            error_log('Algemene fout: ' . $e->getMessage());
-            
-            return [
-                'success' => false,
-                'message' => 'Er is een fout opgetreden: ' . $e->getMessage()
+                'success' => true,
+                'path' => 'posts/' . $year . '/' . $month . '/' . $file_name
             ];
         }
+        
+        return ['success' => false, 'message' => 'Fout bij het uploaden van de afbeelding.'];
+    }
+
+    /**
+     * Save post media met extra metadata
+     */
+    private function savePostMedia($post_id, $image_path, $file_data)
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO post_media (
+                post_id, file_path, media_type, file_name, file_size, alt_text, display_order
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $post_id,
+            $image_path,
+            'image',
+            $file_data['name'],
+            $file_data['size'],
+            '',
+            0
+        ]);
     }
 
         /**
@@ -780,6 +1151,8 @@ class FeedController extends Controller
          */
         public function toggleLike()
         {
+            header('Content-Type: application/json');
+
         // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);

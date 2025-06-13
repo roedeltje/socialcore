@@ -9,11 +9,49 @@ date_default_timezone_set('Europe/Amsterdam');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Laad configuraties
+// Autoloader registreren EERST (verplaatst naar boven)
+spl_autoload_register(function ($className) {
+    // Vervang backslashes door directory separators
+    $parts = explode('\\', $className);
+    
+    // Als het een App namespace is, haal "App" uit het pad
+    if ($parts[0] === 'App') {
+        array_shift($parts); // Verwijder "App" uit het begin
+        $path = implode(DIRECTORY_SEPARATOR, $parts);
+        
+        $appFile = __DIR__ . '/../app/' . $path . '.php';
+        
+        if (file_exists($appFile)) {
+            require_once $appFile;
+            return;
+        }
+    } else {
+        // Originele pad voor andere namespaces
+        $path = str_replace('\\', DIRECTORY_SEPARATOR, $className);
+        
+        // Zoek eerst in app directory
+        $appFile = __DIR__ . '/../app/' . $path . '.php';
+        
+        if (file_exists($appFile)) {
+            require_once $appFile;
+            return;
+        }
+        
+        // Zoek daarna in core directory
+        $coreFile = __DIR__ . '/' . $path . '.php';
+        
+        if (file_exists($coreFile)) {
+            require_once $coreFile;
+            return;
+        }
+    }
+});
+
+// NU kunnen we veilig de configuraties laden (na autoloader)
 $config = [
     'app' => require __DIR__ . '/../config/app.php',
     'database' => require __DIR__ . '/../config/database.php',
-    'theme' => require __DIR__ . '/../config/theme.php',
+    'theme' => require __DIR__ . '/../config/theme.php',  // Nu kan Settings worden gebruikt!
 ];
 
 // Maak config globaal beschikbaar als functie
@@ -50,51 +88,12 @@ define('ENVIRONMENT', config('app.environment', 'development'));
 define('APP_DEBUG', config('app.debug', true));
 define('SITE_NAME', config('app.name', 'SocialCore'));
 
+define('SOCIALCORE', true);  // Voor theme security checks
+
 // Thema instellingen
 define('BASE_PATH', dirname(__DIR__));
-define('THEME_NAME', config('theme.active_theme', 'default')); // Kan later uit de database komen
+define('THEME_NAME', config('theme.active_theme', 'default'));
 define('THEME_PATH', BASE_PATH . '/themes/' . THEME_NAME);
-
-// Autoloader registreren
-spl_autoload_register(function ($className) {
-    // Vervang backslashes door directory separators
-    $parts = explode('\\', $className);
-    
-    // Als het een App namespace is, haal "App" uit het pad
-    if ($parts[0] === 'App') {
-        array_shift($parts); // Verwijder "App" uit het begin
-        $path = implode(DIRECTORY_SEPARATOR, $parts);
-        
-        $appFile = __DIR__ . '/../app/' . $path . '.php';
-        
-        if (file_exists($appFile)) {
-            require_once $appFile;
-            return;
-        }
-    } else {
-        // Originele pad voor andere namespaces
-        $path = str_replace('\\', DIRECTORY_SEPARATOR, $className);
-        
-        // Zoek eerst in app directory
-        $appFile = __DIR__ . '/../app/' . $path . '.php';
-        
-        if (file_exists($appFile)) {
-            require_once $appFile;
-            return;
-        }
-        
-        // Zoek daarna in core directory
-        $coreFile = __DIR__ . '/' . $path . '.php';
-        
-        if (file_exists($coreFile)) {
-            require_once $coreFile;
-            return;
-        }
-        
-        // We verwijderen deze check omdat middleware nu in app/Middleware zit
-        // en al via de App namespace check wordt geladen
-    }
-});
 
 // Laad helpers
 require_once __DIR__ . '/helpers.php';
@@ -103,6 +102,15 @@ require_once __DIR__ . '/helpers/upload.php';
 require_once __DIR__ . '/../app/Helpers/FormHelper.php';
 require_once __DIR__ . '/theme-loader.php';
 
+// === NIEUWE THEMA SYSTEEM INITIALISATIE ===
+// Initialize theme system using existing ThemeManager
+use App\Core\ThemeFunctions;
+use App\Core\ThemeManager;
+
+// Initialiseer theme system (ThemeManager wordt automatisch geïnitialiseerd)
+ThemeFunctions::init();
+ThemeFunctions::load_theme_functions();
+// === EINDE THEMA SYSTEEM INITIALISATIE ===
 
 // Laad de web en API routes
 $webRoutes = require __DIR__ . '/../routes/web.php';
@@ -164,11 +172,10 @@ if (array_key_exists($routeKey, $routes)) {
     $continueRequest = true;
     foreach ($middlewares as $middlewareClass) {
         // Instantieer middleware class
-        // We hoeven geen extra checks meer te doen omdat de autoloader die nu regelt
         $middleware = new $middlewareClass();
         $continueRequest = $middleware->handle();
         
-        // Stop verwerking als middleware returnt false
+        // Stop verwerking als middleware het toestaat niet
         if (!$continueRequest) {
             break;
         }
@@ -185,5 +192,13 @@ if (array_key_exists($routeKey, $routes)) {
     }
 } else {
     http_response_code(404);
-    echo "<h1>404 - Pagina niet gevonden</h1>";
+    
+    // === GEBRUIK NIEUW THEMA SYSTEEM VOOR 404 PAGINA ===
+    try {
+        ThemeFunctions::loadTemplate('404');
+    } catch (Exception $e) {
+        // Fallback naar oude systeem
+        echo "<h1>404 - Pagina niet gevonden</h1>";
+    }
+    // === EINDE 404 THEMA INTEGRATIE ===
 }

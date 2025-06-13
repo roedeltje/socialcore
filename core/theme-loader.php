@@ -2,66 +2,12 @@
 /**
  * SocialCore Theme Loader
  * 
- * Dit bestand bevat functies voor het laden en beheren van thema's
- */
-
-/**
- * Haalt de thema-configuratie op
+ * Dit bestand bevat specifieke functies voor het laden en beheren van thema's
+ * die niet in de algemene helpers zitten.
  * 
- * @return array De thema-configuratie
+ * NOTE: Basis theme functies zoals get_theme_config() en get_active_theme() 
+ * zijn nu in /core/helpers.php gedefinieerd.
  */
-function get_theme_config() {
-    // Probeer eerst de thema configuratie te laden uit config
-    if (function_exists('config') && is_array(config('theme'))) {
-        return config('theme');
-    }
-    
-    // Als dat niet werkt, probeer het thema config bestand rechtstreeks te laden
-    $themeConfigFile = __DIR__ . '/../config/theme.php';
-    if (file_exists($themeConfigFile)) {
-        $themeConfig = require $themeConfigFile;
-        if (is_array($themeConfig)) {
-            return $themeConfig;
-        }
-    }
-    
-    // Als fallback, retourneer standaard configuratie
-    return [
-        'active_theme' => 'default',
-        'themes_directory' => 'themes',
-        'fallback_theme' => 'default'
-    ];
-}
-
-/**
- * Haalt de naam van het actieve thema op
- * 
- * @return string Naam van het actieve thema
- */
-function get_active_theme() {
-    $config = get_theme_config();
-    return $config['active_theme'];
-}
-
-/**
- * Genereert het absolute pad naar een themabestand
- * 
- * @param string $file Relatief pad naar het bestand binnen het thema
- * @param string $theme Optioneel: specifieke thema (standaard: actieve thema)
- * @return string Absoluut pad naar het themabestand
- */
-function get_theme_path($file = '', $theme = '') {
-    $config = get_theme_config();
-    
-    if (empty($theme)) {
-        $theme = $config['active_theme'];
-    }
-    
-    $themes_dir = rtrim($config['themes_directory'], '/');
-    $file = ltrim($file, '/');
-    
-    return __DIR__ . '/../' . $themes_dir . '/' . $theme . '/' . $file;
-}
 
 /**
  * Controleert of een themabestand bestaat
@@ -71,7 +17,12 @@ function get_theme_path($file = '', $theme = '') {
  * @return bool True als het bestand bestaat, anders false
  */
 function theme_file_exists($file, $theme = '') {
-    return file_exists(get_theme_path($file, $theme));
+    if (empty($theme)) {
+        $theme = get_active_theme();
+    }
+    
+    $path = get_theme_path($file);
+    return file_exists($path);
 }
 
 /**
@@ -102,8 +53,9 @@ function load_theme_file($file, $data = [], $once = true) {
         extract($data);
     }
     
-    // Laad het bestand
-    $path = get_theme_path($file, $theme);
+    // Bepaal het volledige pad
+    $themes_dir = $config['themes_directory'] ?? 'themes';
+    $path = __DIR__ . '/../' . $themes_dir . '/' . $theme . '/' . ltrim($file, '/');
     
     if ($once) {
         return include_once $path;
@@ -141,15 +93,12 @@ function load_theme_part($part, $data = []) {
  * 
  * @param string $file Pad naar het asset relatief aan de assets-map van het thema
  * @return string URL naar het thema-asset
+ * 
+ * @deprecated Use theme_asset() from helpers.php instead
  */
 function get_theme_asset_url($file) {
-    $config = get_theme_config();
-    $theme = $config['active_theme'];
-    
-    $file = ltrim($file, '/');
-    
-    // Gebruik de nieuwe 'theme-assets' map in public
-    return base_url('theme-assets/' . $theme . '/' . $file);
+    // Delegate to the new helper function
+    return theme_asset($file);
 }
 
 /**
@@ -163,7 +112,7 @@ function get_theme_metadata($theme = '') {
         $theme = get_active_theme();
     }
     
-    $json_path = get_theme_path('theme.json', $theme);
+    $json_path = get_theme_path('theme.json');
     
     if (file_exists($json_path)) {
         $json_content = file_get_contents($json_path);
@@ -179,20 +128,27 @@ function get_theme_metadata($theme = '') {
  * @param string $component Naam van het component
  * @param array $data Data voor het component
  * @return bool True als het laden is gelukt, anders false
+ * 
+ * @deprecated Use get_component() from helpers.php instead
  */
 function load_theme_component($component, $data = []) {
-    return load_theme_file('components/' . $component . '.php', $data);
+    // Delegate to the new helper function
+    return get_component($component, $data);
 }
 
 /**
- * Laadt een pagina uit het thema
+ * Laadt een pagina uit het thema (legacy versie)
  * 
  * @param string $page Naam van de pagina
  * @param array $data Data voor de pagina
  * @return bool True als het laden is gelukt, anders false
+ * 
+ * NOTE: Deze functie is verplaatst naar helpers.php
+ * Dit is nu een legacy wrapper voor backwards compatibility
  */
-function load_theme_page($page, $data = []) {
-    return load_theme_file('pages/' . $page . '.php', $data);
+function load_theme_page_legacy($page, $data = []) {
+    // Delegate to the new helper function
+    return load_theme_template("pages/{$page}", $data);
 }
 
 /**
@@ -201,7 +157,86 @@ function load_theme_page($page, $data = []) {
  * @param string $template Naam van het template
  * @param array $data Data voor het template
  * @return bool True als het laden is gelukt, anders false
+ * 
+ * NOTE: Deze functie wordt ook gedefinieerd in helpers.php maar met andere signature
+ * Behoud deze voor backwards compatibility
  */
-function load_theme_template($template, $data = []) {
+function load_theme_template_legacy($template, $data = []) {
     return load_theme_file('templates/' . $template . '.php', $data);
+}
+
+/**
+ * Debug functie: Check of theme system correct werkt
+ * 
+ * @return array Debug informatie
+ */
+function debug_theme_system() {
+    $debug = [];
+    
+    // Check config method
+    $config = get_theme_config();
+    $debug['config_theme'] = $config['active_theme'] ?? 'unknown';
+    $debug['themes_directory'] = $config['themes_directory'] ?? 'unknown';
+    $debug['fallback_theme'] = $config['fallback_theme'] ?? 'unknown';
+    
+    // Check ThemeManager method
+    $managerTheme = 'unknown';
+    try {
+        if (class_exists('App\Core\ThemeManager')) {
+            $themeManager = App\Core\ThemeManager::getInstance();
+            $managerTheme = $themeManager->getActiveTheme();
+        }
+    } catch (Exception $e) {
+        $debug['manager_error'] = $e->getMessage();
+    }
+    $debug['manager_theme'] = $managerTheme;
+    
+    // Check final result
+    $debug['final_theme'] = get_active_theme();
+    
+    // Check theme paths
+    $debug['theme_path'] = get_theme_path();
+    $debug['theme_exists'] = theme_exists(get_active_theme());
+    
+    // Check some common files
+    $debug['files'] = [
+        'header' => theme_file_exists('layouts/header.php'),
+        'footer' => theme_file_exists('layouts/footer.php'),
+        'home' => theme_file_exists('pages/home.php'),
+        'style_css' => theme_file_exists('assets/css/style.css'),
+    ];
+    
+    return $debug;
+}
+
+/**
+ * Legacy wrapper functions for backwards compatibility
+ * These delegate to the new helper functions
+ */
+
+if (!function_exists('theme_css_url')) {
+    /**
+     * @deprecated Use theme_style() instead
+     */
+    function theme_css_url($file) {
+        return theme_style($file);
+    }
+}
+
+if (!function_exists('theme_js_url')) {
+    /**
+     * @deprecated Use theme_script() instead
+     */
+    function theme_js_url($file) {
+        return theme_script($file);
+    }
+}
+
+if (!function_exists('theme_image_url')) {
+    /**
+     * @deprecated Use theme_image() instead
+     */
+    function theme_image_url($file) {
+        return theme_image($file);
+    }
 }

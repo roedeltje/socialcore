@@ -1,0 +1,41 @@
+[2025-06-10 10:12:10] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Mooi 🥰
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => fluss-8699968_1280.jpg
+            [full_path] => fluss-8699968_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpTjiY6A
+            [error] => 0
+            [size] => 250913
+        )
+
+)
+
+[2025-06-10 14:32:45] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Test bericht
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+

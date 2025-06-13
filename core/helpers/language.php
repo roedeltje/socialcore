@@ -1,65 +1,55 @@
 <?php
 /**
- * SocialCore Taalhulpfuncties
+ * Language Helper - SocialCore
  * 
- * Bevat functies voor meertaligheid binnen het SocialCore platform.
+ * VERVANG DE HELE INHOUD van /core/helpers/language.php met dit bestand
  */
 
 /**
- * Geeft een vertaalde string terug
+ * Vertaal een sleutel naar de huidige taal
  * 
- * @param string $key De sleutel in de vorm van "bestand.string_key"
- * @param array $replace Associatieve array met waarden die moeten worden vervangen
- * @param string|null $locale Optionele taal, gebruikt anders de huidige taal
- * @return string
+ * @param string $key De vertaalsleutel
+ * @param array|string $replace Vervangingen voor placeholders (optioneel)
+ * @param string $file Het vertaalbestand (optioneel)
+ * @return string De vertaalde tekst
  */
-function __($key, array $replace = [], ?string $locale = null): string 
-{
-    static $translations = [];
-    
-    // Als geen locale is opgegeven, gebruik dan de huidige taal uit de sessie
-    if ($locale === null) {
-        $locale = get_current_language();
+function __($key, $replace = [], $file = null) {
+    // Zorg ervoor dat $replace altijd een array is
+    if (is_string($replace)) {
+        $replace = [$replace];
+    } elseif (!is_array($replace)) {
+        $replace = [];
     }
     
-    // Splits de sleutel in bestandsnaam en string key
-    $parts = explode('.', $key, 2);
-    
-    if (count($parts) !== 2) {
-        // Ongeldige sleutel formaat, geef de sleutel zelf terug
-        return $key;
-    }
-    
-    [$file, $stringKey] = $parts;
-    
-    // Laad het taalbestand als het nog niet is geladen
-    $cacheKey = $locale . '.' . $file;
-    if (!isset($translations[$cacheKey])) {
-        $langFilePath = __DIR__ . '/../../lang/' . $locale . '/' . $file . '.php';
-        
-        if (file_exists($langFilePath)) {
-            $translations[$cacheKey] = require $langFilePath;
+    // Als er geen file is opgegeven, probeer de key te splitsen
+    if ($file === null) {
+        if (strpos($key, '.') !== false) {
+            $parts = explode('.', $key, 2);
+            $file = $parts[0];
+            $key = $parts[1];
         } else {
-            // Bestand bestaat niet, probeer de standaardtaal
-            $defaultLocale = get_default_language();
-            $defaultFilePath = __DIR__ . '/../../lang/' . $defaultLocale . '/' . $file . '.php';
-            
-            if ($locale !== $defaultLocale && file_exists($defaultFilePath)) {
-                $translations[$cacheKey] = require $defaultFilePath;
-            } else {
-                // Geen vertaling gevonden, lege array gebruiken
-                $translations[$cacheKey] = [];
-            }
+            $file = 'app'; // Default file
         }
     }
     
-    // Haal de vertaling op
-    $translation = $translations[$cacheKey][$stringKey] ?? $stringKey;
+    // Probeer de vertaling te vinden
+    $translation = getTranslation($key, $file);
     
-    // Vervang placeholders met waarden
+    // Als er geen vertaling is, gebruik de key zelf
+    if ($translation === null) {
+        $translation = $key;
+    }
+    
+    // Vervang placeholders als er vervangingen zijn
     if (!empty($replace)) {
-        foreach ($replace as $placeholder => $value) {
-            $translation = str_replace(':' . $placeholder, $value, $translation);
+        foreach ($replace as $search => $replacement) {
+            if (is_numeric($search)) {
+                // Numerieke keys: vervang :0, :1, etc.
+                $translation = str_replace(':' . $search, $replacement, $translation);
+            } else {
+                // String keys: vervang :key
+                $translation = str_replace(':' . $search, $replacement, $translation);
+            }
         }
     }
     
@@ -67,100 +57,93 @@ function __($key, array $replace = [], ?string $locale = null): string
 }
 
 /**
- * Haalt de huidige taal op uit sessie of cookie
- * 
- * @return string Taalcode (bijv. 'nl', 'en')
+ * Helper functie om vertaling op te halen
  */
-function get_current_language(): string 
-{
-    if (isset($_SESSION['language'])) {
-        return $_SESSION['language'];
-    }
+function getTranslation($key, $file) {
+    static $translations = [];
     
-    if (isset($_COOKIE['language'])) {
-        return $_COOKIE['language'];
-    }
-    
-    return get_default_language();
-}
-
-/**
- * Haalt de standaardtaal van de applicatie op
- * 
- * @return string Taalcode (bijv. 'nl', 'en')
- */
-function get_default_language(): string 
-{
-    // Haal uit de config, of gebruik 'nl' als standaard
-    // TODO: Implementeer een config system om dit configureerbaar te maken
-    return 'nl';
-}
-
-/**
- * Stelt de taal in voor de huidige sessie en (optioneel) cookie
- * 
- * @param string $locale Taalcode (bijv. 'nl', 'en')
- * @param bool $rememberInCookie True om de keuze op te slaan in een cookie
- * @param int $cookieDuration Duur van de cookie in seconden (standaard 30 dagen)
- * @return bool
- */
-function set_language(string $locale, bool $rememberInCookie = false, int $cookieDuration = 2592000): bool 
-{
-    // Controleer of de taal bestaat
-    $langDir = __DIR__ . '/../../lang/' . $locale;
-    
-    if (!is_dir($langDir)) {
-        return false;
-    }
-    
-    // Sla de taal op in de sessie
-    $_SESSION['language'] = $locale;
-    
-    // Optioneel: sla de taal op in een cookie
-    if ($rememberInCookie) {
-        setcookie('language', $locale, [
-            'expires' => time() + $cookieDuration,
-            'path' => '/',
-            'domain' => '',
-            'secure' => isset($_SERVER['HTTPS']),
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ]);
-    }
-    
-    return true;
-}
-
-/**
- * Krijgt een lijst van alle beschikbare talen
- * 
- * @return array Associatieve array met taalcode => taalnaam
- */
-function get_available_languages(): array 
-{
-    $langDir = __DIR__ . '/../../lang';
-    $languages = [];
-    
-    // Scan de language directory
-    $dirs = scandir($langDir);
-    
-    foreach ($dirs as $dir) {
-        if ($dir === '.' || $dir === '..' || !is_dir($langDir . '/' . $dir)) {
-            continue;
+    if (!isset($translations[$file])) {
+        $langFile = __DIR__ . '/../../lang/' . getCurrentLanguage() . '/' . $file . '.php';
+        if (file_exists($langFile)) {
+            $translations[$file] = require $langFile;
+        } else {
+            $translations[$file] = [];
         }
-        
-        // Hier zou je een mapping kunnen hebben tussen taalcodes en namen
-        // Voor nu gebruiken we een eenvoudige mapping
-        $languageNames = [
-            'nl' => 'Nederlands',
-            'en' => 'English',
-            'fr' => 'Français',
-            'de' => 'Deutsch',
-            'es' => 'Español'
-        ];
-        
-        $languages[$dir] = $languageNames[$dir] ?? $dir;
+    }
+    
+    return $translations[$file][$key] ?? null;
+}
+
+/**
+ * Krijg huidige taal
+ */
+function getCurrentLanguage() {
+    return $_SESSION['language'] ?? 'nl';
+}
+
+/**
+ * Zet de huidige taal
+ */
+function setLanguage($lang) {
+    $_SESSION['language'] = $lang;
+}
+
+/**
+ * Krijg alle beschikbare talen
+ */
+function getAvailableLanguages() {
+    $languages = [];
+    $langDir = __DIR__ . '/../../lang';
+    
+    if (is_dir($langDir)) {
+        $dirs = scandir($langDir);
+        foreach ($dirs as $dir) {
+            if ($dir !== '.' && $dir !== '..' && is_dir($langDir . '/' . $dir)) {
+                $languages[] = $dir;
+            }
+        }
     }
     
     return $languages;
+}
+
+/**
+ * Laad een specifiek language bestand
+ */
+function loadLanguageFile($file, $lang = null) {
+    if ($lang === null) {
+        $lang = getCurrentLanguage();
+    }
+    
+    $langFile = __DIR__ . '/../../lang/' . $lang . '/' . $file . '.php';
+    
+    if (file_exists($langFile)) {
+        return require $langFile;
+    }
+    
+    return [];
+}
+
+/**
+ * Controleer of een taal bestaat
+ */
+function languageExists($lang) {
+    $langDir = __DIR__ . '/../../lang/' . $lang;
+    return is_dir($langDir);
+}
+
+/**
+ * Plural helper voor vertalingen
+ */
+function __n($single, $plural, $count, $replace = [], $file = null) {
+    $key = ($count == 1) ? $single : $plural;
+    $replace['count'] = $count;
+    return __($key, $replace, $file);
+}
+
+/**
+ * Escape HTML en vertaal tegelijk
+ */
+function __e($key, $replace = [], $file = null) {
+    return htmlspecialchars(__($key, $replace, $file), ENT_QUOTES, 'UTF-8');
 }

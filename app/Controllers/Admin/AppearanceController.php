@@ -27,7 +27,7 @@ class AppearanceController extends Controller
     /**
      * View methode die admin layout gebruikt
      */
-    protected function view($view, $data = [])
+    protected function view($view, $data = [], $forceNewSystem = false)
     {
         // Gebruik de admin layout
         $title = $data['title'] ?? 'Admin';
@@ -51,30 +51,53 @@ class AppearanceController extends Controller
             $themes = $this->themeManager->getAllThemes();
             $activeTheme = $this->themeManager->getActiveTheme();
             
-            $data = [
-                'title' => 'Thema\'s beheren',
-                'themes' => $themes,
-                'activeTheme' => $activeTheme
-            ];
+            // Debug: Controleer of we data hebben
+            if (empty($themes)) {
+                throw new \Exception("Geen themes gevonden via ThemeManager");
+            }
             
-            $this->view('admin/appearance/themes', $data);
+            // Prepare data voor view
+            $title = 'Thema\'s beheren';
+            
+            // DIRECTE ADMIN LAYOUT LOADING (meest reliable)
+            $contentView = BASE_PATH . '/app/Views/admin/appearance/themes.php';
+            
+            // Zorg dat alle variabelen beschikbaar zijn in de view
+            extract(compact('title', 'themes', 'activeTheme'));
+            
+            // Laad admin layout
+            include BASE_PATH . '/app/Views/admin/layout.php';
             
         } catch (\Exception $e) {
-            echo "<div style='padding: 20px; background: #f8d7da; color: #721c24;'>";
-            echo "<h3>Debug Informatie - Thema Manager</h3>";
-            echo "<p><strong>Fout:</strong> " . htmlspecialchars($e->getMessage()) . "</p>";
+            // Error handling met admin layout
+            $title = 'Thema Fout';
+            $error_message = $e->getMessage();
+            
+            // Show debug info
+            echo "<div style='padding: 20px; background: #f8d7da; color: #721c24; margin: 20px; border-radius: 5px;'>";
+            echo "<h3>🔍 Debug Informatie - Thema Manager</h3>";
+            echo "<p><strong>Fout:</strong> " . htmlspecialchars($error_message) . "</p>";
             echo "<p><strong>ThemeManager status:</strong> " . ($this->themeManager ? 'Geladen' : 'Niet geladen') . "</p>";
             
-            // Test of BASE_PATH bestaat
-            echo "<p><strong>BASE_PATH:</strong> " . (defined('BASE_PATH') ? BASE_PATH : 'NIET GEDEFINIEERD') . "</p>";
+            if ($this->themeManager) {
+                try {
+                    $debugThemes = $this->themeManager->getAllThemes();
+                    echo "<p><strong>Direct themes test:</strong> " . count($debugThemes) . " gevonden</p>";
+                    foreach ($debugThemes as $slug => $theme) {
+                        echo "- {$slug}: " . htmlspecialchars($theme['name'] ?? 'Geen naam') . "<br>";
+                    }
+                } catch (\Exception $debugE) {
+                    echo "<p><strong>Debug fout:</strong> " . htmlspecialchars($debugE->getMessage()) . "</p>";
+                }
+            }
             
-            // Test of themes directory bestaat
-            $themesDir = (defined('BASE_PATH') ? BASE_PATH : __DIR__) . '/themes';
-            echo "<p><strong>Themes directory:</strong> {$themesDir} - " . (is_dir($themesDir) ? 'BESTAAT' : 'BESTAAT NIET') . "</p>";
-            
-            echo "<p><strong>Stack trace:</strong></p>";
-            echo "<pre>" . $e->getTraceAsString() . "</pre>";
             echo "</div>";
+            
+            // Fallback: lege data
+            $themes = [];
+            $activeTheme = 'default';
+            $contentView = BASE_PATH . '/app/Views/admin/appearance/themes.php';
+            include BASE_PATH . '/app/Views/admin/layout.php';
         }
     }
     

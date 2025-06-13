@@ -1,0 +1,105 @@
+[2025-06-09 14:12:39] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Nog een test bericht
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-09 14:19:55] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Kan ik nu posten?
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-09 14:41:51] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hweekdjeuw
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-09 15:47:25] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Mooie foto 😎
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => river-9010602_1280.jpg
+            [full_path] => river-9010602_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phplD3OKa
+            [error] => 0
+            [size] => 241525
+        )
+
+)
+
+[2025-06-09 17:16:13] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => 
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => budapest-4838854_1280.jpg
+            [full_path] => budapest-4838854_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpQtK9wu
+            [error] => 0
+            [size] => 433235
+        )
+
+)
+

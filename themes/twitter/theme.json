@@ -1,0 +1,52 @@
+{
+  "name": "Twitter Style",
+  "description": "Een modern Twitter-geïnspireerd theme voor SocialCore met clean design en focus op content",
+  "version": "1.0.0",
+  "author": "SocialCore Team",
+  "screenshot": "screenshot.png",
+  "requires": {
+    "socialcore": ">=1.0.0",
+    "php": ">=8.0"
+  },
+  "features": {
+    "responsive": true,
+    "dark_mode": true,
+    "rtl_support": false,
+    "custom_colors": true,
+    "custom_fonts": true
+  },
+  "colors": {
+    "primary": "#1da1f2",
+    "secondary": "#14171a",
+    "background": "#ffffff",
+    "surface": "#f7f9fa",
+    "text": "#14171a",
+    "text_secondary": "#657786",
+    "border": "#e1e8ed",
+    "accent": "#1da1f2",
+    "success": "#17bf63",
+    "warning": "#ffad1f",
+    "error": "#e0245e"
+  },
+  "typography": {
+    "font_family": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "sizes": {
+      "small": "14px",
+      "base": "15px",
+      "large": "17px",
+      "xl": "20px",
+      "xxl": "24px"
+    }
+  },
+  "layout": {
+    "sidebar_width": "275px",
+    "content_width": "600px",
+    "container_max_width": "1200px"
+  },
+  "customizable": [
+    "colors.primary",
+    "colors.accent", 
+    "typography.font_family",
+    "layout.sidebar_width"
+  ]
+}

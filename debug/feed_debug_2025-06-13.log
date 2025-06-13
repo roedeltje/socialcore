@@ -1,0 +1,20 @@
+[2025-06-13 17:20:44] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Wat een uitzicht
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => old-man-4466290_1280.jpg
+            [full_path] => old-man-4466290_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpEUODCT
+            [error] => 0
+            [size] => 234470
+        )
+
+)
+
