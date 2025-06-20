@@ -15,6 +15,7 @@ use App\Controllers\FriendsController;
 use App\Controllers\NotificationsController;
 use App\Controllers\MessagesController;
 use App\Controllers\TestController;
+use App\Controllers\CommentsController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\AppearanceController;
@@ -897,10 +898,13 @@ return [
     'middleware' => [AuthMiddleware::class]
 ],
 
-    'test/theme' => function() {
-    $controller = new TestController();
-    $controller->theme();
-},
+    'comments/delete' => [
+    'callback' => function () {
+        $commentsController = new CommentsController(); // ← Naam aangepast
+        $commentsController->delete();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
     
     // Eventuele andere routes...
 ];

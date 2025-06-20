@@ -156,29 +156,20 @@ async function postTweet(content) {
         formData.append('content', content);
         
         const response = await fetch('/?route=feed/create', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'  // 👈 En deze ook!
-        },
-        body: formData
-    });
+            method: 'POST',
+            body: formData
+        });
         
         const result = await response.json();
         
         if (result.success) {
-    // Clear the form
-    tweetText.value = '';
-    document.querySelector('.char-count').textContent = '280';
-    
-    // Show Twitter-style notification
-    showNotification('Tweet geplaatst! 🎉');
-    
-    // Refresh after a short delay to show the notification
-    setTimeout(() => {
-        window.location.reload();
-    }, 1500);
-} else {
+            // Clear the form
+            tweetText.value = '';
+            document.querySelector('.char-count').textContent = '280';
+            
+            // Refresh the page to show new tweet
+            window.location.reload();
+        } else {
             alert('Er is een fout opgetreden bij het posten van je tweet.');
         }
     } catch (error) {
@@ -232,25 +223,19 @@ async function deletePost(postId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest'  // 👈 Deze header was missing!
             },
             body: `post_id=${postId}`
         });
         
-        console.log('Response status:', response.status);
         const result = await response.json();
-        console.log('Delete result:', result);
         
         if (result.success) {
-            // Verbeterde DOM element finding
-            const tweet = document.querySelector(`[data-post-id="${postId}"]`)?.closest('.tweet, .twitter-post, .bg-white');
+            // Remove tweet from DOM
+            const tweet = document.querySelector(`[data-post-id="${postId}"]`);
             if (tweet) {
                 tweet.style.animation = 'fadeOut 0.3s ease';
                 setTimeout(() => tweet.remove(), 300);
             }
-            
-            // Twitter-stijl notificatie
-            showNotification('Tweet verwijderd! 🗑️');
         } else {
             alert('Er is een fout opgetreden bij het verwijderen van de post.');
         }
@@ -337,10 +322,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.querySelector('.twitter-profile')) {
         initProfilePage();
     }
-    
-    // Comment interactions op ALLE pagina's
-    initCommentInteractions();
-    initCommentsToggle();
 });
 
 // Friend request functions (for profile buttons)
@@ -370,192 +351,4 @@ async function acceptFriendRequest(username) {
     } catch (error) {
         console.error('Error accepting friend request:', error);
     }
-}
-
-/**
- * ===== COMMENT LIKE & DELETE FUNCTIONALITEIT =====
- */
-
-// Comment like toggle function
-function toggleCommentLike(commentId, button) {
-    if (button.disabled) return;
-    
-    button.disabled = true;
-    const likeCount = button.querySelector('.twitter-comment-like-count');
-    
-    fetch('/?route=feed/comment/like', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: 'comment_id=' + encodeURIComponent(commentId)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            likeCount.textContent = data.like_count;
-            
-            if (data.action === 'liked') {
-                button.classList.add('liked');
-            } else {
-                button.classList.remove('liked');
-            }
-        } else {
-            alert('Error: ' + (data.message || 'Failed to like reply'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while liking this reply');
-    })
-    .finally(() => {
-        button.disabled = false;
-    });
-}
-
-// Comment delete function
-function deleteComment(commentId) {
-    fetch('/?route=feed/comment/delete', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: 'comment_id=' + encodeURIComponent(commentId)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
-            if (commentElement) {
-                commentElement.style.opacity = '0';
-                commentElement.style.transform = 'translateX(-20px)';
-                setTimeout(() => {
-                    commentElement.remove();
-                    showNotification('Reply deleted', 'success');
-                }, 200);
-            }
-        } else {
-            alert('Error: ' + (data.message || 'Failed to delete reply'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while deleting the reply');
-    });
-}
-
-// Initialize comment interactions
-function initCommentInteractions() {
-    // Comment like buttons
-    document.addEventListener('click', function(e) {
-        const likeButton = e.target.closest('.twitter-comment-like-btn');
-        if (likeButton) {
-            e.preventDefault();
-            const commentId = likeButton.getAttribute('data-comment-id');
-            toggleCommentLike(commentId, likeButton);
-        }
-        
-        // Comment delete buttons
-        const deleteButton = e.target.closest('.twitter-comment-delete-btn');
-        if (deleteButton) {
-            e.preventDefault();
-            const commentId = deleteButton.getAttribute('data-comment-id');
-            if (confirm('Are you sure you want to delete this reply?')) {
-                deleteComment(commentId);
-            }
-        }
-        
-        // Comment menu toggles
-        const menuButton = e.target.closest('.twitter-comment-menu-btn');
-        if (menuButton) {
-            e.stopPropagation();
-            const dropdown = menuButton.parentElement.querySelector('.twitter-comment-menu-dropdown');
-            
-            // Close other dropdowns
-            document.querySelectorAll('.twitter-comment-menu-dropdown').forEach(menu => {
-                if (menu !== dropdown) menu.classList.add('hidden');
-            });
-            
-            // Toggle current dropdown
-            dropdown.classList.toggle('hidden');
-        }
-    });
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.twitter-comment-menu')) {
-            document.querySelectorAll('.twitter-comment-menu-dropdown').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-    });
-}
-
-// Fixed Comments Toggle Functionality (no duplicates)
-function initCommentsToggle() {
-    console.log('🔍 InitCommentsToggle called');
-    
-    // Remove existing event listeners first to prevent duplicates
-    const existingButtons = document.querySelectorAll('.comment-button[data-listener="true"]');
-    existingButtons.forEach(button => {
-        button.removeAttribute('data-listener');
-    });
-    
-    const commentButtons = document.querySelectorAll('.comment-button');
-    console.log(`🔍 Found ${commentButtons.length} comment buttons`);
-    
-    commentButtons.forEach((button, index) => {
-        // Skip if already has listener
-        if (button.hasAttribute('data-listener')) {
-            return;
-        }
-        
-        // Mark as having listener
-        button.setAttribute('data-listener', 'true');
-        
-        console.log(`🔍 Setting up button ${index}:`, button);
-        
-        button.addEventListener('click', function(e) {
-            console.log('🔍 Comment button clicked!', this);
-            e.preventDefault();
-            e.stopPropagation(); // Prevent event bubbling
-            
-            const postCard = this.closest('.tweet') || this.closest('.twitter-post-card');
-            console.log('🔍 Found post container:', postCard);
-            
-            if (!postCard) {
-                console.log('❌ No post container found');
-                return;
-            }
-            
-            const commentsSection = postCard.querySelector('.twitter-comments-section');
-            console.log('🔍 Found comments section:', commentsSection);
-            
-            if (!commentsSection) {
-                console.log('❌ No comments section found');
-                return;
-            }
-            
-            const isVisible = commentsSection.classList.contains('show');
-            console.log('🔍 Comments visible:', isVisible);
-            
-            if (isVisible) {
-                console.log('🔍 Hiding comments');
-                commentsSection.classList.remove('show');
-                this.classList.remove('active');
-            } else {
-                console.log('🔍 Showing comments');
-                commentsSection.classList.add('show');
-                this.classList.add('active');
-                
-                const textarea = commentsSection.querySelector('.twitter-comment-textarea');
-                if (textarea) {
-                    console.log('🔍 Focusing textarea');
-                    setTimeout(() => textarea.focus(), 100);
-                }
-            }
-        });
-    });
 }

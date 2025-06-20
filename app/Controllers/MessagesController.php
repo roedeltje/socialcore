@@ -54,6 +54,15 @@ class MessagesController extends Controller
             'unread_count' => $unreadCount,
             'current_user_id' => $userId
         ];
+
+        // // Check welk thema actief is
+        // $activeTheme = $_SESSION['theme'] ?? 'default'; // Of hoe je het thema bepaalt
+        
+        // if ($activeTheme === 'twitter') {
+        //     $data['pageCSS'] = [
+        //         'theme-assets/twitter/css/components.css'
+        //     ];
+        // }
         
         $this->view('messages/index', $data);
     }
@@ -139,7 +148,6 @@ class MessagesController extends Controller
      */
     public function send()
     {
-
         // Debug logging
         file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
             date('Y-m-d H:i:s') . " - Send method called\n" .
@@ -200,39 +208,57 @@ class MessagesController extends Controller
         }
         
         try {
-
-            // Debug: log voor database insert
-            //file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-              //  "About to insert message\n", FILE_APPEND);
-
             // Begin database transactie
             $this->db->beginTransaction();
             
-            // Sla bericht op in database
+            // Bepaal message type
+            $messageType = 'text'; // Default type
+            $attachmentPath = null;
+            $attachmentType = null;
+            
+            // GEFIXTE FOTO UPLOAD: Check op juiste $_FILES key
+            if (!empty($_FILES['message_photo']['name']) && $_FILES['message_photo']['error'] === 0) {
+                file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
+                    "Processing photo upload for message_photo\n", FILE_APPEND);
+                
+                $uploadResult = $this->handlePhotoUpload($_FILES['message_photo']);
+                
+                if ($uploadResult && isset($uploadResult['success']) && $uploadResult['success']) {
+                    $attachmentPath = $uploadResult['file_path'];
+                    $attachmentType = 'image';
+                    $messageType = 'image'; // Update message type
+                    
+                    file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
+                        "Photo upload successful: " . $attachmentPath . "\n", FILE_APPEND);
+                } else {
+                    file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
+                        "Photo upload failed\n", FILE_APPEND);
+                }
+            }
+            
+            // GEVIXTE DATABASE INSERT: Include attachment columns
             $stmt = $this->db->prepare("
-            INSERT INTO messages (sender_id, receiver_id, subject, content, type)
-            VALUES (?, ?, ?, ?, ?)
-        ");
+                INSERT INTO messages (sender_id, receiver_id, subject, content, type, attachment_path, attachment_type, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            ");
             
             $stmt->execute([
                 $senderId,
                 $receiverId,
                 $subject,
                 $content,
-                $messageType
+                $messageType,
+                $attachmentPath,
+                $attachmentType
             ]);
             
             $messageId = $this->db->lastInsertId();
 
-            //file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-            //"Message inserted with ID: " . $messageId . "\n", FILE_APPEND);
-            
-            // NIEUW: Verwerk foto upload indien aanwezig
-            if (!empty($_FILES['image']['name'])) {
-            //file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-              //  "Processing photo upload\n", FILE_APPEND);
-            $this->handlePhotoUpload($_FILES['image'], $messageId);
-        }
+            file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
+                "Message inserted with ID: " . $messageId . 
+                " | Type: " . $messageType . 
+                " | Attachment: " . ($attachmentPath ? $attachmentPath : 'none') . "\n", 
+                FILE_APPEND);
             
             // Commit transactie
             $this->db->commit();
@@ -246,11 +272,10 @@ class MessagesController extends Controller
             // Rollback bij fout
             $this->db->rollBack();
             
-            // BETERE ERROR LOGGING
-            //file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-            //  "ERROR: " . $e->getMessage() . "\n" .
-             //   "Stack trace: " . $e->getTraceAsString() . "\n", 
-               // FILE_APPEND);
+            file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
+                "ERROR: " . $e->getMessage() . "\n" .
+                "Stack trace: " . $e->getTraceAsString() . "\n", 
+                FILE_APPEND);
             
             error_log("Error sending message: " . $e->getMessage());
             $_SESSION['error_message'] = 'Er ging iets mis bij het verzenden van het bericht: ' . $e->getMessage();

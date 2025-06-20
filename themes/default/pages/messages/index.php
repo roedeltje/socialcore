@@ -1,3 +1,4 @@
+<?php echo "<!-- DEBUGGING: Loading from /themes/default/pages/messages/index.php -->"; ?>
 <?php /* SocialCore Berichten Inbox - Hyves stijl */ ?>
 
 
@@ -138,77 +139,3 @@
         </div>
     <?php endif; ?>
 </div>
-
-<!-- CSS voor extra styling -->
-<style>
-.conversation-item:last-child {
-    border-bottom: none;
-}
-
-.conversation-item:hover .text-gray-400 {
-    color: #3B82F6;
-}
-
-.messages-container a {
-    text-decoration: none;
-}
-
-.messages-container a:hover {
-    text-decoration: none;
-}
-
-/* Responsive aanpassingen */
-@media (max-width: 768px) {
-    .messages-container {
-        padding: 1rem;
-    }
-    
-    .messages-header {
-        padding: 1rem;
-    }
-    
-    .messages-header h1 {
-        font-size: 1.5rem;
-    }
-    
-    .conversation-item a {
-        padding: 0.75rem;
-    }
-    
-    .conversation-item img {
-        width: 2.5rem;
-        height: 2.5rem;
-    }
-}
-
-/* Animaties */
-.conversation-item {
-    transition: all 0.2s ease;
-}
-
-.conversation-item:hover {
-    transform: translateX(2px);
-}
-
-/* Badge pulse animatie voor ongelezen berichten */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-}
-
-.conversation-item .bg-red-500 {
-    animation: pulse 2s infinite;
-}
-
-/* Fix voor CSS conflicten in messages */
-.messages-container {
-    position: relative;
-    z-index: 999;
-    background: white;
-}
-
-/* Verberg mogelijke overlay elementen */
-body > div:not(.messages-container) {
-    z-index: 1;
-}
-</style>

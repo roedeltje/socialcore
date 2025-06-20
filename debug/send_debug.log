@@ -103,3 +103,47 @@ FILES data: Array
 
 )
 
+2025-06-19 09:40:00 - Send method called
+POST data: Array
+(
+    [receiver_id] => 6
+    [subject] => 
+    [content] => Hallo marietje
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+2025-06-20 10:40:40 - Send method called
+POST data: Array
+(
+    [receiver_id] => 6
+    [subject] => Test mail
+    [content] => Hier een testje 😍
+)
+
+FILES data: Array
+(
+    [message_photo] => Array
+        (
+            [name] => 499425474_24045306578395845_8099089086563796365_n.jpg
+            [full_path] => 499425474_24045306578395845_8099089086563796365_n.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpodDm0X
+            [error] => 0
+            [size] => 179714
+        )
+
+)
+

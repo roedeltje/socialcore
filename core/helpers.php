@@ -408,3 +408,198 @@ function admin_asset_url($file) {
     $file = ltrim($file, '/');
     return base_url('assets/admin/' . $file);
 }
+
+/**
+ * ============================================================================
+ * AVATAR & MEDIA HELPER FUNCTIONS
+ * ============================================================================
+ */
+
+/**
+ * Genereert een consistente avatar URL
+ * 
+ * @param string|null $avatarPath Pad naar avatar uit database
+ * @param string|null $theme Specifiek theme voor fallback avatar
+ * @return string Volledige URL naar avatar
+ */
+function get_avatar_url($avatarPath = null, $theme = null): string
+{
+    // Als er geen avatar path is, gebruik default
+    if (empty($avatarPath)) {
+        $theme_name = $theme ?? get_active_theme();
+        return base_url("theme-assets/{$theme_name}/images/default-avatar.png");
+    }
+    
+    // Als het al een volledige URL is
+    if (str_starts_with($avatarPath, 'http')) {
+        return $avatarPath;
+    }
+    
+    // Als het een theme asset is
+    if (str_starts_with($avatarPath, 'theme-assets')) {
+        return base_url($avatarPath);
+    }
+    
+    // Voor uploads - zorg voor correcte path structuur
+    // Avatar path uit database is bijv: "avatars/2025/05/avatar_1_68348a9ba26262.13561588.jpg"
+    $uploadPath = 'uploads/' . ltrim($avatarPath, '/');
+    $fullServerPath = $_SERVER['DOCUMENT_ROOT'] . '/' . $uploadPath;
+    
+    // Check of bestand daadwerkelijk bestaat
+    if (file_exists($fullServerPath)) {
+        return base_url($uploadPath);
+    }
+    
+    // Fallback naar default avatar
+    $theme_name = $theme ?? get_active_theme();
+    return base_url("theme-assets/{$theme_name}/images/default-avatar.png");
+}
+
+/**
+ * Genereert een cover foto URL met fallback
+ * 
+ * @param string|null $coverPath Pad naar cover foto uit database
+ * @return string|null URL naar cover foto of null als geen cover
+ */
+function get_cover_url($coverPath = null): ?string
+{
+    if (empty($coverPath)) {
+        return null;
+    }
+    
+    // Als het al een volledige URL is
+    if (str_starts_with($coverPath, 'http')) {
+        return $coverPath;
+    }
+    
+    // Voor uploads
+    $uploadPath = 'uploads/' . ltrim($coverPath, '/');
+    $fullServerPath = $_SERVER['DOCUMENT_ROOT'] . '/' . $uploadPath;
+    
+    // Check of bestand bestaat
+    if (file_exists($fullServerPath)) {
+        return base_url($uploadPath);
+    }
+    
+    return null;
+}
+
+/**
+ * Genereert een URL voor geüploade media
+ * 
+ * @param string $mediaPath Pad naar media bestand
+ * @param string $type Type media (posts, avatars, covers, etc.)
+ * @return string URL naar media bestand
+ */
+function get_media_url(string $mediaPath, string $type = 'posts'): string
+{
+    // Als het al een volledige URL is
+    if (str_starts_with($mediaPath, 'http')) {
+        return $mediaPath;
+    }
+    
+    // Als pad al "uploads/" bevat, gebruik direct
+    if (str_starts_with($mediaPath, 'uploads/')) {
+        return base_url($mediaPath);
+    }
+    
+    // Anders, construeer pad met type
+    $uploadPath = "uploads/{$type}/" . ltrim($mediaPath, '/');
+    return base_url($uploadPath);
+}
+
+/**
+ * Controleert of een media bestand bestaat
+ * 
+ * @param string $mediaPath Pad naar media bestand
+ * @return bool True als bestand bestaat
+ */
+function media_file_exists(string $mediaPath): bool
+{
+    if (empty($mediaPath)) {
+        return false;
+    }
+    
+    // Als het een volledige URL is, kunnen we niet controleren
+    if (str_starts_with($mediaPath, 'http')) {
+        return true; // Assumeer dat externe URLs bestaan
+    }
+    
+    // Construeer volledig server pad
+    $uploadPath = str_starts_with($mediaPath, 'uploads/') 
+        ? $mediaPath 
+        : 'uploads/' . ltrim($mediaPath, '/');
+        
+    $fullServerPath = $_SERVER['DOCUMENT_ROOT'] . '/' . $uploadPath;
+    
+    return file_exists($fullServerPath);
+}
+
+/**
+ * Formatteert bestandsgrootte naar leesbaar formaat
+ * 
+ * @param int $size Bestandsgrootte in bytes
+ * @return string Geformatteerde grootte (bijv. "1.5 MB")
+ */
+function format_file_size(int $size): string
+{
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $unit = 0;
+    
+    while ($size >= 1024 && $unit < count($units) - 1) {
+        $size /= 1024;
+        $unit++;
+    }
+    
+    return round($size, 1) . ' ' . $units[$unit];
+}
+
+/**
+ * Genereert een veilige bestandsnaam
+ * 
+ * @param string $filename Originele bestandsnaam
+ * @param string $prefix Optionele prefix
+ * @return string Veilige bestandsnaam
+ */
+function sanitize_filename(string $filename, string $prefix = ''): string
+{
+    // Haal extensie op
+    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+    $basename = pathinfo($filename, PATHINFO_FILENAME);
+    
+    // Maak bestandsnaam veilig
+    $basename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $basename);
+    $basename = trim($basename, '._-');
+    
+    // Voeg timestamp toe voor uniciteit
+    $timestamp = uniqid();
+    
+    // Construeer nieuwe naam
+    $newName = $prefix . $basename . '_' . $timestamp;
+    
+    if (!empty($extension)) {
+        $newName .= '.' . strtolower($extension);
+    }
+    
+    return $newName;
+}
+
+/**
+ * ============================================================================
+ * DEPRECATED AVATAR FUNCTIONS (voor backwards compatibility)
+ * ============================================================================
+ */
+
+/**
+ * @deprecated Gebruik get_avatar_url() instead
+ */
+function avatar_url($avatarPath) {
+    return get_avatar_url($avatarPath);
+}
+
+/**
+ * @deprecated Gebruik get_media_url() instead
+ */
+function upload_url($path) {
+    return get_media_url($path);
+}

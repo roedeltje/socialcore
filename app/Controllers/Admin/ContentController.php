@@ -20,8 +20,9 @@ class ContentController extends Controller
     
     /**
      * View methode die admin layout gebruikt
+     * Aangepast om compatible te zijn met parent Controller class
      */
-    protected function view($view, $data = [])
+    protected function view($view, $data = [], $forceNewSystem = false)
     {
         // Gebruik de admin layout
         $title = $data['title'] ?? 'Content Beheer';

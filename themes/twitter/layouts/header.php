@@ -8,6 +8,13 @@
     <!-- Twitter Theme CSS -->
     <link rel="stylesheet" href="<?= base_url('theme-assets/twitter/css/style.css') ?>">
     
+    <!-- Dynamische pagina-specifieke CSS -->
+    <?php if (isset($pageCSS) && is_array($pageCSS)): ?>
+        <?php foreach ($pageCSS as $cssFile): ?>
+            <link rel="stylesheet" href="<?= base_url($cssFile) ?>">
+        <?php endforeach; ?>
+    <?php endif; ?>
+    
     <!-- Font Awesome voor iconen -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>

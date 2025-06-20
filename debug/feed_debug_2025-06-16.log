@@ -1,0 +1,321 @@
+[2025-06-16 10:27:46] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => dit is een tehs
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 10:39:35] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hallo hier is een test bericht
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 10:40:03] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Nog een javascritp test
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 10:44:08] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hier is nog een test
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-16 10:48:36] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Dit is een test
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 10:50:20] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Dit is een test
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 10:52:13] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Nog maar eens een test
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 10:55:11] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hallo nog een test bericht
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 10:56:30] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hallo tester
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-16 11:03:28] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => hallo hier is een test
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 11:06:13] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hallo hier is een test bericht
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 11:07:09] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Mag ik even testen?
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 11:07:09] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Mag ik even testen?
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 12:05:02] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Test
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 499425474_24045306578395845_8099089086563796365_n.jpg
+            [full_path] => 499425474_24045306578395845_8099089086563796365_n.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phph2GDhQ
+            [error] => 0
+            [size] => 179714
+        )
+
+)
+
+[2025-06-16 12:07:22] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Leuke he
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 500201519_1265128122279435_6879088767347417683_n.jpg
+            [full_path] => 500201519_1265128122279435_6879088767347417683_n.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpblvZsD
+            [error] => 0
+            [size] => 41307
+        )
+
+)
+
+[2025-06-16 12:13:58] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Weer een testbericht
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => adaa6563-a0e1-4dbd-8bfc-1446f2834bdf.png
+            [full_path] => adaa6563-a0e1-4dbd-8bfc-1446f2834bdf.png
+            [type] => image/png
+            [tmp_name] => /tmp/phpjANfSp
+            [error] => 0
+            [size] => 1251884
+        )
+
+)
+
+[2025-06-16 12:14:29] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Test
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => cat-9059025_1280.jpg
+            [full_path] => cat-9059025_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/php6ObbYh
+            [error] => 0
+            [size] => 187780
+        )
+
+)
+
+[2025-06-16 12:20:08] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Mooi he?
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => budapest-4838854_1280.jpg
+            [full_path] => budapest-4838854_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpHPCfjE
+            [error] => 0
+            [size] => 433235
+        )
+
+)
+
+[2025-06-16 13:50:35] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Haha
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 500086053_1016803683892419_2625517534345211822_n.jpg
+            [full_path] => 500086053_1016803683892419_2625517534345211822_n.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/php9p9ev1
+            [error] => 0
+            [size] => 120057
+        )
+
+)
+
+[2025-06-16 14:16:15] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Wat leuk
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 499425474_24045306578395845_8099089086563796365_n.jpg
+            [full_path] => 499425474_24045306578395845_8099089086563796365_n.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpdcmQy2
+            [error] => 0
+            [size] => 179714
+        )
+
+)
+
+[2025-06-16 15:16:12] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Test
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-16 17:10:20] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => 😄
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+

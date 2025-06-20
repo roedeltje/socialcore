@@ -292,7 +292,7 @@
                                         $form_id = 'profilePostForm';
                                         $context = 'profile';
                                         // $user = $user; (al beschikbaar)
-                                        include __DIR__ . '/../partials/post-form.php'; 
+                                        include THEME_PATH . '/partials/post-form.php'; 
                                         ?>
                                     </div>
                                 </div>

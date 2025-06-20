@@ -22,207 +22,41 @@ class FeedController extends Controller
      * Toon de Hyves-stijl homepage/nieuwsfeed
      */
     public function index()
-    {
-        // ALTIJD loggen, ook zonder new_theme parameter
-        file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
-            "[" . date('Y-m-d H:i:s') . "] FeedController index() called\n", 
-            FILE_APPEND | LOCK_EX);
-            
-        file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
-            "[" . date('Y-m-d H:i:s') . "] GET parameters: " . print_r($_GET, true) . "\n", 
-            FILE_APPEND | LOCK_EX);
-        
-        $testNewTheme = isset($_GET['new_theme']) && $_GET['new_theme'] === '1';
-
-        if ($testNewTheme) {
-            // Test of we überhaupt in dit blok komen
-            file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
-                "[" . date('Y-m-d H:i:s') . "] ENTERING NEW THEME BLOCK\n", 
-                FILE_APPEND | LOCK_EX);
-                
-            // Test of we kunnen schrijven naar new_theme_debug
-            file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
-                "[" . date('Y-m-d H:i:s') . "] Attempting to write to new_theme_debug...\n", 
-                FILE_APPEND | LOCK_EX);
-                
-            // Direct test
-            $testWrite = file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                "[" . date('Y-m-d H:i:s') . "] TEST WRITE\n", 
-                FILE_APPEND | LOCK_EX);
-                
-            file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
-                "[" . date('Y-m-d H:i:s') . "] Test write result: " . ($testWrite ? 'SUCCESS' : 'FAILED') . "\n", 
-                FILE_APPEND | LOCK_EX);
-        }
-        
-        file_put_contents('/var/www/socialcore.local/debug/controller_debug_' . date('Y-m-d') . '.log', 
-            "[" . date('Y-m-d H:i:s') . "] testNewTheme: " . ($testNewTheme ? 'TRUE' : 'FALSE') . "\n", 
-            FILE_APPEND | LOCK_EX);
-
-        $testNewTheme = isset($_GET['new_theme']) && $_GET['new_theme'] === '1';
-        
-        if ($testNewTheme) {
-            // Debug logging naar ons eigen logsysteem
-            file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                "[" . date('Y-m-d H:i:s') . "] === NEW THEME DEBUG START ===\n", 
-                FILE_APPEND | LOCK_EX);
-                
-            file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                "[" . date('Y-m-d H:i:s') . "] Test nieuwe thema systeem geactiveerd\n", 
-                FILE_APPEND | LOCK_EX);
-            
-            try {
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] 1. ThemeFunctions initialiseren...\n", 
-                    FILE_APPEND | LOCK_EX);
-                    
-                \App\Core\ThemeFunctions::init();
-                
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] ✅ ThemeFunctions geïnitialiseerd\n", 
-                    FILE_APPEND | LOCK_EX);
-                
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] 2. ThemeManager instance ophalen...\n", 
-                    FILE_APPEND | LOCK_EX);
-                    
-                $themeManager = \App\Core\ThemeManager::getInstance();
-                $currentTheme = $themeManager->getActiveTheme();
-                
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] Current theme: {$currentTheme}\n", 
-                    FILE_APPEND | LOCK_EX);
-                
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] 3. Template pad zoeken...\n", 
-                    FILE_APPEND | LOCK_EX);
-                    
-                $templatePath = $themeManager->getThemeTemplatePath('pages/timeline.php');
-                
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] Template pad: {$templatePath}\n", 
-                    FILE_APPEND | LOCK_EX);
-                    
-                $templateExists = file_exists($templatePath);
-                
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] Template bestaat: " . ($templateExists ? 'YES' : 'NO') . "\n", 
-                    FILE_APPEND | LOCK_EX);
-                
-                if ($templateExists) {
-                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                        "[" . date('Y-m-d H:i:s') . "] 4. Posts ophalen voor template...\n", 
-                        FILE_APPEND | LOCK_EX);
-                }
-                
-            } catch (Exception $e) {
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] ❌ ERROR in setup: " . $e->getMessage() . "\n", 
-                    FILE_APPEND | LOCK_EX);
-                    
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] Error file: " . $e->getFile() . " Line: " . $e->getLine() . "\n", 
-                    FILE_APPEND | LOCK_EX);
-            }
-        }
-
-        // Controleer of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            if ($testNewTheme) {
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] ERROR: User not logged in, redirecting\n", 
-                    FILE_APPEND | LOCK_EX);
-            }
-            header('Location: /auth/login');
-            exit;
-        }
-
-        try {
-            if ($testNewTheme) {
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] 5. About to call getAllPosts()\n", 
-                    FILE_APPEND | LOCK_EX);
-            }
-
-            // Haal echte posts op uit de database
-            $posts = $this->getAllPosts();
-
-            if ($testNewTheme) {
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] Retrieved " . count($posts) . " posts\n", 
-                    FILE_APPEND | LOCK_EX);
-            }
-            
-            // Haal gebruikersinfo op
-            $currentUser = $this->getCurrentUser($_SESSION['user_id']);
-            
-            // Haal real-time widget data op
-            $onlineFriends = $this->getOnlineFriends();
-            $trendingHashtags = $this->getTrendingHashtags();
-            $suggestedUsers = $this->getSuggestedUsers();
-            
-            // Data doorsturen naar de Hyves-stijl view
-            $data = [
-                'posts' => $posts,
-                'current_user' => $currentUser,
-                'online_friends' => $onlineFriends,
-                'trending_hashtags' => $trendingHashtags,
-                'suggested_users' => $suggestedUsers,
-                'page_title' => 'Nieuwsfeed - SocialCore'
-            ];
-            
-            if ($testNewTheme) {
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] 6. Data prepared, attempting to load new theme template...\n", 
-                    FILE_APPEND | LOCK_EX);
-                    
-                try {
-                    $this->viewNew('feed/index', $data);
-                    
-                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                        "[" . date('Y-m-d H:i:s') . "] ✅ New theme template loaded successfully\n", 
-                        FILE_APPEND | LOCK_EX);
-                        
-                } catch (Exception $e) {
-                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                        "[" . date('Y-m-d H:i:s') . "] ❌ ERROR loading new theme: " . $e->getMessage() . "\n", 
-                        FILE_APPEND | LOCK_EX);
-                        
-                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                        "[" . date('Y-m-d H:i:s') . "] Error file: " . $e->getFile() . " Line: " . $e->getLine() . "\n", 
-                        FILE_APPEND | LOCK_EX);
-                        
-                    // Fallback naar huidige systeem
-                    file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                        "[" . date('Y-m-d H:i:s') . "] Falling back to current system...\n", 
-                        FILE_APPEND | LOCK_EX);
-                        
-                    $this->view('feed/index', $data);
-                }
-            } else {
-                $this->view('feed/index', $data);
-            }
-            
-        } catch (Exception $e) {
-            if ($testNewTheme) {
-                file_put_contents('/var/www/socialcore.local/debug/new_theme_debug_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] ❌ GENERAL ERROR: " . $e->getMessage() . "\n", 
-                    FILE_APPEND | LOCK_EX);
-            }
-            
-            error_log('Feed error: ' . $e->getMessage());
-            $_SESSION['error_message'] = 'Er ging iets mis bij het laden van de feed.';
-            
-            // Fallback data voor foutafhandeling
-            $this->view('feed/index', [
-                'posts' => [],
-                'current_user' => $this->getDefaultUser(),
-                'online_friends' => [],
-                'trending_hashtags' => [],
-                'suggested_users' => []
-            ]);
-        }
+{
+    // Controleer of gebruiker is ingelogd
+    if (!isset($_SESSION['user_id'])) {
+        header('Location: /auth/login');
+        exit;
     }
+
+    try {
+        // Haal echte posts op uit de database
+        $posts = $this->getAllPosts();
+        
+        // Haal gebruikersinfo op
+        $currentUser = $this->getCurrentUser($_SESSION['user_id']);
+        
+        // Haal real-time widget data op
+        $onlineFriends = $this->getOnlineFriends();
+        $trendingHashtags = $this->getTrendingHashtags();
+        $suggestedUsers = $this->getSuggestedUsers();
+        
+        // Data doorsturen naar de view
+        $data = [
+            'posts' => $posts,
+            'current_user' => $currentUser,  // ← Dit is de variabele die je nodig hebt!
+            'online_friends' => $onlineFriends,
+            'trending_hashtags' => $trendingHashtags,
+            'suggested_users' => $suggestedUsers,
+            'page_title' => 'Nieuwsfeed - SocialCore'
+        ];
+        
+        $this->view('feed/index', $data);
+        
+    } catch (Exception $e) {
+        // Error handling...
+    }
+}
 
     /**
      * Haal alle posts op met verbeterde Hyves-stijl data

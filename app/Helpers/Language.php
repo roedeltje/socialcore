@@ -157,35 +157,30 @@ class Language {
     }
 
     /**
- * Convert timestamp to "time ago" format
- * 
- * @param string $datetime
- * @return string
- */
-public static function timeAgo($datetime) 
+     * Convert timestamp to "time ago" format
+     * 
+     * @param string $datetime
+     * @return string
+     */
+    public static function timeAgo($datetime) 
 {
-    $time = time() - strtotime($datetime);
-    
-    if ($time < 60) {
-        return 'nu';
+    // Als het al verwerkt is, gewoon teruggeven
+    if (empty($datetime) || strpos($datetime, 'geleden') !== false || strpos($datetime, 'nu') !== false || strpos($datetime, 'm') !== false || strpos($datetime, 'u') !== false || strpos($datetime, 'd') !== false) {
+        return $datetime;
     }
     
-    $time_rules = array(
-        12 * 30 * 24 * 60 * 60 => 'jaar',
-        30 * 24 * 60 * 60      => 'maand',
-        24 * 60 * 60           => 'dag',
-        60 * 60                => 'uur',
-        60                     => 'minuut'
-    );
-    
-    foreach ($time_rules as $secs => $str) {
-        $d = $time / $secs;
-        if ($d >= 1) {
-            $r = round($d);
-            return $r . ' ' . ($r > 1 ? $str . ($str == 'jaar' ? '' : 'en') : $str) . ' geleden';
-        }
+    try {
+        $date = new \DateTime($datetime);
+        $now = new \DateTime();
+        $time = $now->getTimestamp() - $date->getTimestamp();
+        
+        if ($time < 60) return 'nu';
+        if ($time < 3600) return floor($time/60) . ' minuten geleden';
+        if ($time < 86400) return floor($time/3600) . ' uur geleden';
+        return floor($time/86400) . ' dagen geleden';
+        
+    } catch (\Exception $e) {
+        return $datetime; // Fallback
     }
-    
-    return 'nu';
 }
 }

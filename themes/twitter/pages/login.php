@@ -50,7 +50,7 @@
             <?php endif; ?>
 
             <!-- Login formulier -->
-            <form method="POST" action="<?= base_url('?route=auth/login') ?>" style="width: 100%;">
+            <form method="POST" action="<?= base_url('/?route=login/process') ?>" style="width: 100%;">
                 <!-- Email/Username veld -->
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 15px; font-weight: 400; color: var(--text-primary); margin-bottom: 8px;">

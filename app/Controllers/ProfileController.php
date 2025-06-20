@@ -191,7 +191,7 @@ class ProfileController extends Controller
             $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($dbUser) {
-                // Formateer de avatar path met de nieuwe helper
+                // ✅ Gebruik de verbeterde avatar URL functie
                 $avatarPath = $this->getAvatarUrl($dbUser['avatar']);
                     
                 // Formateer de join datum
@@ -212,9 +212,10 @@ class ProfileController extends Controller
                     'date_of_birth' => $dbUser['date_of_birth'] ?: '',
                     'gender' => $dbUser['gender'] ?: '',
                     'phone' => $dbUser['phone'] ?: '',
-                    'avatar' => $dbUser['avatar'] ?: 'theme-assets/default/images/default-avatar.png',
-                    'avatar_url' => $avatarPath, // Volledige URL voor weergave
+                    'avatar' => $dbUser['avatar'] ?: '',  // Behoud originele pad voor database operaties
+                    'avatar_url' => $avatarPath,         // Volledige URL voor weergave
                     'cover_photo' => $dbUser['cover_photo'] ?: '',
+                    'created_at' => $dbUser['created_at'],
                     'joined' => $joinDate,
                     'role' => $dbUser['role'] ?: 'member',
                     // Dummy data voor nu - later uit database halen
@@ -241,9 +242,10 @@ class ProfileController extends Controller
             'date_of_birth' => '',
             'gender' => '',
             'phone' => '',
-            'avatar' => 'theme-assets/default/images/default-avatar.png',
+            'avatar' => '',
             'avatar_url' => base_url('theme-assets/default/images/default-avatar.png'),
             'cover_photo' => '',
+            'created_at' => date('Y-m-d H:i:s'),
             'joined' => date('d M Y'),
             'role' => 'member',
             'interests' => [],
@@ -1135,33 +1137,36 @@ class ProfileController extends Controller
      */
     private function getAvatarUrl($avatarPath)
     {
+        // Als er geen avatar path is, gebruik default
         if (empty($avatarPath)) {
             return base_url('theme-assets/default/images/default-avatar.png');
         }
         
-        // Als het pad al een volledige URL is
+        // Als het al een volledige URL is
         if (str_starts_with($avatarPath, 'http')) {
             return $avatarPath;
         }
         
-        // Als het een theme asset is
+        // Als het een theme asset is (bijv. "theme-assets/default/images/default-avatar.png") 
         if (str_starts_with($avatarPath, 'theme-assets')) {
             return base_url($avatarPath);
         }
         
-        // Voor uploads: gebruik base_url zonder extra 'public'
-        // Want de upload path bevat al de juiste structuur
-        return base_url('uploads/' . $avatarPath);
-    }
-
-    private function deleteUploadedFile($filePath)
-    {
-        if (!empty($filePath)) {
-            $fullPath = __DIR__ . '/../../public/uploads/' . $filePath;
-            if (file_exists($fullPath)) {
-                unlink($fullPath);
-            }
+        // Voor uploads - zorg voor correcte path structuur
+        // Avatar path uit database is bijv: "avatars/2025/05/avatar_1_68348a9ba26262.13561588.jpg"
+        $uploadPath = 'uploads/' . ltrim($avatarPath, '/');
+        $fullServerPath = $_SERVER['DOCUMENT_ROOT'] . '/' . $uploadPath;
+        
+        // Check of bestand daadwerkelijk bestaat
+        if (file_exists($fullServerPath)) {
+            return base_url($uploadPath);
         }
+        
+        // Debug logging als bestand niet bestaat (tijdelijk)
+        error_log("Avatar file not found: " . $fullServerPath . " for avatar path: " . $avatarPath);
+        
+        // Fallback naar default avatar
+        return base_url('theme-assets/default/images/default-avatar.png');
     }
 
 

@@ -280,6 +280,10 @@
     box-shadow: 0 4px 15px var(--hyves-shadow);
     z-index: 1000;
     min-width: 150px;
+    /* Geen display: none - laat Tailwind's hidden class het werk doen */
+}
+
+.post-menu-dropdown.hidden {
     display: none;
 }
 

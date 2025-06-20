@@ -41,13 +41,13 @@ $placeholder = $placeholder ?? 'Tweet your reply';
                 <!-- Comment Actions -->
                 <div class="twitter-comment-actions">
                     <div class="twitter-comment-tools">
-                        <!-- Emoji picker trigger -->
-                        <button type="button" 
-                                class="twitter-comment-tool twitter-emoji-trigger"
-                                data-form-id="<?= htmlspecialchars($form_id) ?>"
-                                title="Add emoji">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        <!-- Emoji picker trigger - GEFIXTE VERSIE -->
+                        <button type="button" class="twitter-comment-emoji-trigger" data-form-id="<?= htmlspecialchars($form_id) ?>">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                <circle cx="9" cy="9" r="1" fill="currentColor"/>
+                                <circle cx="15" cy="9" r="1" fill="currentColor"/>
                             </svg>
                         </button>
                         
@@ -156,267 +156,6 @@ $placeholder = $placeholder ?? 'Tweet your reply';
     </form>
 </div>
 
-<style>
-/* Twitter Comment Form Styles */
-.twitter-comment-form-wrapper {
-    border-top: 1px solid var(--twitter-border);
-    padding-top: 12px;
-    margin-top: 12px;
-}
-
-.twitter-comment-form {
-    position: relative;
-}
-
-.twitter-comment-compose {
-    display: flex;
-    gap: 12px;
-    padding: 12px 0;
-}
-
-.twitter-comment-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.twitter-comment-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.twitter-comment-textarea-container {
-    position: relative;
-}
-
-.twitter-comment-textarea {
-    width: 100%;
-    border: none;
-    resize: none;
-    font-size: 15px;
-    line-height: 1.4;
-    padding: 8px 0;
-    background: transparent;
-    color: var(--twitter-dark);
-    font-family: inherit;
-    min-height: 40px;
-}
-
-.twitter-comment-textarea:focus {
-    outline: none;
-}
-
-.twitter-comment-textarea::placeholder {
-    color: var(--twitter-gray);
-}
-
-.twitter-comment-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 8px;
-}
-
-.twitter-comment-tools {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.twitter-comment-tool {
-    background: none;
-    border: none;
-    color: var(--twitter-blue);
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.twitter-comment-tool:hover:not(:disabled) {
-    background-color: var(--twitter-blue-light);
-}
-
-.twitter-comment-tool:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.twitter-comment-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.twitter-comment-char-counter {
-    font-size: 13px;
-    color: var(--twitter-gray);
-}
-
-.twitter-comment-char-count.warning {
-    color: #FF8C00;
-}
-
-.twitter-comment-char-count.danger {
-    color: #DC2626;
-    font-weight: 700;
-}
-
-.twitter-reply-btn {
-    background-color: var(--twitter-blue);
-    color: white;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 16px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.twitter-reply-btn:hover:not(:disabled) {
-    background-color: var(--twitter-blue-hover);
-}
-
-.twitter-reply-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Comment Emoji Picker */
-.twitter-comment-emoji-picker {
-    position: absolute;
-    top: 100%;
-    left: 44px;
-    background: var(--twitter-white);
-    border: 1px solid var(--twitter-border);
-    border-radius: 12px;
-    box-shadow: var(--twitter-shadow);
-    max-height: 250px;
-    overflow-y: auto;
-    z-index: 1000;
-    margin-top: 8px;
-    width: 280px;
-    animation: fadeInUp 0.2s ease;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.twitter-comment-emoji-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background-color: var(--twitter-bg);
-    border-bottom: 1px solid var(--twitter-border);
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--twitter-dark);
-}
-
-.twitter-comment-emoji-close {
-    background: none;
-    border: none;
-    color: var(--twitter-gray);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.twitter-comment-emoji-close:hover {
-    background-color: var(--twitter-hover);
-    color: var(--twitter-dark);
-}
-
-.twitter-comment-emoji-categories {
-    padding: 8px;
-}
-
-.twitter-comment-emoji-category {
-    margin-bottom: 12px;
-}
-
-.twitter-comment-emoji-category:last-child {
-    margin-bottom: 0;
-}
-
-.twitter-comment-category-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--twitter-gray);
-    margin-bottom: 6px;
-    padding: 0 4px;
-}
-
-.twitter-comment-emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 4px;
-}
-
-.twitter-comment-emoji-item {
-    font-size: 16px;
-    padding: 6px;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    background: none;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 28px;
-}
-
-.twitter-comment-emoji-item:hover {
-    background-color: var(--twitter-hover);
-    transform: scale(1.1);
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-    .twitter-comment-emoji-picker {
-        left: 0;
-        right: 0;
-        width: auto;
-    }
-    
-    .twitter-comment-emoji-grid {
-        grid-template-columns: repeat(5, 1fr);
-    }
-    
-    .twitter-comment-actions {
-        flex-direction: column;
-        gap: 8px;
-        align-items: stretch;
-    }
-    
-    .twitter-comment-right {
-        justify-content: space-between;
-        width: 100%;
-    }
-}
-</style>
-
 <script>
 // Initialize comment form functionality
 document.addEventListener('DOMContentLoaded', function() {
@@ -426,7 +165,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const textarea = form.querySelector('.twitter-comment-textarea');
     const charCounter = form.querySelector('.twitter-comment-char-count');
     const submitBtn = form.querySelector('.twitter-reply-btn');
-    const emojiTrigger = form.querySelector('.twitter-emoji-trigger');
+    // GEFIXTE SELECTOR
+    const emojiTrigger = form.querySelector('.twitter-comment-emoji-trigger');
     const emojiPanel = document.getElementById('<?= htmlspecialchars($form_id) ?>EmojiPanel');
     
     // Character counter and validation
@@ -506,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('post_id', '<?= htmlspecialchars($post_id) ?>');
         formData.append('comment_content', content);
         
-        fetch('<?= base_url("feed/comment/create") ?>', {
+        fetch('/?route=feed/comment', {
             method: 'POST',
             body: formData
         })
@@ -537,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Close emoji picker when clicking outside
     document.addEventListener('click', function(e) {
-        if (!emojiTrigger.contains(e.target) && !emojiPanel.contains(e.target)) {
+        if (emojiTrigger && emojiPanel && !emojiTrigger.contains(e.target) && !emojiPanel.contains(e.target)) {
             emojiPanel.style.display = 'none';
         }
     });

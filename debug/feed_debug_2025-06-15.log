@@ -1,0 +1,40 @@
+[2025-06-15 15:17:53] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Dit is een test
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-15 15:24:05] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Testen
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-15 15:54:11] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => sdfds
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-15 16:53:17] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Dit is een test
+)
+
+FILES data: Array
+(
+)
+

@@ -1,0 +1,21 @@
+[2025-06-19 14:12:57] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Alle css opgeruimd. Dat staat netjes 😄
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => abstract-cartoon-art-7510531_1280.jpg
+            [full_path] => abstract-cartoon-art-7510531_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/php7dUx8u
+            [error] => 0
+            [size] => 163605
+        )
+
+)
+

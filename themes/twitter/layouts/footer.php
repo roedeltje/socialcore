@@ -19,6 +19,6 @@
         
     </div>
 </footer>
-
+    <script src="<?= base_url('theme-assets/twitter/js/theme.js') ?>"></script>
 </body>
 </html>

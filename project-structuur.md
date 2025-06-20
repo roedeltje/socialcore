@@ -137,6 +137,20 @@ socialcore_extracted/
                     default-avatar-male.png
                 js/
                     theme.js
+            twitter/
+                css/
+                    feed.css
+                    profile.css
+                    style.css
+                images/
+                    logo-big.png
+                    default-avatar.png
+                    friends-group.jpg
+                    logo.png
+                    default-avatar-female.png
+                    default-avatar-male.png
+                js/
+                    theme.js
         uploads/
             .htaccess
             avatars/
@@ -224,4 +238,46 @@ socialcore_extracted/
                 messages.php
                 single-post.php
                 user-posts.php
-```
+```     twitter/
+            functions.php
+            index.php
+            thema-bestanden.md
+            theme.json
+            user-posts.php
+            assets/
+                css/
+                    style.css
+                images/
+                    default-avatar.png
+                    logo.png
+                js/
+                    theme.js
+            components/
+                language_switcher.php
+            layouts/
+                footer.php
+                header.php
+            pages/
+                about.php
+                edit-profile.php
+                home.php
+                login.php
+                profile.php
+                register.php
+                settings.php
+                timeline.php
+            partials/
+                messages.php
+                navigation.php
+                post-form.php
+                settings/
+                    profile_basic.php
+                    profile_avatar.php
+                    privacy_settings.php
+                    notification_preferences.php
+                    account_security.php
+                    test.php
+            templates/
+                messages.php
+                single-post.php
+                user-posts.php

@@ -1,0 +1,563 @@
+/* ===== CONSISTENT TIMELINE STYLING (zelfde basis als profile.php) ===== */
+
+/* Main Layout Container */
+.timeline-layout {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: calc(100vh - 53px);
+}
+
+/* Layout positioning - hoe sidebars zich verhouden tot elkaar */
+.twitter-left-sidebar {
+    width: 275px;
+    position: fixed;
+    top: 53px;
+    left: 200px;
+    height: calc(100vh - 53px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Rechter Sidebar Container */
+.twitter-right-sidebar {
+    width: 320px;
+    position: fixed;
+    top: 53px;
+    right: 100px;
+    height: calc(100vh - 53px);
+    overflow-y: auto;
+    background-color: var(--bg-primary);
+    z-index: 50;
+    padding: 24px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .twitter-right-sidebar {
+        right: 30px;
+        width: 260px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .twitter-right-sidebar {
+        display: none;
+    }
+}
+
+/* Main Content Area */
+.timeline-main {
+    flex: 1;
+    margin-left: 220px; /* Space for left sidebar */
+    margin-right: 240px; /* Space for right sidebar */
+    border-left: 1px solid var(--border-color, #e1e8ed);
+    border-right: 1px solid var(--border-color, #e1e8ed);
+    min-height: calc(100vh - 53px);
+    background-color: var(--bg-primary, white);
+    margin-top: 0;
+    padding-top: 0;
+}
+
+/* Timeline Header */
+.timeline-header {
+    position: sticky;
+    top: 53px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+    padding: 16px;
+    z-index: 100;
+}
+
+.timeline-header h1 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary, #0f1419);
+    margin: 0 0 16px 0;
+}
+
+.timeline-tabs {
+    display: flex;
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 16px;
+    font-weight: 500;
+    color: var(--text-secondary, #536471);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    color: var(--text-primary, #0f1419);
+    border-bottom-color: var(--twitter-blue, #1d9bf0);
+    font-weight: 700;
+}
+
+.tab-btn:hover {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+/* Tweet Compose */
+.tweet-compose {
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+    padding: 16px;
+    background: var(--bg-primary, white);
+}
+
+.compose-form {
+    display: flex;
+    gap: 12px;
+}
+
+.compose-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.compose-input {
+    flex: 1;
+}
+
+.compose-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 20px;
+    line-height: 24px;
+    color: var(--text-primary, #0f1419);
+    background: transparent;
+    resize: none;
+    min-height: 120px;
+    font-family: inherit;
+}
+
+.compose-textarea::placeholder {
+    color: var(--text-secondary, #536471);
+}
+
+.compose-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.media-actions {
+    display: flex;
+    gap: 16px;
+}
+
+.media-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--twitter-blue, #1d9bf0);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.media-btn:hover {
+    background: rgba(29, 155, 240, 0.1);
+}
+
+.tweet-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.char-count {
+    font-size: 13px;
+    color: var(--text-secondary, #536471);
+}
+
+.char-count.warning {
+    color: #f7931e;
+}
+
+.char-count.danger {
+    color: var(--twitter-red, #f91880);
+}
+
+.tweet-btn {
+    background: var(--twitter-blue, #1d9bf0);
+    color: white;
+    border: none;
+    border-radius: 9999px;
+    padding: 8px 16px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.tweet-btn:hover:not(:disabled) {
+    background: var(--twitter-blue-hover, #1a8cd8);
+}
+
+.tweet-btn:disabled {
+    background: var(--twitter-blue, #1d9bf0);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Photo upload preview */
+.photo-preview {
+    margin-top: 12px;
+    position: relative;
+}
+
+.photo-preview img {
+    max-width: 100%;
+    border-radius: 12px;
+}
+
+.photo-preview .remove-photo {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* Timeline Feed */
+.timeline-feed {
+    background: var(--bg-primary, white);
+}
+
+.empty-timeline {
+    padding: 64px 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+}
+
+.empty-timeline h3 {
+    font-size: 31px;
+    font-weight: 800;
+    line-height: 36px;
+    color: var(--text-primary, #0f1419);
+    margin: 0 0 8px 0;
+}
+
+.empty-timeline p {
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--text-secondary, #536471);
+    margin: 0 0 32px 0;
+}
+
+.primary-btn {
+    background: var(--twitter-blue, #1d9bf0);
+    color: white;
+    border: none;
+    border-radius: 9999px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.primary-btn:hover {
+    background: var(--twitter-blue-hover, #1a8cd8);
+}
+
+/* Tweet Styles (consistent met profile.php) */
+.tweet {
+    display: flex;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+    transition: background-color 0.2s;
+    cursor: pointer;
+    background: var(--bg-primary, white);
+}
+
+.tweet:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.tweet-avatar {
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.tweet-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.tweet-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.tweet-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+    position: relative;
+}
+
+.tweet-author {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary, #0f1419);
+    text-decoration: none;
+    margin: 0;
+}
+
+.tweet-author:hover {
+    text-decoration: underline;
+}
+
+.tweet-username {
+    font-size: 15px;
+    color: var(--text-secondary, #536471);
+    text-decoration: none;
+    margin: 0;
+}
+
+.tweet-time {
+    font-size: 15px;
+    color: var(--text-secondary, #536471);
+}
+
+.tweet-time::before {
+    content: "·";
+    margin: 0 4px;
+}
+
+.tweet-menu {
+    margin-left: auto;
+    position: relative;
+}
+
+.menu-trigger {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--text-secondary, #536471);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.tweet:hover .menu-trigger {
+    opacity: 1;
+}
+
+.menu-trigger:hover {
+    background: rgba(29, 155, 240, 0.1);
+    color: var(--twitter-blue, #1d9bf0);
+}
+
+.tweet-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-primary, white);
+    border: 1px solid var(--border-color, #e1e8ed);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    min-width: 180px;
+    z-index: 100;
+    display: none;
+}
+
+.tweet-dropdown.show {
+    display: block;
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--twitter-red, #f91880);
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+.tweet-text {
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--text-primary, #0f1419);
+    margin-bottom: 12px;
+    word-wrap: break-word;
+}
+
+.tweet-media {
+    margin-bottom: 12px;
+}
+
+.tweet-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 1px solid var(--border-color, #e1e8ed);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.tweet-image:hover {
+    transform: scale(1.02);
+}
+
+.tweet-actions {
+    display: flex;
+    justify-content: space-between;
+    max-width: 425px;
+    margin-top: 12px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #536471);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 9999px;
+    transition: all 0.2s;
+    font-size: 13px;
+}
+
+.action-btn:hover {
+    background: rgba(29, 155, 240, 0.1);
+    color: var(--twitter-blue, #1d9bf0);
+}
+
+.like-btn.liked {
+    color: var(--twitter-red, #f91880);
+}
+
+.like-btn.liked svg {
+    fill: var(--twitter-red, #f91880);
+}
+
+/* Image Modal */
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    cursor: pointer;
+}
+
+.modal-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    cursor: default;
+}
+
+.modal-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+#modal-image {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .timeline-main {
+        margin-right: 260px; /* Smaller right sidebar */
+    }
+}
+
+@media (max-width: 1024px) {
+    .timeline-main {
+        margin-right: 0; /* No right sidebar */
+    }
+}
+
+@media (max-width: 768px) {
+    .timeline-main {
+        margin-left: 68px; /* Smaller left sidebar */
+    }
+}
+
+@media (max-width: 500px) {
+    .timeline-main {
+        margin-left: 0; /* No left sidebar */
+    }
+    
+    .timeline-layout {
+        /* padding-top: 53px; */
+    }
+}
+
+/* Comment Button Styling */
+.action-btn.comment-button {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn.comment-button:hover {
+    background-color: rgba(29, 161, 242, 0.1);
+    color: #1DA1F2;
+}
+
+.action-btn.comment-button.active {
+    color: #1DA1F2;
+}
+
+.action-btn.comment-button.active .comment-icon {
+    color: #1DA1F2;
+}

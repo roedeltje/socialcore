@@ -1,4 +1,13 @@
 <?php
+// Debug: Wat hebben we beschikbaar?
+echo "<!-- DEBUG: ";
+echo "SESSION: " . print_r($_SESSION, true);
+if (isset($user)) {
+    echo "USER variable: " . print_r($user, true);
+}
+echo " -->";
+?>
+<?php
 // /themes/twitter/partials/post-form.php
 // Twitter-style post formulier voor timeline en profile
 
@@ -17,10 +26,11 @@ $user = $user ?? $current_user ?? [];
         
         <!-- Twitter Compose Area -->
         <div class="twitter-compose-area">
+        <div class="twitter-compose-area">
             <div class="twitter-user-avatar-section">
-                <img src="<?= $user['avatar_url'] ?? theme_asset('images/default-avatar.png') ?>" 
-                     alt="<?= htmlspecialchars($user['name'] ?? $user['username'] ?? 'User') ?>" 
-                     class="twitter-compose-avatar">
+                <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/twitter/images/default-avatar.png') ?>" 
+                    alt="<?= htmlspecialchars($current_user['display_name'] ?? $current_user['username'] ?? 'Gebruiker') ?>" 
+                    class="twitter-compose-avatar">
             </div>
             
             <div class="twitter-compose-content">
@@ -60,7 +70,10 @@ $user = $user ?? $current_user ?? [];
                                 data-form-id="<?= $form_id ?>" 
                                 title="Add emoji">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                <path d="M12,2C6.486,2,2,6.486,2,12s4.486,10,10,10s10-4.486,10-10S17.514,2,12,2z M12,20c-4.411,0-8-3.589-8-8 s3.589-8,8-8s8,3.589,8,8S16.411,20,12,20z"/>
+                                <circle cx="8.5" cy="10.5" r="1.5"/>
+                                <circle cx="15.5" cy="10.5" r="1.5"/>
+                                <path d="M12,18c2.28 0 4.22-1.66 5-4H7C7.78,16.34 9.72,18 12,18z"/>
                             </svg>
                         </button>
                         
@@ -255,504 +268,6 @@ $user = $user ?? $current_user ?? [];
     </div>
 </div>
 
-<style>
-/* ===== TWITTER POST FORM STYLING ===== */
-.twitter-post-form-container {
-    position: relative;
-    z-index: 10;
-}
-
-.twitter-post-form {
-    background: var(--twitter-white);
-    border-bottom: 1px solid var(--twitter-border);
-}
-
-/* Twitter Compose Area */
-.twitter-compose-area {
-    display: flex;
-    padding: 16px 20px;
-    gap: 12px;
-}
-
-.twitter-user-avatar-section {
-    flex-shrink: 0;
-}
-
-.twitter-compose-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.twitter-compose-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.twitter-compose-textarea {
-    width: 100%;
-    border: none;
-    resize: none;
-    font-size: 20px;
-    line-height: 1.4;
-    padding: 12px 0;
-    background: transparent;
-    color: var(--twitter-dark);
-    font-family: inherit;
-    min-height: 60px;
-}
-
-.twitter-compose-textarea:focus {
-    outline: none;
-}
-
-.twitter-compose-textarea::placeholder {
-    color: var(--twitter-gray);
-    font-size: 20px;
-}
-
-/* Media Preview */
-.twitter-media-preview {
-    margin: 12px 0;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid var(--twitter-border);
-}
-
-.twitter-media-wrapper {
-    position: relative;
-    display: block;
-}
-
-.twitter-preview-image {
-    width: 100%;
-    height: auto;
-    max-height: 300px;
-    object-fit: cover;
-    display: block;
-}
-
-.twitter-remove-media {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(4px);
-}
-
-.twitter-remove-media:hover {
-    background: rgba(0, 0, 0, 0.8);
-    transform: scale(1.1);
-}
-
-/* Twitter Compose Actions */
-.twitter-compose-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--twitter-border);
-}
-
-.twitter-compose-tools {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
-.twitter-compose-tool {
-    background: none;
-    border: none;
-    color: var(--twitter-blue);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.twitter-compose-tool:hover:not(:disabled) {
-    background-color: var(--twitter-blue-light);
-}
-
-.twitter-compose-tool:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.twitter-file-input {
-    position: absolute;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-}
-
-.twitter-compose-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-/* Character Counter */
-.twitter-char-counter {
-    position: relative;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.twitter-char-circle {
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
-.twitter-char-progress {
-    transition: stroke-dashoffset 0.2s ease;
-}
-
-.twitter-char-count {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--twitter-gray);
-    position: relative;
-    z-index: 1;
-}
-
-.twitter-char-count.warning {
-    color: #FF8C00;
-}
-
-.twitter-char-count.danger {
-    color: #DC2626;
-    font-weight: 700;
-}
-
-/* Tweet Button */
-.twitter-tweet-btn {
-    background-color: var(--twitter-blue);
-    color: white;
-    border: none;
-    padding: 8px 24px;
-    border-radius: 20px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.twitter-tweet-btn:hover:not(:disabled) {
-    background-color: var(--twitter-blue-hover);
-}
-
-.twitter-tweet-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Privacy Options */
-.twitter-privacy-options {
-    padding: 16px 20px;
-    background-color: var(--twitter-bg);
-    border-top: 1px solid var(--twitter-border);
-}
-
-.twitter-privacy-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-    color: var(--twitter-dark);
-    font-weight: 700;
-    font-size: 15px;
-}
-
-.twitter-privacy-choices {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.twitter-privacy-choice {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 12px;
-    border-radius: 12px;
-    transition: background-color 0.2s ease;
-}
-
-.twitter-privacy-choice:hover {
-    background-color: var(--twitter-hover);
-}
-
-.twitter-privacy-choice input[type="radio"] {
-    display: none;
-}
-
-.twitter-choice-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.twitter-choice-content svg {
-    color: var(--twitter-gray);
-    transition: color 0.2s ease;
-}
-
-.twitter-privacy-choice input[type="radio"]:checked + .twitter-choice-content svg {
-    color: var(--twitter-blue);
-}
-
-.twitter-choice-text {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--twitter-dark);
-}
-
-/* Twitter Emoji Picker */
-.twitter-emoji-picker {
-    position: fixed !important;
-    z-index: 99999 !important;
-    background: var(--twitter-white);
-    border: 1px solid var(--twitter-border);
-    border-radius: 16px;
-    box-shadow: var(--twitter-shadow);
-    max-height: 300px;
-    overflow-y: auto;
-    margin-top: 8px;
-    animation: emojiPickerFadeIn 0.2s ease-out;
-    width: 320px;
-    max-width: 90vw;
-    
-    transform: translateZ(0);
-    isolation: isolate;
-}
-
-@keyframes emojiPickerFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px) translateZ(0);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) translateZ(0);
-    }
-}
-
-.twitter-emoji-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background-color: var(--twitter-bg);
-    color: var(--twitter-dark);
-    border-radius: 16px 16px 0 0;
-    font-size: 15px;
-    font-weight: 700;
-    z-index: 1;
-    border-bottom: 1px solid var(--twitter-border);
-}
-
-.twitter-emoji-close {
-    background: none;
-    border: none;
-    color: var(--twitter-gray);
-    cursor: pointer;
-    padding: 0;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-}
-
-.twitter-emoji-close:hover {
-    background-color: var(--twitter-hover);
-    color: var(--twitter-dark);
-}
-
-.twitter-emoji-categories {
-    padding: 12px;
-    z-index: 1;
-}
-
-.twitter-emoji-category {
-    margin-bottom: 16px;
-}
-
-.twitter-emoji-category:last-child {
-    margin-bottom: 0;
-}
-
-.twitter-category-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--twitter-gray);
-    margin-bottom: 8px;
-    padding: 0 6px;
-    border-bottom: 1px solid var(--twitter-border);
-    padding-bottom: 6px;
-}
-
-.twitter-emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 6px;
-    padding: 6px;
-}
-
-.twitter-emoji-item {
-    font-size: 20px;
-    padding: 8px;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 36px;
-    background: none;
-    border: none;
-}
-
-.twitter-emoji-item:hover {
-    background-color: var(--twitter-hover);
-    transform: scale(1.2);
-}
-
-.twitter-emoji-item:active {
-    transform: scale(1.1);
-    background-color: var(--twitter-blue-light);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .twitter-compose-area {
-        padding: 12px 16px;
-        gap: 10px;
-    }
-    
-    .twitter-compose-avatar {
-        width: 40px;
-        height: 40px;
-    }
-    
-    .twitter-compose-textarea {
-        font-size: 18px;
-        min-height: 50px;
-    }
-    
-    .twitter-compose-textarea::placeholder {
-        font-size: 18px;
-    }
-    
-    .twitter-compose-actions {
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch;
-    }
-    
-    .twitter-compose-tools {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .twitter-compose-right {
-        justify-content: space-between;
-        width: 100%;
-    }
-    
-    .twitter-emoji-picker {
-        left: 10px !important;
-        right: 10px !important;
-        width: auto !important;
-        max-width: calc(100vw - 20px) !important;
-    }
-    
-    .twitter-emoji-grid {
-        grid-template-columns: repeat(6, 1fr);
-        gap: 4px;
-    }
-    
-    .twitter-emoji-item {
-        font-size: 18px;
-        padding: 6px;
-        min-height: 32px;
-    }
-}
-
-@media (max-width: 480px) {
-    .twitter-compose-area {
-        padding: 12px;
-    }
-    
-    .twitter-compose-textarea {
-        font-size: 16px;
-        min-height: 50px;
-    }
-    
-    .twitter-compose-textarea::placeholder {
-        font-size: 16px;
-    }
-    
-    .twitter-compose-tools {
-        gap: 8px;
-    }
-    
-    .twitter-privacy-choices {
-        gap: 4px;
-    }
-    
-    .twitter-privacy-choice {
-        padding: 8px;
-    }
-}
-
-/* Smooth scrollbar voor emoji panel */
-.twitter-emoji-picker::-webkit-scrollbar {
-    width: 6px;
-}
-
-.twitter-emoji-picker::-webkit-scrollbar-track {
-    background: var(--twitter-bg);
-    border-radius: 3px;
-}
-
-.twitter-emoji-picker::-webkit-scrollbar-thumb {
-    background: var(--twitter-blue);
-    border-radius: 3px;
-}
-
-.twitter-emoji-picker::-webkit-scrollbar-thumb:hover {
-    background: var(--twitter-blue-hover);
-}
-</style>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all post forms on the page
@@ -915,8 +430,12 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Tweeting...';
             
-            fetch('<?= base_url("feed/create") ?>', {
+            fetch('/?route=feed/create', {
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
                 body: formData
             })
             .then(response => response.json())

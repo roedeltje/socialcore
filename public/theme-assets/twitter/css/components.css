@@ -1,0 +1,2264 @@
+/* ========================================
+   SOCIALCORE COMPONENTS CSS
+   Bevat alle CSS voor herbruikbare components
+   ======================================== */
+
+/* ========================================
+   1. CSS VARIABELEN & GLOBALE STIJLEN
+   ======================================== */
+:root {
+    --primary-blue: #0066cc;
+    --hover-blue: #0052a3;
+    /* etc... */
+}
+
+/* ========================================
+   2. NAVIGATIE (navigation.php)
+   ======================================== */
+/* Hoofdnavigatie container */
+/* Dropdown menu's */
+/* Mobile menu */
+/* Twitter Navigation Styles */
+.twitter-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+    z-index: 1000;
+    height: 53px;
+}
+
+.nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    height: 100%;
+}
+
+/* Brand/Logo */
+.nav-brand {
+    flex-shrink: 0;
+}
+
+.brand-link {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    color: var(--primary-color, #1d9bf0);
+}
+
+.brand-link:hover {
+    background: rgba(29, 155, 240, 0.1);
+}
+
+.brand-logo {
+    width: 30px;
+    height: 30px;
+}
+
+/* Search Bar */
+.nav-search {
+    flex: 1;
+    max-width: 600px;
+    margin: 0 20px;
+}
+
+.search-form {
+    width: 100%;
+}
+
+.search-input-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary, #536471);
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    background: var(--search-bg, #eff3f4);
+    border: 1px solid transparent;
+    border-radius: 50px;
+    padding: 12px 16px 12px 48px;
+    font-size: 15px;
+    color: var(--text-primary, #0f1419);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    background: white;
+    border-color: var(--primary-color, #1d9bf0);
+    box-shadow: 0 0 0 1px var(--primary-color, #1d9bf0);
+}
+
+.search-input::placeholder {
+    color: var(--text-secondary, #536471);
+}
+
+/* Navigation Actions */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.nav-item {
+    position: relative;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    color: var(--text-primary, #0f1419);
+    position: relative;
+}
+
+.nav-link:hover {
+    background: rgba(29, 155, 240, 0.1);
+}
+
+/* Notification Badge */
+.notification-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--primary-color, #1d9bf0);
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
+/* Profile Dropdown */
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    border-radius: 50px;
+    padding: 4px 8px 4px 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.profile-button:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.profile-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.dropdown-arrow {
+    color: var(--text-secondary, #536471);
+    transition: transform 0.2s;
+}
+
+.profile-button[aria-expanded="true"] .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.profile-dropdown {
+    position: relative;
+}
+
+.profile-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: white;
+    border: 1px solid var(--border-color, #e1e8ed);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    min-width: 240px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+.dropdown-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.dropdown-user-info {
+    flex: 1;
+}
+
+.dropdown-name {
+    display: block;
+    font-weight: 700;
+    color: var(--text-primary, #0f1419);
+    font-size: 15px;
+}
+
+.dropdown-username {
+    display: block;
+    color: var(--text-secondary, #536471);
+    font-size: 14px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border-color, #e1e8ed);
+    margin: 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: var(--text-primary, #0f1419);
+    font-size: 15px;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background: var(--hover-bg, #f7f9fa);
+}
+
+.dropdown-item.logout {
+    color: #f91880;
+}
+
+.dropdown-item.logout:hover {
+    background: rgba(249, 24, 128, 0.1);
+}
+
+/* Login/Register Buttons */
+.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.login-btn {
+    color: var(--primary-color, #1d9bf0);
+    background: transparent;
+    border: 1px solid var(--border-color, #e1e8ed);
+}
+
+.login-btn:hover {
+    background: rgba(29, 155, 240, 0.1);
+}
+
+.register-btn {
+    color: white;
+    background: var(--primary-color, #1d9bf0);
+}
+
+.register-btn:hover {
+    background: #1a8cd8;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .nav-search {
+        display: none;
+    }
+    
+    .nav-container {
+        padding: 0 12px;
+    }
+    
+    .nav-actions {
+        gap: 4px;
+    }
+    
+    .nav-link {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .profile-avatar {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .profile-dropdown-menu {
+        right: -8px;
+        min-width: 220px;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-brand {
+        margin-right: 8px;
+    }
+    
+    .brand-logo {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Add top padding to body to account for fixed nav */
+body {
+    padding-top: 53px;
+}
+
+/* ========================================
+   3. POST FORMULIER (post-form.php)
+   ======================================== */
+/* Post editor */
+.twitter-post-form-container {
+    position: relative;
+    z-index: 10;
+}
+
+.twitter-post-form {
+    background: var(--twitter-white);
+    border-bottom: 1px solid var(--twitter-border);
+}
+
+/* Twitter Compose Area */
+.twitter-compose-area {
+    display: flex;
+    padding: 16px 20px;
+    gap: 12px;
+}
+
+.twitter-user-avatar-section {
+    flex-shrink: 0;
+}
+
+.twitter-compose-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.twitter-compose-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.twitter-compose-textarea {
+    width: 100%;
+    border: none;
+    resize: none;
+    font-size: 20px;
+    line-height: 1.4;
+    padding: 12px 0;
+    background: transparent;
+    color: var(--twitter-dark);
+    font-family: inherit;
+    min-height: 60px;
+}
+
+.twitter-compose-textarea:focus {
+    outline: none;
+}
+
+.twitter-compose-textarea::placeholder {
+    color: var(--twitter-gray);
+    font-size: 20px;
+}
+
+/* Media Preview */
+.twitter-media-preview {
+    margin: 12px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--twitter-border);
+}
+
+.twitter-media-wrapper {
+    position: relative;
+    display: block;
+}
+
+.twitter-preview-image {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: cover;
+    display: block;
+}
+
+.twitter-remove-media {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.twitter-remove-media:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+/* Twitter Compose Actions */
+.twitter-compose-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--twitter-border);
+}
+
+.twitter-compose-tools {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.twitter-compose-tool {
+    background: none;
+    border: none;
+    color: var(--twitter-blue);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.twitter-compose-tool:hover:not(:disabled) {
+    background-color: var(--twitter-blue-light);
+}
+
+.twitter-compose-tool:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.twitter-file-input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.twitter-compose-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;  /* ← Meer ruimte tussen karakterteller en button */
+}
+
+/* Character Counter */
+.twitter-char-counter {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.twitter-char-circle {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.twitter-char-progress {
+    transition: stroke-dashoffset 0.2s ease;
+}
+
+.twitter-char-count {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--twitter-gray);
+    position: relative;
+    z-index: 1;
+}
+
+.twitter-char-count.warning {
+    color: #FF8C00;
+}
+
+.twitter-char-count.danger {
+    color: #DC2626;
+    font-weight: 700;
+}
+
+/* Tweet Button */
+.twitter-tweet-btn {
+    background-color: var(--twitter-blue);
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.twitter-tweet-btn:hover:not(:disabled) {
+    background-color: var(--twitter-blue-hover);
+}
+
+.twitter-tweet-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Privacy Options */
+.twitter-privacy-options {
+    padding: 16px 20px;
+    background-color: var(--twitter-bg);
+    border-top: 1px solid var(--twitter-border);
+}
+
+.twitter-privacy-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--twitter-dark);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.twitter-privacy-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.twitter-privacy-choice {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 12px;
+    transition: background-color 0.2s ease;
+}
+
+.twitter-privacy-choice:hover {
+    background-color: var(--twitter-hover);
+}
+
+.twitter-privacy-choice input[type="radio"] {
+    display: none;
+}
+
+.twitter-choice-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.twitter-choice-content svg {
+    color: var(--twitter-gray);
+    transition: color 0.2s ease;
+}
+
+.twitter-privacy-choice input[type="radio"]:checked + .twitter-choice-content svg {
+    color: var(--twitter-blue);
+}
+
+.twitter-choice-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--twitter-dark);
+}
+
+/* Twitter Emoji Picker */
+.twitter-emoji-picker {
+    position: fixed !important;
+    z-index: 99999 !important;
+    background: #ffffff !important; /* Expliciete witte achtergrond */
+    border: 1px solid #e1e8ed;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 
+                0 4px 16px rgba(0, 0, 0, 0.1) !important; /* Verbeterde schaduw */
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 8px;
+    animation: emojiPickerFadeIn 0.2s ease-out;
+    width: 320px;
+    max-width: 90vw;
+    
+    transform: translateZ(0);
+    isolation: isolate;
+    backdrop-filter: blur(8px); /* Extra ondersteuning voor doorzichtigheid */
+}
+
+@keyframes emojiPickerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) translateZ(0);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) translateZ(0);
+    }
+}
+
+.twitter-emoji-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #f7f9fa !important;
+    color: var(--twitter-dark);
+    border-radius: 16px 16px 0 0;
+    font-size: 15px;
+    font-weight: 700;
+    z-index: 1;
+    border-bottom: 1px solid var(--twitter-border);
+}
+
+.twitter-emoji-close {
+    background: none;
+    border: none;
+    color: var(--twitter-gray);
+    cursor: pointer;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.twitter-emoji-close:hover {
+    background-color: var(--twitter-hover);
+    color: var(--twitter-dark);
+}
+
+.twitter-emoji-categories {
+    padding: 12px;
+    z-index: 1;
+}
+
+.twitter-emoji-category {
+    margin-bottom: 16px;
+}
+
+.twitter-emoji-category:last-child {
+    margin-bottom: 0;
+}
+
+.twitter-category-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--twitter-gray);
+    margin-bottom: 8px;
+    padding: 0 6px;
+    border-bottom: 1px solid var(--twitter-border);
+    padding-bottom: 6px;
+}
+
+.twitter-emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    padding: 6px;
+}
+
+.twitter-emoji-item {
+    font-size: 20px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    background: none;
+    border: none;
+}
+
+.twitter-emoji-item:hover {
+    background-color: var(--twitter-hover);
+    transform: scale(1.2);
+}
+
+.twitter-emoji-item:active {
+    transform: scale(1.1);
+    background-color: var(--twitter-blue-light);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .twitter-compose-area {
+        padding: 12px 16px;
+        gap: 10px;
+    }
+    
+    .twitter-compose-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .twitter-compose-textarea {
+        font-size: 18px;
+        min-height: 50px;
+    }
+    
+    .twitter-compose-textarea::placeholder {
+        font-size: 18px;
+    }
+    
+    .twitter-compose-actions {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .twitter-compose-tools {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .twitter-compose-right {
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .twitter-emoji-picker {
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+    
+    .twitter-emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+    }
+    
+    .twitter-emoji-item {
+        font-size: 18px;
+        padding: 6px;
+        min-height: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .twitter-compose-area {
+        padding: 12px;
+    }
+    
+    .twitter-compose-textarea {
+        font-size: 16px;
+        min-height: 50px;
+    }
+    
+    .twitter-compose-textarea::placeholder {
+        font-size: 16px;
+    }
+    
+    .twitter-compose-tools {
+        gap: 8px;
+    }
+    
+    .twitter-privacy-choices {
+        gap: 4px;
+    }
+    
+    .twitter-privacy-choice {
+        padding: 8px;
+    }
+}
+
+/* Smooth scrollbar voor emoji panel */
+.twitter-emoji-picker::-webkit-scrollbar {
+    width: 6px;
+}
+
+.twitter-emoji-picker::-webkit-scrollbar-track {
+    background: var(--twitter-bg);
+    border-radius: 3px;
+}
+
+.twitter-emoji-picker::-webkit-scrollbar-thumb {
+    background: var(--twitter-blue);
+    border-radius: 3px;
+}
+
+.twitter-emoji-picker::-webkit-scrollbar-thumb:hover {
+    background: var(--twitter-blue-hover);
+}
+/* Emoji picker */
+/* File upload area */
+
+/* ========================================
+   4. COMMENT FORMULIER (comment-form.php)
+   ======================================== */
+/* Comment input */
+/* Comment emoji picker */
+/* Twitter Comment Form Styles */
+.twitter-comment-form-wrapper {
+    border-top: 1px solid var(--twitter-border);
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.twitter-comment-form {
+    position: relative;
+}
+
+.twitter-comment-compose {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.twitter-comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.twitter-comment-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.twitter-comment-textarea-container {
+    position: relative;
+}
+
+.twitter-comment-textarea {
+    width: 100%;
+    border: none;
+    resize: none;
+    font-size: 15px;
+    line-height: 1.4;
+    padding: 8px 0;
+    background: transparent;
+    color: var(--twitter-dark);
+    font-family: inherit;
+    min-height: 40px;
+}
+
+.twitter-comment-textarea:focus {
+    outline: none;
+}
+
+.twitter-comment-textarea::placeholder {
+    color: var(--twitter-gray);
+}
+
+.twitter-comment-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.twitter-comment-tools {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.twitter-comment-tool {
+    background: none;
+    border: none;
+    color: var(--twitter-blue);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.twitter-comment-tool:hover:not(:disabled) {
+    background-color: var(--twitter-blue-light);
+}
+
+.twitter-comment-tool:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* GEFIXTE CSS VOOR EMOJI TRIGGER */
+.twitter-comment-emoji-trigger {
+    background: none;
+    border: none;
+    color: var(--twitter-blue);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.twitter-comment-emoji-trigger:hover {
+    background-color: rgba(29, 161, 242, 0.1);
+}
+
+.twitter-comment-emoji-trigger svg {
+    width: 20px;
+    height: 20px;
+}
+
+.twitter-comment-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.twitter-comment-char-counter {
+    font-size: 13px;
+    color: var(--twitter-gray);
+}
+
+.twitter-comment-char-count.warning {
+    color: #FF8C00;
+}
+
+.twitter-comment-char-count.danger {
+    color: #DC2626;
+    font-weight: 700;
+}
+
+.twitter-reply-btn {
+    background-color: var(--twitter-blue);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.twitter-reply-btn:hover:not(:disabled) {
+    background-color: var(--twitter-blue-hover);
+}
+
+.twitter-reply-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Comment Emoji Picker */
+.twitter-comment-emoji-picker {
+    position: absolute;
+    top: 100%;
+    left: 44px;
+    background: #ffffff !important;
+    background: var(--twitter-white);
+    border: 1px solid var(--twitter-border);
+    border-radius: 12px;
+    box-shadow: var(--twitter-shadow);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 8px;
+    width: 280px;
+    animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.twitter-comment-emoji-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #f7f9fa !important;
+    border-bottom: 1px solid var(--twitter-border);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--twitter-dark);
+}
+
+.twitter-comment-emoji-close {
+    background: none;
+    border: none;
+    color: var(--twitter-gray);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.twitter-comment-emoji-close:hover {
+    background-color: var(--twitter-hover);
+    color: var(--twitter-dark);
+}
+
+.twitter-comment-emoji-categories {
+    padding: 8px;
+    background: #ffffff !important;
+}
+
+.twitter-comment-emoji-category {
+    margin-bottom: 12px;
+}
+
+.twitter-comment-emoji-category:last-child {
+    margin-bottom: 0;
+}
+
+.twitter-comment-category-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--twitter-gray);
+    margin-bottom: 6px;
+    padding: 0 4px;
+}
+
+.twitter-comment-emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+}
+
+.twitter-comment-emoji-item {
+    font-size: 16px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+}
+
+.twitter-comment-emoji-item:hover {
+    background-color: var(--twitter-hover);
+    transform: scale(1.1);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .twitter-comment-emoji-picker {
+        left: 0;
+        right: 0;
+        width: auto;
+    }
+    
+    .twitter-comment-emoji-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    
+    .twitter-comment-actions {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+    
+    .twitter-comment-right {
+        justify-content: space-between;
+        width: 100%;
+    }
+}
+
+/* COMMENT ITEM Comment-item.php */
+/* Twitter Comment Item Styles */
+.twitter-comment-item {
+    border-bottom: 1px solid var(--twitter-border);
+    padding: 12px 0;
+    transition: all 0.2s ease;
+}
+
+.twitter-comment-item:hover {
+    background-color: var(--twitter-hover);
+}
+
+.twitter-comment-item:last-child {
+    border-bottom: none;
+}
+
+.twitter-comment-content {
+    display: flex;
+    gap: 12px;
+}
+
+.twitter-comment-item-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.twitter-comment-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.twitter-comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.twitter-comment-author-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.twitter-comment-author {
+    font-weight: 700;
+    color: var(--twitter-dark);
+    text-decoration: none;
+    font-size: 15px;
+}
+
+.twitter-comment-author:hover {
+    text-decoration: underline;
+}
+
+.twitter-comment-username {
+    color: var(--twitter-gray);
+    font-size: 15px;
+}
+
+.twitter-comment-separator {
+    color: var(--twitter-gray);
+    font-size: 15px;
+}
+
+.twitter-comment-time {
+    color: var(--twitter-gray);
+    font-size: 15px;
+}
+
+.twitter-comment-menu {
+    position: relative;
+}
+
+.twitter-comment-menu-btn {
+    background: none;
+    border: none;
+    color: var(--twitter-gray);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.twitter-comment-menu-btn:hover {
+    background-color: var(--twitter-hover);
+    color: var(--twitter-dark);
+}
+
+.twitter-comment-menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: var(--twitter-white);
+    border: 1px solid var(--twitter-border);
+    border-radius: 8px;
+    box-shadow: var(--twitter-shadow);
+    z-index: 50;
+    overflow: hidden;
+    margin-top: 4px;
+    min-width: 120px;
+}
+
+.twitter-comment-menu-dropdown.hidden {
+    display: none;
+}
+
+.twitter-comment-menu-dropdown:not(.hidden) {
+    animation: fadeInDropdown 0.15s ease;
+}
+
+@keyframes fadeInDropdown {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.twitter-comment-delete-btn {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    color: #DC2626;
+    transition: all 0.2s ease;
+}
+
+.twitter-comment-delete-btn:hover {
+    background-color: #FEF2F2;
+}
+
+.twitter-comment-text {
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--twitter-dark);
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
+.twitter-comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.twitter-comment-like-btn,
+.twitter-comment-reply-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+    color: var(--twitter-gray);
+    font-size: 13px;
+}
+
+.twitter-comment-like-btn:hover:not(:disabled),
+.twitter-comment-reply-btn:hover {
+    background-color: var(--twitter-hover);
+    color: var(--twitter-dark);
+}
+
+.twitter-comment-like-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.twitter-comment-like-btn.liked {
+    color: #E91E63 !important;
+}
+
+.twitter-comment-like-btn.liked:hover {
+    background-color: rgba(233, 30, 99, 0.1);
+}
+
+.twitter-comment-like-btn.liked .twitter-comment-like-icon {
+    fill: #E91E63;
+}
+
+.twitter-comment-like-count {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.twitter-comment-like-btn.liked .twitter-comment-like-count {
+    color: #E91E63;
+    font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .twitter-comment-item {
+        padding: 8px 0;
+    }
+    
+    .twitter-comment-content {
+        gap: 8px;
+    }
+    
+    .twitter-comment-item-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .twitter-comment-author-info {
+        gap: 2px;
+        font-size: 14px;
+    }
+    
+    .twitter-comment-author,
+    .twitter-comment-username,
+    .twitter-comment-separator,
+    .twitter-comment-time {
+        font-size: 14px;
+    }
+    
+    .twitter-comment-text {
+        font-size: 14px;
+    }
+    
+    .twitter-comment-actions {
+        gap: 12px;
+    }
+    
+    .twitter-comment-like-btn,
+    .twitter-comment-reply-btn {
+        padding: 4px 6px;
+        font-size: 12px;
+    }
+}
+
+/* Twitter Comments Section Styles */
+.twitter-comments-section {
+    display: none; /* Hide comments by default */
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--twitter-border);
+    animation: slideDown 0.3s ease-out;
+}
+
+.twitter-comments-section.show {
+    display: block; /* Show when toggled */
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Make comment button clickable */
+.twitter-action-button.comment-button {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.twitter-action-button.comment-button:hover {
+    background-color: var(--twitter-hover);
+    border-radius: 50%;
+}
+
+.twitter-action-button.comment-button.active {
+    color: var(--twitter-blue);
+}
+
+.twitter-action-button.comment-button.active .comment-icon {
+    color: var(--twitter-blue);
+}
+
+/* Loading state for comments */
+.twitter-comments-loading {
+    padding: 20px;
+    text-align: center;
+    color: var(--twitter-gray);
+    border-top: 1px solid var(--twitter-border);
+}
+
+/* Login Prompt Styles */
+.twitter-login-prompt {
+    border-top: 1px solid var(--twitter-border);
+    padding: 20px;
+}
+
+.twitter-login-prompt-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background-color: var(--twitter-bg);
+    border-radius: 16px;
+    border: 1px solid var(--twitter-border);
+}
+
+.twitter-login-icon {
+    color: var(--twitter-blue);
+    flex-shrink: 0;
+}
+
+.twitter-login-text {
+    flex: 1;
+}
+
+.twitter-login-text h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--twitter-dark);
+    margin-bottom: 4px;
+}
+
+.twitter-login-text p {
+    font-size: 15px;
+    color: var(--twitter-gray);
+    margin: 0;
+}
+
+.twitter-login-btn {
+    background-color: var(--twitter-blue);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.twitter-login-btn:hover {
+    background-color: var(--twitter-blue-hover);
+    text-decoration: none;
+    color: white;
+}
+
+/* Comments List */
+.twitter-comments-list {
+    border-top: 1px solid var(--twitter-border);
+}
+
+/* No Comments State - Compact Version */
+.twitter-no-comments {
+    border-top: 1px solid var(--twitter-border);
+    padding: 20px; /* Reduced from 40px 20px */
+    text-align: center;
+}
+
+.twitter-no-comments-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px; /* Reduced from 16px */
+}
+
+.twitter-no-comments-icon {
+    color: var(--twitter-gray);
+    opacity: 0.6;
+    width: 32px; /* Smaller icon */
+    height: 32px;
+}
+
+.twitter-no-comments-text h3 {
+    font-size: 16px; /* Reduced from 20px */
+    font-weight: 700;
+    color: var(--twitter-dark);
+    margin-bottom: 2px; /* Reduced from 4px */
+}
+
+.twitter-no-comments-text p {
+    font-size: 14px; /* Reduced from 15px */
+    color: var(--twitter-gray);
+    margin: 0;
+}
+
+/* Even more compact mobile version */
+@media (max-width: 640px) {
+    .twitter-no-comments {
+        padding: 16px; /* Even smaller on mobile */
+    }
+    
+    .twitter-no-comments-content {
+        gap: 6px;
+    }
+    
+    .twitter-no-comments-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .twitter-no-comments-text h3 {
+        font-size: 14px;
+    }
+    
+    .twitter-no-comments-text p {
+        font-size: 13px;
+    }
+}
+
+/* Show/Hide Comments Toggle */
+.twitter-comments-toggle {
+    border-top: 1px solid var(--twitter-border);
+    padding: 12px 20px;
+    background-color: var(--twitter-bg);
+}
+
+.twitter-comments-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--twitter-blue);
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.twitter-comments-toggle-btn:hover {
+    color: var(--twitter-blue-hover);
+}
+
+.twitter-comments-toggle-btn svg {
+    transition: transform 0.2s ease;
+}
+
+.twitter-comments-toggle-btn.expanded svg {
+    transform: rotate(180deg);
+}
+
+/* Loading State */
+.twitter-comments-loading {
+    padding: 20px;
+    text-align: center;
+    color: var(--twitter-gray);
+}
+
+.twitter-comments-loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--twitter-border);
+    border-radius: 50%;
+    border-top-color: var(--twitter-blue);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.twitter-comments-error {
+    padding: 20px;
+    text-align: center;
+    color: #DC2626;
+    background-color: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 12px;
+    margin: 12px 20px;
+}
+
+/* Success Message */
+.twitter-comments-success {
+    padding: 16px 20px;
+    text-align: center;
+    color: #166534;
+    background-color: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-radius: 12px;
+    margin: 12px 20px;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .twitter-login-prompt {
+        padding: 16px;
+    }
+    
+    .twitter-login-prompt-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .twitter-login-text h3 {
+        font-size: 16px;
+    }
+    
+    .twitter-login-text p {
+        font-size: 14px;
+    }
+    
+    .twitter-login-btn {
+        padding: 8px 20px;
+        font-size: 14px;
+    }
+    
+    .twitter-no-comments {
+        padding: 32px 16px;
+    }
+    
+    .twitter-no-comments-text h3 {
+        font-size: 18px;
+    }
+    
+    .twitter-no-comments-text p {
+        font-size: 14px;
+    }
+    
+    .twitter-comments-toggle {
+        padding: 12px 16px;
+    }
+}
+
+/* ========================================
+   5. SIDEBARS (left-sidebar.php, right-sidebar.php)
+   ======================================== */
+/* Sidebar containers */
+/* Widget styling */
+/* ===== RIGHT SIDEBAR STYLING ===== */
+
+/* Widget Base Styling */
+.twitter-widget {
+    background-color: var(--bg-secondary, #f7f9fa);
+    border-radius: 16px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e1e8ed);
+}
+
+.twitter-widget-header {
+    padding: 20px 16px 12px;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+}
+
+.twitter-widget-content {
+    /* No padding, items handle their own */
+}
+
+/* Trending Items */
+.trending-item {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.trending-item:hover {
+    background-color: var(--bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+.trending-item:last-child {
+    border-bottom: none;
+}
+
+.trending-category {
+    font-size: 13px;
+    color: var(--text-secondary, #536471);
+    line-height: 16px;
+}
+
+.trending-topic {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2px 0 4px 0;
+    line-height: 20px;
+}
+
+.trending-posts {
+    font-size: 13px;
+    color: var(--text-secondary, #536471);
+    line-height: 16px;
+}
+
+/* Who to Follow Items */
+.follow-item {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.2s ease;
+}
+
+.follow-item:hover {
+    background-color: var(--bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+.follow-item:last-child {
+    border-bottom: none;
+}
+
+.follow-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.follow-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.follow-user-details {
+    min-width: 0;
+    flex: 1;
+}
+
+.follow-user-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.follow-user-username {
+    color: var(--text-secondary, #536471);
+    font-size: 15px;
+    margin: 0;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.follow-btn {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
+    padding: 6px 16px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.follow-btn:hover {
+    background: var(--text-secondary);
+}
+
+.follow-btn.following {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.follow-btn.following:hover {
+    background: rgba(244, 33, 46, 0.1);
+    color: rgb(244, 33, 46);
+    border-color: rgba(244, 33, 46, 0.3);
+}
+
+/* Widget Footer */
+.widget-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border-color, #e1e8ed);
+}
+
+.widget-footer-link {
+    color: var(--twitter-blue);
+    text-decoration: none;
+    font-size: 15px;
+}
+
+.widget-footer-link:hover {
+    text-decoration: underline;
+}
+
+/* ===== LEFT SIDEBAR STYLING ===== */
+
+
+
+/* Twitter Logo (klein logo voor sidebar) */
+/* .sidebar-twitter-logo {
+    width: 30px;
+    height: 30px;
+    margin: 0 0 32px 16px;
+    color: var(--twitter-blue);
+} */
+
+/* Navigatie Menu */
+.sidebar-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    padding-left: 0 !important;
+}
+
+.sidebar-nav-item {
+    margin-bottom: 4px;
+    margin-left: 0 !important;
+}
+
+.sidebar-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 19px;
+    font-weight: 400;
+    transition: all 0.15s ease;
+    margin-left: 0 !important;
+}
+
+.sidebar-nav-link:hover {
+    background: rgba(29, 155, 240, 0.1);
+}
+
+.sidebar-nav-link.active {
+    font-weight: 700;
+    color: var(--twitter-blue);
+}
+
+.sidebar-nav-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 16px;
+    fill: currentColor;
+}
+
+/* Tweet/Post Button */
+.twitter-post-btn {
+    background-color: var(--twitter-blue);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 16px 32px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin: 24px 0;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.twitter-post-btn:hover {
+    background-color: var(--twitter-blue-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .twitter-left-sidebar {
+        width: 68px;
+    }
+    
+    .sidebar-nav-link {
+        justify-content: center;
+        padding: 12px;
+    }
+    
+    .sidebar-nav-text {
+        display: none;
+    }
+    
+    .sidebar-nav-icon {
+        margin-right: 0;
+    }
+    
+    .twitter-post-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        padding: 0;
+        font-size: 24px;
+    }
+    
+    .twitter-post-btn .btn-text {
+        display: none;
+    }
+    
+    .twitter-post-btn .btn-icon {
+        display: block;
+    }
+}
+
+@media (max-width: 500px) {
+    .twitter-left-sidebar {
+        display: none;
+    }
+}
+
+
+
+.twitter-left-sidebar * {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+/* ========================================
+   6. MESSAGES
+   ======================================== */
+
+   /* Twitter-style Messages CSS */
+
+/* Messages container styles */
+.messages-container {
+    background-color: #000000;
+    color: #ffffff;
+    min-height: 100vh;
+}
+
+/* Scrollbar styling for dark theme */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* Message bubbles */
+.message-bubble {
+    max-width: 320px;
+}
+
+.message-text {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Photo preview styles */
+.photo-preview {
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+.photo-preview:hover {
+    transform: scale(1.02);
+}
+
+/* Emoji picker styles */
+.emoji-picker {
+    z-index: 50;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.emoji-category-btn {
+    transition: all 0.2s ease;
+    color: #d1d5db;
+}
+
+.emoji-category-btn:hover {
+    background-color: #374151;
+    color: #ffffff;
+}
+
+.emoji-category-btn.active {
+    background-color: #374151;
+    color: #60a5fa;
+}
+
+.emoji-grid {
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 #1f2937;
+}
+
+/* Button animations */
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Form input styles for dark theme */
+input[type="text"],
+input[type="email"],
+textarea,
+select {
+    background-color: #ffffff;
+    border: 1px solid #374151;
+    color: #0a0a0a;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus,
+select:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* Placeholder text color */
+::placeholder {
+    color: #6b7280;
+}
+
+/* Auto-resize textarea */
+textarea {
+    resize: none;
+    overflow-y: auto;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+/* Message status indicators */
+.message-status {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* Unread message indicators */
+.unread-indicator {
+    background-color: #3b82f6;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Conversation item hover effects */
+.conversation-item {
+    transition: all 0.2s ease;
+}
+
+.conversation-item:hover {
+    background-color: #1f2937;
+    transform: translateX(2px);
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Photo lightbox */
+.photo-lightbox {
+    backdrop-filter: blur(8px);
+}
+
+/* Character count styling */
+.char-count {
+    font-size: 0.75rem;
+    transition: color 0.2s ease;
+}
+
+.char-count.warning {
+    color: #fbbf24;
+}
+
+.char-count.danger {
+    color: #ef4444;
+}
+
+/* Photo preview animation */
+#photoPreviewArea {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .message-bubble {
+        max-width: 280px;
+    }
+    
+    .emoji-picker {
+        width: 280px;
+        right: -20px;
+    }
+    
+    .messages-container {
+        padding: 0.5rem;
+    }
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Dark theme specific adjustments */
+.bg-gray-900 {
+    background-color: #1f2937;
+}
+
+.bg-gray-800 {
+    background-color: #374151;
+}
+
+.border-gray-800 {
+    border-color: #374151;
+}
+
+.border-gray-700 {
+    border-color: #4b5563;
+}
+
+.text-gray-400 {
+    color: #9ca3af;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+/* Message bubble specific styles */
+.message-text.own {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.message-text.other {
+    background-color: #374151;
+}
+
+/* Smooth transitions */
+* {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* ========================================
+   7.ALGEMENE COMPONENTEN
+   ======================================== */
+/* Buttons, cards, modals, etc. */

@@ -129,7 +129,7 @@ echo "</div>";
                         $form_id = 'postForm';
                         $context = 'timeline';
                         $user = $current_user;
-                        include __DIR__ . '/../partials/post-form.php';
+                        include THEME_PATH . '/partials/post-form.php';
                     ?>
                 </div>
             </div>
@@ -180,7 +180,7 @@ echo "</div>";
                                             <button type="button" class="post-menu-button">
                                                 <span class="menu-dots">⋯</span>
                                             </button>
-                                            <div class="post-menu-dropdown">
+                                            <div class="post-menu-dropdown hidden">
                                                 <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
                                                     <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
                                                     <button type="button" class="delete-post-button">

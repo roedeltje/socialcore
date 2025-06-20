@@ -16,27 +16,32 @@ class Controller
      * @param bool $forceNewSystem Force use of new ThemeFunctions system
      */
     protected function view($view, $data = [], $forceNewSystem = false)
-    {
-        // Detecteer of dit een admin view is
-        $isAdminView = strpos($view, 'admin/') === 0;
-        
-        // Voor admin views, altijd het oude directe systeem gebruiken
-        if ($isAdminView) {
-            $this->loadAdminView($view, $data);
-            return;
-        }
-
-        // Bepaal welk thema systeem te gebruiken
-        $useNewSystem = $forceNewSystem || $this->useNewThemeSystem;
-
-        if ($useNewSystem) {
-            // === NIEUW GESTANDAARDISEERD SYSTEEM ===
-            $this->loadViewWithNewSystem($view, $data);
-        } else {
-            // === BESTAAND WERKEND SYSTEEM ===
-            $this->loadViewWithCurrentSystem($view, $data);
-        }
+{
+    echo "<!-- DEBUG: Loading view: $view -->";
+    
+    // Detecteer of dit een admin view is
+    $isAdminView = strpos($view, 'admin/') === 0;
+    
+    // Voor admin views, altijd het oude directe systeem gebruiken
+    if ($isAdminView) {
+        echo "<!-- DEBUG: Using admin view system -->";
+        $this->loadAdminView($view, $data);
+        return;
     }
+
+    // Bepaal welk thema systeem te gebruiken
+    $useNewSystem = $forceNewSystem || $this->useNewThemeSystem;
+
+    if ($useNewSystem) {
+        echo "<!-- DEBUG: Using NEW theme system -->";
+        // === NIEUW GESTANDAARDISEERD SYSTEEM ===
+        $this->loadViewWithNewSystem($view, $data);
+    } else {
+        echo "<!-- DEBUG: Using CURRENT theme system -->";
+        // === BESTAAND WERKEND SYSTEEM ===
+        $this->loadViewWithCurrentSystem($view, $data);
+    }
+}
 
     /**
      * Load view using new standardized theme system
@@ -96,23 +101,48 @@ class Controller
             $action = $parts[1];
             
             // Eenvoudige mapping van controller/view naar themanamen
-            $themePageMap = [
-                'home/index' => 'pages/home.php',
-                'profile/index' => 'pages/profile.php', 
-                'profile/edit' => 'pages/edit-profile.php',
-                'profile/avatar' => 'pages/edit-profile.php',
-                'profile/privacy' => 'pages/edit-profile.php',
-                'profile/notifications' => 'pages/edit-profile.php',
-                'feed/index' => 'pages/timeline.php',
-                'auth/login' => 'pages/login.php',
-                'auth/register' => 'pages/register.php',
-                'about/index' => 'pages/about.php',
-                'friends/index' => 'templates/friends.php',
-                'friends/requests' => 'templates/friend-requests.php',
-                'notifications/index' => 'templates/notifications.php',
-                'messages/index' => 'templates/messages.php',
-                // Voeg hier meer mappings toe indien nodig
-            ];
+            $themeMappings = [
+                'default' => [
+                    'home/index' => 'pages/home.php',
+                            'profile/index' => 'pages/profile.php', 
+                            'profile/edit' => 'pages/edit-profile.php',
+                            'profile/avatar' => 'pages/edit-profile.php',
+                            'profile/privacy' => 'pages/edit-profile.php',
+                            'profile/notifications' => 'pages/edit-profile.php',
+                            'feed/index' => 'pages/timeline.php',
+                            'auth/login' => 'pages/login.php',
+                            'auth/register' => 'pages/register.php',
+                            'about/index' => 'pages/about.php',
+                            'friends/index' => 'templates/friends.php',
+                            'friends/requests' => 'templates/friend-requests.php',
+                            'notifications/index' => 'templates/notifications.php',
+                            'messages/index' => 'pages/messages/index.php',
+                            'messages/compose' => 'pages/messages/compose.php',
+                            'messages/conversation' => 'pages/messages/conversation.php',
+                            // ... rest van default mappings
+                        ],
+                'twitter' => [
+                    'home/index' => 'pages/home.php',
+                            'profile/index' => 'pages/profile.php',
+                            'profile/edit' => 'pages/edit-profile.php',
+                            'profile/avatar' => 'pages/edit-profile.php',
+                            'profile/privacy' => 'pages/edit-profile.php',
+                            'profile/notifications' => 'pages/edit-profile.php', 
+                            'feed/index' => 'pages/timeline.php',
+                            'auth/login' => 'pages/login.php',
+                            'auth/register' => 'pages/register.php',
+                            'about/index' => 'pages/about.php',
+                            'friends/index' => 'templates/friends.php',
+                            'friends/requests' => 'templates/friend-requests.php',
+                            'notifications/index' => 'templates/notifications.php',
+                            'messages/index' => 'pages/messages/index.php',
+                            'messages/compose' => 'pages/messages/compose.php',
+                            'messages/conversation' => 'pages/messages/conversation.php',
+                        ]
+                    ];
+
+                $themePageMap = $themeMappings[$activeTheme] ?? $themeMappings['default'];
+
             
             // Converteer naar themabestandspad als er een mapping bestaat
             $viewKey = $controller . '/' . $action;
@@ -139,10 +169,25 @@ class Controller
         
         // Probeer elk pad totdat er een bestand wordt gevonden
         $foundViewPath = null;
+        // Net voor de foreach loop:
+        echo "<!-- DEBUG: Generated theme path: " . ($rootDir . $themesDir . '/' . $activeTheme . '/' . $themeFile) . " -->";
+        echo "<!-- DEBUG: \$rootDir = " . $rootDir . " -->";
+        echo "<!-- DEBUG: \$themesDir = " . $themesDir . " -->";
+        echo "<!-- DEBUG: \$activeTheme = " . $activeTheme . " -->";
+        echo "<!-- DEBUG: \$themeFile = " . $themeFile . " -->";
+        // Test of het pad echt bestaat:
+$testPath = "/var/www/socialcore.local/themes/default/pages/messages/index.php";
+echo "<!-- DEBUG: Manual test - file_exists('$testPath'): " . (file_exists($testPath) ? "TRUE" : "FALSE") . " -->";
+echo "<!-- DEBUG: Manual test - is_readable('$testPath'): " . (is_readable($testPath) ? "TRUE" : "FALSE") . " -->";
         foreach ($viewPaths as $path) {
+            echo "<!-- DEBUG: Trying path: " . $path . " -->";
             if (file_exists($path)) {
+                echo "<!-- DEBUG: FOUND: " . $path . " -->";
                 $foundViewPath = $path;
+                echo "<!-- DEBUG: ACTUALLY LOADING FILE: " . $foundViewPath . " -->";
                 break;
+            }else {
+                echo "<!-- DEBUG: NOT FOUND: " . $path . " -->";
             }
         }
         
@@ -405,5 +450,48 @@ class Controller
     protected function canEdit($user_id)
     {
         return $this->isOwner($user_id) || is_admin();
+    }
+
+    /**
+     * Load messages view with theme layout
+     */
+    private function loadMessagesViewWithLayout($view, $data = [])
+    {
+        die("DEBUG: loadMessagesViewWithLayout wordt nog steeds aangeroepen voor: " . $view);
+
+        extract($data);
+        
+        // Messages view pad
+        $viewPath = __DIR__ . '/../Views/' . $view . '.php';
+        
+        if (!file_exists($viewPath)) {
+            echo "Messages view niet gevonden: " . htmlspecialchars($view);
+            return;
+        }
+        
+        // Buffer de view content
+        ob_start();
+        include $viewPath;
+        $content = ob_get_clean();
+        
+        // Voeg content toe aan data voor layout
+        $data['content'] = $content;
+        extract($data);
+        
+        // Laad met thema layout (kopieer van bestaande systeem)
+        $themeConfig = get_theme_config();
+        $activeTheme = $themeConfig['active_theme'] ?? 'default';
+        $rootDir = '/var/www/socialcore.local/';
+        
+        $headerPath = $rootDir . 'themes/' . $activeTheme . '/layouts/header.php';
+        $footerPath = $rootDir . 'themes/' . $activeTheme . '/layouts/footer.php';
+        
+        if (file_exists($headerPath) && file_exists($footerPath)) {
+            include $headerPath;
+            echo $content;
+            include $footerPath;
+        } else {
+            echo $content;
+        }
     }
 }
