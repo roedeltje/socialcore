@@ -459,3 +459,88 @@ body {
 #scrollToTop {
     display: none !important;
 }
+
+/* TWITTER LINK PREVIEW OVERRIDE */
+.twitter-link-preview-unique .twitter-preview-text-content {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+}
+
+.twitter-link-preview-unique .twitter-preview-text-content * {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.twitter-preview-card-unique {
+    background: white !important;
+}
+
+/* ========================================
+   TWITTER LINK PREVIEW FORCE OVERRIDE
+   Voeg dit toe aan het EINDE van je style.css
+   ======================================== */
+
+/* Alle mogelijke link preview selectors forceren naar wit */
+.twitter-link-preview *,
+.twitter-link-preview-unique *,
+.link-preview-container *,
+.twitter-preview-card-unique *,
+.twitter-preview-text-content,
+.twitter-preview-text-content *,
+.link-preview-content,
+.link-preview-content * {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f1419 !important;
+}
+
+/* Specifieke override voor tekst elementen */
+.twitter-link-preview .domain-text,
+.twitter-link-preview .title-text,
+.twitter-link-preview .description-text,
+.twitter-preview-text-content .domain-text,
+.twitter-preview-text-content .title-text,
+.twitter-preview-text-content .description-text {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Domain tekst grijs */
+.twitter-link-preview .domain-text,
+.twitter-preview-text-content .domain-text {
+    color: #536471 !important;
+}
+
+/* Titel zwart */
+.twitter-link-preview .title-text,
+.twitter-preview-text-content .title-text {
+    color: #0f1419 !important;
+}
+
+/* Beschrijving grijs */
+.twitter-link-preview .description-text,
+.twitter-preview-text-content .description-text {
+    color: #536471 !important;
+}
+
+/* Extra sterke override voor alle div elementen in preview */
+.twitter-link-preview div,
+.twitter-link-preview-unique div,
+.link-preview-container div {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+}
+
+/* Image container mag geen achtergrond hebben */
+.twitter-preview-image-container {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Laatste redmiddel - override ALLES */
+[class*="twitter-link-preview"] *,
+[class*="link-preview"] *,
+[class*="preview-content"] * {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+}

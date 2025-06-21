@@ -194,21 +194,26 @@ echo "</div>";
                                 
                                 <!-- Post Content -->
                                 <div class="post-content">
-                                    <?php if (!empty($post['content'])): ?>
-                                        <div class="post-text">
-                                            <?= nl2br(htmlspecialchars($post['content'])) ?>
-                                        </div>
-                                    <?php endif; ?>
-                                    
-                                    <!-- Media (foto/video) -->
-                                    <?php if (!empty($post['media_path'])): ?>
-                                        <div class="post-media">
-                                            <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
-                                                 alt="Post afbeelding" 
-                                                 class="media-image">
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
+                                <?php if (!empty($post['content'])): ?>
+                                    <div class="post-text">
+                                        <?= nl2br(htmlspecialchars($post['content'])) ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <!-- Media (foto/video) - BESTAANDE CODE -->
+                                <?php if (!empty($post['media_path'])): ?>
+                                    <div class="post-media">
+                                        <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
+                                            alt="Post afbeelding" 
+                                            class="media-image">
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <!-- Link preview (NIEUWE FUNCTIONALITEIT) -->
+                                <?php if ($post['type'] === 'link' && !empty($post['preview_url'])): ?>
+                                    <?php get_theme_component('link-preview', ['post' => $post]); ?>
+                                <?php endif; ?>
+                            </div>
                                 
                                 <!-- Post Footer - Hyves-stijl interactie knoppen -->
                                 <div class="post-footer">

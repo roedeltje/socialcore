@@ -1,0 +1,208 @@
+[2025-06-21 09:38:13] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/misdaad/6359873/man-die-werd-gearresteerd-om-burgergrenscontrole-na-paar-uur-weer-vrij.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-21 09:53:06] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Onrust in PvdA: oud-partijleiders keren zich tegen omstreden raketschild-motie van GL-PvdA
+https://www.ad.nl/politiek/onrust-in-pvda-oud-partijleiders-keren-zich-tegen-omstreden-raketschild-motie-van-gl-pvda~a8f46e03/
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-21 09:59:36] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Quincy Promes na uitlevering door Dubai aangekomen in Nederland
+https://www.nu.nl/misdaad/6359875/quincy-promes-na-uitlevering-door-dubai-aangekomen-in-nederland.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-21 13:31:26] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Flessenpost van Schots meisje na 31 jaar beantwoord vanaf Noors eiland
+https://www.nu.nl/opmerkelijk/6359903/flessenpost-van-schots-meisje-na-31-jaar-beantwoord-vanaf-noors-eiland.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-21 13:40:02] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/tech/6359782/telegram-oprichter-heeft-ruim-100-kinderen-en-gaat-erfenis-over-hen-verdelen.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 13:42:56] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/tech/6359782/telegram-oprichter-heeft-ruim-100-kinderen-en-gaat-erfenis-over-hen-verdelen.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 14:23:54] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.youtube.com/watch?v=JkoimKJNvOw
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 14:25:21] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/midden-oostenconflict/6359775/de-hongerigste-plek-op-aarde-bereikt-een-alsmaar-schokkender-dieptepunt.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 14:41:34] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.youtube.com/watch?v=JkoimKJNvOw
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 15:36:44] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/economie/6359839/uitzendkrachten-in-de-toekomst-mogelijk-niet-meer-welkom-in-de-vleessector.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 15:42:24] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/economie/6359839/uitzendkrachten-in-de-toekomst-mogelijk-niet-meer-welkom-in-de-vleessector.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 15:49:11] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/politiek/6359905/oproep-wapenembargo-tegen-israel-leidt-bij-pvda-deel-op-congres-tot-chagrijn.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 15:56:29] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/economie/6359840/defensie-kan-voorlopig-niet-zonder-amerika-we-zijn-verslaafd-aan-de-vs.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 15:58:33] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.nu.nl/317740/video/van-den-goorbergh-wordt-van-motor-gelanceerd-bij-crash-in-moto2.html
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+
+[2025-06-21 16:07:43] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.ad.nl/binnenland/bezoekers-van-festival-op-de-ring-klagen-over-drukte-en-weinig-schaduw~a4fde37e/
+    [privacy] => public
+)
+
+FILES data: Array
+(
+)
+

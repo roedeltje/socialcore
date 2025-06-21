@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initLikeButtons();
     initImageUpload();
     initPostMenus();
+    initLinkPreviewDetection();
     console.log('✅ Post menus initialized');
 
     initAvatarUpload();
@@ -1297,6 +1298,282 @@ console.log('🔍 All functions available:', typeof initPostMenus, typeof initLi
 
 // Global debug functie beschikbaar maken
 window.debugSocialCore = debugSocialCore;
+
+// Voeg dit toe aan je bestaande theme.js
+
+/**
+ * Real-time link preview functionaliteit
+ */
+function initLinkPreviewDetection() {
+    console.log('🔧 Initializing link preview detection...');
+    
+    // GEFIXTE ELEMENT SELECTIE - gebruik de correcte IDs
+    const postTextareas = document.querySelectorAll('#postFormContent, #profilePostFormContent');
+    
+    console.log('🔍 Found textareas for link preview:', postTextareas.length);
+    
+    postTextareas.forEach(function(textarea, index) {
+        if (!textarea) return;
+        
+        console.log('🔧 Setting up link preview for textarea ' + (index + 1) + ': ' + textarea.id);
+        
+        let timeout;
+        let currentPreviewContainer = null;
+        
+        // Zoek of maak preview container
+        const form = textarea.closest('form');
+        if (form) {
+            console.log('📋 Found parent form for textarea:', textarea.id);
+            
+            // Controleer of preview container al bestaat
+            currentPreviewContainer = form.querySelector('.link-preview-container');
+            
+            if (!currentPreviewContainer) {
+                console.log('➕ Creating new preview container');
+                // Maak preview container aan
+                currentPreviewContainer = document.createElement('div');
+                currentPreviewContainer.className = 'link-preview-container hidden mt-3';
+                
+                // Voeg toe na de textarea wrapper
+                const textareaWrapper = textarea.closest('.input-wrapper, .mb-4') || textarea.parentNode;
+                textareaWrapper.appendChild(currentPreviewContainer);
+                console.log('✅ Preview container added to DOM');
+            } else {
+                console.log('♻️ Using existing preview container');
+            }
+        }
+        
+        textarea.addEventListener('input', function() {
+            clearTimeout(timeout);
+            
+            timeout = setTimeout(function() {
+                const content = textarea.value;
+                const urlPattern = /https?:\/\/[^\s]+/i;
+                const match = content.match(urlPattern);
+                
+                if (match && currentPreviewContainer) {
+                    console.log('🔗 URL detected, generating preview:', match[0]);
+                    generateRealtimePreview(match[0], currentPreviewContainer);
+                } else if (currentPreviewContainer) {
+                    hidePreviewContainer(currentPreviewContainer);
+                }
+            }, 1000); // 1 seconde delay
+        });
+        
+        console.log('✅ Link preview setup complete for: ' + textarea.id);
+    });
+    
+    console.log('✅ Link preview detection initialized');
+}
+
+/**
+ * Genereer real-time preview
+ */
+function generateRealtimePreview(url, container) {
+    // Toon loading state
+    container.innerHTML = `
+        <div class="link-preview-loading">
+            <div class="loading-spinner"></div>
+            <span>Link preview laden...</span>
+        </div>
+    `;
+    container.classList.remove('hidden');
+    
+    // AJAX call naar LinkPreviewController
+    fetch('?route=linkpreview/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `url=${encodeURIComponent(url)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.preview) {
+            showRealtimePreview(data.preview, container);
+        } else {
+            hidePreviewContainer(container);
+        }
+    })
+    .catch(error => {
+        console.error('Preview generation failed:', error);
+        hidePreviewContainer(container);
+    });
+}
+
+/**
+ * Toon preview in container
+ */
+function showRealtimePreview(preview, container) {
+    container.innerHTML = `
+        <div class="link-preview">
+            <div class="link-preview-card">
+                <div class="link-preview-layout">
+                    <div class="link-preview-content">
+                        <div class="link-preview-domain">📌 ${preview.domain}</div>
+                        ${preview.title ? `<div class="link-preview-title">${preview.title}</div>` : ''}
+                        ${preview.description ? `<div class="link-preview-description">${preview.description.substring(0, 120)}${preview.description.length > 120 ? '...' : ''}</div>` : ''}
+                    </div>
+                    ${preview.image_url ? `
+                        <div class="link-preview-image">
+                            <img src="${preview.image_url}" alt="Preview" loading="lazy">
+                        </div>
+                    ` : ''}
+                </div>
+                <button type="button" onclick="hidePreviewContainer(this.closest('.link-preview-container'))" class="link-preview-remove">×</button>
+            </div>
+        </div>
+    `;
+    container.classList.remove('hidden');
+}
+
+/**
+ * Verberg preview container
+ */
+function hidePreviewContainer(container) {
+    if (container) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+    }
+}
+
+// CSS voor loading en preview styling
+const linkPreviewStyles = `
+<style>
+.link-preview-container {
+    margin-top: 12px;
+}
+
+.link-preview-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+    color: #6b7280;
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #0f3ea3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.link-preview {
+    position: relative;
+    border: 2px solid #0f3ea3;
+    border-radius: 10px;
+    overflow: hidden;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.link-preview-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.link-preview-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+}
+
+.link-preview-content {
+    flex: 1;
+    padding: 15px;
+    min-width: 0;
+}
+
+.link-preview-image {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: #f3f4f6;
+}
+
+.link-preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.link-preview-domain {
+    font-size: 12px;
+    color: #0f3ea3;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.link-preview-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f3ea3;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.link-preview-description {
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.link-preview-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .link-preview-image {
+        height: 120px;
+    }
+    
+    .link-preview-content {
+        padding: 10px 12px;
+    }
+}
+</style>
+`;
+
+// Voeg CSS toe aan document head
+if (!document.querySelector('#link-preview-styles')) {
+    const styleElement = document.createElement('div');
+    styleElement.id = 'link-preview-styles';
+    styleElement.innerHTML = linkPreviewStyles;
+    document.head.appendChild(styleElement);
+}
+
+// Initialiseer na DOM load
+document.addEventListener('DOMContentLoaded', function() {
+    initLinkPreviewDetection();
+});
 
 // TIJDELIJKE DEBUG - voeg toe onderaan theme.js
 // setTimeout(function() {

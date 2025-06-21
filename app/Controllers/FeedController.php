@@ -77,18 +77,26 @@ class FeedController extends Controller
                 p.created_at,
                 p.likes_count,
                 p.comments_count,
+                p.link_preview_id,
                 u.id as user_id,
                 u.username,
                 COALESCE(up.display_name, u.username) as user_name,
                 up.avatar,
                 target_user.username as target_username,
                 COALESCE(target_profile.display_name, target_user.username) as target_name,
-                (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
+                (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path,
+                -- Link preview data
+                lp.url as preview_url,
+                lp.title as preview_title,
+                lp.description as preview_description,
+                lp.image_url as preview_image,
+                lp.domain as preview_domain
             FROM posts p
             JOIN users u ON p.user_id = u.id
             LEFT JOIN user_profiles up ON u.id = up.user_id
             LEFT JOIN users target_user ON p.target_user_id = target_user.id
             LEFT JOIN user_profiles target_profile ON target_user.id = target_profile.user_id
+            LEFT JOIN link_previews lp ON p.link_preview_id = lp.id
             WHERE p.is_deleted = 0
             ORDER BY p.created_at DESC
             LIMIT ?
@@ -708,7 +716,7 @@ class FeedController extends Controller
         }
     
     /**
-     * Enhanced createPost met Hyves features
+     * Enhanced createPost met Hyves features en link preview support
      */
     public function createPost($userId = null, $content = null, $type = 'text') 
     {
@@ -733,9 +741,10 @@ class FeedController extends Controller
             return ['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.'];
         }
 
-        // Bepaal post type
+        // Bepaal post type en verwerk link preview
         $post_type = $type;
         $image_path = null;
+        $link_preview_id = null;
 
         // Afbeelding upload (bestaande logica behouden)
         if (!empty($_FILES['image']['name'])) {
@@ -746,17 +755,25 @@ class FeedController extends Controller
             $image_path = $uploadResult['path'];
             $post_type = 'photo';
         }
+        
+        // Link preview verwerking (nieuwe functionaliteit)
+        if (!empty($content)) {
+            $link_preview_id = $this->processLinkPreview($content);
+            if ($link_preview_id && $post_type === 'text') {
+                $post_type = 'link';
+            }
+        }
 
         try {
             $this->db->beginTransaction();
             
-            // Verbeterde post insert met Hyves velden
+            // Verbeterde post insert met Hyves velden EN link preview
             $stmt = $this->db->prepare("
                 INSERT INTO posts (
-                    user_id, content, type, privacy_level, mood, location, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, NOW())
+                    user_id, content, type, privacy_level, mood, location, link_preview_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
             ");
-            $stmt->execute([$userId, $content, $post_type, $privacy, $mood, $location]);
+            $stmt->execute([$userId, $content, $post_type, $privacy, $mood, $location, $link_preview_id]);
             $post_id = $this->db->lastInsertId();
             
             // Media opslaan indien aanwezig
@@ -1548,6 +1565,146 @@ class FeedController extends Controller
         }
         
         exit;
+    }
+
+    /**
+     * Detecteert URLs in post content en genereert link previews
+     */
+    private function processLinkPreview($content)
+    {
+        // Regex voor URL detectie
+        $urlPattern = '/https?:\/\/[^\s]+/i';
+        preg_match($urlPattern, $content, $matches);
+        
+        if (!empty($matches)) {
+            $url = $matches[0];
+            
+            // Controleer of we al een preview hebben (cache)
+            $linkPreview = $this->getLinkPreviewFromCache($url);
+            
+            if (!$linkPreview) {
+                // Genereer nieuwe preview
+                $linkPreview = $this->generateLinkPreview($url);
+            }
+            
+            return $linkPreview ? $linkPreview['id'] : null;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Zoekt bestaande link preview in cache
+     */
+    private function getLinkPreviewFromCache($url)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT * FROM link_previews 
+                WHERE url = ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            ");
+            $stmt->execute([$url]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Cache lookup error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Genereert nieuwe link preview (GEFIXTE VERSIE)
+     */
+    private function generateLinkPreview($url)
+    {
+        try {
+            // Valideer URL
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                return false;
+            }
+            
+            // Haal metadata op MET NIEUWE METHODE
+            $metadata = $this->fetchAndParseMetadata($url);
+            
+            if ($metadata) {
+                // Sla op in database
+                $stmt = $this->db->prepare("
+                    INSERT INTO link_previews (url, title, description, image_url, domain, created_at) 
+                    VALUES (?, ?, ?, ?, ?, NOW())
+                ");
+                
+                $domain = parse_url($url, PHP_URL_HOST);
+                $stmt->execute([
+                    $url,
+                    $metadata['title'],
+                    $metadata['description'],
+                    $metadata['image'],
+                    $domain
+                ]);
+                
+                return [
+                    'id' => $this->db->lastInsertId(),
+                    'url' => $url,
+                    'title' => $metadata['title'],
+                    'description' => $metadata['description'],
+                    'image_url' => $metadata['image'],
+                    'domain' => $domain
+                ];
+            }
+            
+        } catch (Exception $e) {
+            error_log("Link preview generation error: " . $e->getMessage());
+        }
+        
+        return false;
+    }
+
+    /**
+     * Nieuwe metadata parser (simpeler versie)
+     */
+    private function fetchAndParseMetadata($url)
+    {
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 10,
+                'user_agent' => 'Mozilla/5.0 (compatible; SocialCore/1.0)'
+            ]
+        ]);
+        
+        $html = @file_get_contents($url, false, $context);
+        
+        if (!$html) {
+            return false;
+        }
+        
+        // Simpele regex parsing (geen DOMDocument)
+        $title = '';
+        $description = '';
+        $image = '';
+        
+        // Extract title
+        if (preg_match('/<meta property="og:title" content="([^"]*)"[^>]*>/i', $html, $matches)) {
+            $title = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
+        } elseif (preg_match('/<title[^>]*>([^<]*)<\/title>/i', $html, $matches)) {
+            $title = html_entity_decode(trim($matches[1]), ENT_QUOTES, 'UTF-8');
+        }
+        
+        // Extract description  
+        if (preg_match('/<meta property="og:description" content="([^"]*)"[^>]*>/i', $html, $matches)) {
+            $description = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
+        } elseif (preg_match('/<meta name="description" content="([^"]*)"[^>]*>/i', $html, $matches)) {
+            $description = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
+        }
+        
+        // Extract image
+        if (preg_match('/<meta property="og:image" content="([^"]*)"[^>]*>/i', $html, $matches)) {
+            $image = $matches[1];
+        }
+        
+        return [
+            'title' => trim($title) ?: 'Geen titel',
+            'description' => trim($description) ?: 'Geen beschrijving', 
+            'image' => $image
+        ];
     }
 
 }

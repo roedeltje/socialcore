@@ -373,6 +373,311 @@ function render_theme_page(string $page, array $data = [], bool $with_header = t
 
 /**
  * ============================================================================
+ * THEME COMPONENT SYSTEM (NEW)
+ * ============================================================================
+ */
+
+/**
+ * Intelligente component loader met theme detection en fallback systeem
+ * 
+ * @param string $component Component naam (bijv. 'link-preview', 'post-card')
+ * @param array $data Data beschikbaar voor component
+ * @param string|null $theme Specifiek theme (null = actief theme)
+ * @param bool $return_path Of alleen het pad moet worden teruggegeven
+ * @return bool|string True als geladen, false bij fout, string als return_path=true
+ */
+function get_theme_component(string $component, array $data = [], string $theme = null, bool $return_path = false): bool|string
+{
+    $theme_name = $theme ?? get_active_theme();
+    
+    // Prioriteit paths voor component loading
+    $component_paths = [
+        // 1. Actief thema - components directory
+        get_theme_path("components/{$component}.php"),
+        
+        // 2. Actief thema - legacy component location (voor backwards compatibility)
+        get_theme_path("partials/{$component}.php"),
+        
+        // 3. Default thema - components directory
+        __DIR__ . '/../themes/default/components/' . $component . '.php',
+        
+        // 4. Default thema - legacy location
+        __DIR__ . '/../themes/default/partials/' . $component . '.php',
+        
+        // 5. Core fallback components (voor essential components)
+        __DIR__ . '/../core/components/' . $component . '.php'
+    ];
+    
+    foreach ($component_paths as $path) {
+        if (file_exists($path)) {
+            if ($return_path) {
+                return $path;
+            }
+            
+            // Extract data voor gebruik in component
+            extract($data);
+            
+            // Include het component
+            include $path;
+            return true;
+        }
+    }
+    
+    // Component niet gevonden - log voor debugging (alleen als debug mode aan staat)
+    if ((defined('WP_DEBUG') && WP_DEBUG) || (defined('DEBUG') && DEBUG)) {
+        error_log("Theme component '{$component}' not found in theme '{$theme_name}' or fallbacks");
+    }
+    
+    return false;
+}
+
+/**
+ * Laadt een component en returneert de output als string
+ * 
+ * @param string $component Component naam
+ * @param array $data Data voor component
+ * @param string|null $theme Specifiek theme
+ * @return string|false Component output of false bij fout
+ */
+function get_theme_component_content(string $component, array $data = [], string $theme = null): string|false
+{
+    $component_path = get_theme_component($component, $data, $theme, true);
+    
+    if ($component_path && file_exists($component_path)) {
+        // Extract data
+        extract($data);
+        
+        // Capture output
+        ob_start();
+        include $component_path;
+        $output = ob_get_clean();
+        
+        return $output;
+    }
+    
+    return false;
+}
+
+/**
+ * Controleer of een component bestaat voor een thema
+ * 
+ * @param string $component Component naam
+ * @param string|null $theme Specifiek theme (null = actief)
+ * @return bool True als component bestaat
+ */
+function theme_component_exists(string $component, string $theme = null): bool
+{
+    return get_theme_component($component, [], $theme, true) !== false;
+}
+
+/**
+ * Haal alle beschikbare components op voor een thema
+ * 
+ * @param string|null $theme Specifiek theme (null = actief)
+ * @return array Array van component namen
+ */
+function get_theme_components(string $theme = null): array
+{
+    $theme_name = $theme ?? get_active_theme();
+    $components = [];
+    
+    // Check components directory
+    $components_dir = get_theme_path('components');
+    if (is_dir($components_dir)) {
+        $files = scandir($components_dir);
+        foreach ($files as $file) {
+            if (pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+                $components[] = pathinfo($file, PATHINFO_FILENAME);
+            }
+        }
+    }
+    
+    // Check partials directory voor legacy components
+    $partials_dir = get_theme_path('partials');
+    if (is_dir($partials_dir)) {
+        $files = scandir($partials_dir);
+        foreach ($files as $file) {
+            if (pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+                $component_name = pathinfo($file, PATHINFO_FILENAME);
+                if (!in_array($component_name, $components)) {
+                    $components[] = $component_name;
+                }
+            }
+        }
+    }
+    
+    return $components;
+}
+
+/**
+ * Render een component met fallback naar theme template system
+ * (WordPress-stijl functie)
+ * 
+ * @param string $component Component naam
+ * @param array $data Data voor component
+ * @param bool $echo Of output direct moet worden uitgevoerd
+ * @return string|bool Component output of success status
+ */
+function render_component(string $component, array $data = [], bool $echo = true): string|bool
+{
+    $output = get_theme_component_content($component, $data);
+    
+    if ($output !== false) {
+        if ($echo) {
+            echo $output;
+            return true;
+        }
+        return $output;
+    }
+    
+    // Fallback naar bestaande get_component() functie
+    if ($echo) {
+        return get_component($component, $data);
+    }
+    
+    // Voor string return zonder echo, capture get_component output
+    ob_start();
+    $success = get_component($component, $data);
+    $output = ob_get_clean();
+    
+    return $success ? $output : false;
+}
+
+/**
+ * ============================================================================
+ * THEME DETECTION UTILITIES
+ * ============================================================================
+ */
+
+/**
+ * Detecteer het beste component op basis van theme features
+ * 
+ * @param string $component_base Base component naam (bijv. 'link-preview')
+ * @param array $data Component data
+ * @return bool True als component succesvol geladen
+ */
+function get_adaptive_component(string $component_base, array $data = []): bool
+{
+    $theme_name = get_active_theme();
+    
+    // Probeer theme-specifieke variant eerst
+    if (get_theme_component("{$component_base}-{$theme_name}", $data)) {
+        return true;
+    }
+    
+    // Probeer basis component
+    return get_theme_component($component_base, $data);
+}
+
+/**
+ * Haal theme metadata op voor component compatibility
+ * 
+ * @param string|null $theme Specifiek theme
+ * @return array Theme features en component support
+ */
+function get_theme_component_support(string $theme = null): array
+{
+    $theme_name = $theme ?? get_active_theme();
+    
+    try {
+        // Gebruik ThemeManager voor metadata
+        if (class_exists('App\Core\ThemeManager')) {
+            $themeManager = \App\Core\ThemeManager::getInstance();
+            $themeData = $themeManager->getThemeData($theme_name);
+            
+            return [
+                'features' => $themeData['features'] ?? [],
+                'supports' => $themeData['supports'] ?? [],
+                'components' => $themeData['components'] ?? [],
+                'component_list' => get_theme_components($theme_name)
+            ];
+        }
+    } catch (Exception $e) {
+        error_log('Theme component support error: ' . $e->getMessage());
+    }
+    
+    // Fallback
+    return [
+        'features' => [],
+        'supports' => [],
+        'components' => [],
+        'component_list' => get_theme_components($theme_name)
+    ];
+}
+
+/**
+ * ============================================================================
+ * BACKWARDS COMPATIBILITY WRAPPERS
+ * ============================================================================
+ */
+
+/**
+ * Alias voor get_theme_component (kortere naam)
+ */
+function theme_component(string $component, array $data = []): bool
+{
+    return get_theme_component($component, $data);
+}
+
+/**
+ * WordPress-stijl get_template_part equivalent
+ */
+function get_template_part(string $slug, string $name = '', array $data = []): bool
+{
+    $component = empty($name) ? $slug : "{$slug}-{$name}";
+    return get_theme_component($component, $data);
+}
+
+/**
+ * ============================================================================
+ * COMPONENT DEBUGGING HELPERS
+ * ============================================================================
+ */
+
+/**
+ * Debug informatie over component loading
+ * 
+ * @param string $component Component naam
+ * @return array Debug informatie
+ */
+function debug_component_loading(string $component): array
+{
+    $theme_name = get_active_theme();
+    $debug = [
+        'component' => $component,
+        'theme' => $theme_name,
+        'searched_paths' => [],
+        'found_path' => null,
+        'exists' => false
+    ];
+    
+    // Test alle mogelijke paths
+    $test_paths = [
+        'current_theme_components' => get_theme_path("components/{$component}.php"),
+        'current_theme_partials' => get_theme_path("partials/{$component}.php"),
+        'default_theme_components' => __DIR__ . '/../themes/default/components/' . $component . '.php',
+        'default_theme_partials' => __DIR__ . '/../themes/default/partials/' . $component . '.php',
+        'core_components' => __DIR__ . '/../core/components/' . $component . '.php'
+    ];
+    
+    foreach ($test_paths as $type => $path) {
+        $exists = file_exists($path);
+        $debug['searched_paths'][$type] = [
+            'path' => $path,
+            'exists' => $exists
+        ];
+        
+        if ($exists && !$debug['found_path']) {
+            $debug['found_path'] = $path;
+            $debug['exists'] = true;
+        }
+    }
+    
+    return $debug;
+}
+
+/**
+ * ============================================================================
  * DEPRECATED FUNCTIONS (voor backwards compatibility)
  * ============================================================================
  */

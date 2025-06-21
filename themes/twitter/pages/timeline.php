@@ -186,6 +186,10 @@ $pageCSS = [
                                              onclick="openImageModal('<?= base_url('uploads/' . htmlspecialchars($post['media_path'])) ?>')">
                                     </div>
                                 <?php endif; ?>
+
+                                <?php if ($post['type'] === 'link' && !empty($post['preview_url'])): ?>
+                                    <?php get_theme_component('link-preview', ['post' => $post]); ?>
+                                <?php endif; ?>
                                 
                                 <div class="tweet-actions">
                                     <button class="action-btn reply-btn comment-button" data-post-id="<?= $post['id'] ?>">
