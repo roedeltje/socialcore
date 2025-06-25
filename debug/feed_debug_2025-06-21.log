@@ -206,3 +206,24 @@ FILES data: Array
 (
 )
 
+[2025-06-21 16:54:19] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => https://www.metronieuws.nl/onderweg/ov/2025/06/ns-compensatiesysteem-nog-steeds-plat/
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+

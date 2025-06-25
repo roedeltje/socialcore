@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controllers;
+use Exception;
 
 // FORCE IMMEDIATE DEBUG - direct na namespace
 file_put_contents('/tmp/controller_loaded_' . time() . '.txt', 
@@ -11,6 +12,7 @@ use App\Database\Database;
 use App\Auth\Auth;
 use PDO;
 use App\Helpers\Logger;
+use App\Controllers\PrivacyController;
 
 class MessagesController extends Controller
 {
@@ -112,244 +114,259 @@ class MessagesController extends Controller
     }
     
     /**
-     * Nieuw bericht - Toon formulier
+     * 🔒 GEFIXED: Toon compose pagina met correcte privacy handling
      */
-    public function compose($username = null)
+    public function compose($prefilledUsername = null)
     {
-        // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
             redirect('login');
             return;
         }
-        
+
+        $senderId = $_SESSION['user_id'];
         $recipientUser = null;
-        
-        // Als een username is meegegeven, zoek die gebruiker op
-        if ($username) {
-            $recipientUser = $this->getUserByUsername($username);
-            if (!$recipientUser) {
-                $_SESSION['error_message'] = 'Gebruiker niet gevonden.';
-                redirect('messages');
-                return;
+        $canSendMessage = true;
+        $privacyError = null;
+
+        // Als er een username is opgegeven, controleer privacy
+        if ($prefilledUsername) {
+            // Haal ontvanger gegevens op
+            $stmt = $this->db->prepare("
+                SELECT u.id, u.username, COALESCE(up.display_name, u.username) as display_name 
+                FROM users u 
+                LEFT JOIN user_profiles up ON u.id = up.user_id 
+                WHERE u.username = ?
+            ");
+            $stmt->execute([$prefilledUsername]);
+            $recipientUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($recipientUser) {
+                // 🔒 PRIVACY CHECK
+                $canSendMessage = $this->canSendMessageTo($recipientUser['id'], $senderId);
+                
+                if (!$canSendMessage) {
+                    $privacyError = "Je kunt geen berichten sturen naar {$recipientUser['display_name']}. Deze gebruiker accepteert alleen berichten van vrienden.";
+                }
             }
         }
-        
+
+        // 🆕 NIEUW: Haal ALLE gebruikers op met privacy status
+        $allUsers = $this->getAllUsersWithPrivacyStatus($senderId);
+
         $data = [
             'title' => 'Nieuw bericht',
             'recipient_user' => $recipientUser,
-            'all_users' => $this->getAllUsers() // Voor dropdown als geen specifieke ontvanger
+            'can_send_message' => $canSendMessage,
+            'privacy_error' => $privacyError,
+            'all_users' => $allUsers  // 🆕 Alle gebruikers met privacy info
         ];
-        
+
         $this->view('messages/compose', $data);
+    }
+
+    /**
+     * 🆕 NIEUW: Haal alle gebruikers op met privacy status
+     */
+    private function getAllUsersWithPrivacyStatus($senderId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    u.id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as display_name,
+                    up.avatar,
+                    ups.messages_from
+                FROM users u
+                LEFT JOIN user_profiles up ON u.id = up.user_id  
+                LEFT JOIN user_privacy_settings ups ON u.id = ups.user_id
+                WHERE u.id != ?
+                ORDER BY up.display_name ASC, u.username ASC
+            ");
+            $stmt->execute([$senderId]);
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Voeg privacy status toe aan elke gebruiker
+            foreach ($users as &$user) {
+                $user['avatar_url'] = get_avatar_url($user['avatar']);
+                $user['can_send_message'] = $this->canSendMessageTo($user['id'], $senderId);
+                
+                // Bepaal waarom niet als kan_send_message false is
+                if (!$user['can_send_message']) {
+                    switch ($user['messages_from'] ?? 'friends') {
+                        case 'nobody':
+                            $user['privacy_reason'] = 'Accepteert geen berichten';
+                            break;
+                        case 'friends':
+                            $user['privacy_reason'] = 'Alleen vrienden';
+                            break;
+                        default:
+                            $user['privacy_reason'] = 'Niet beschikbaar';
+                    }
+                }
+            }
+
+            return $users;
+            
+        } catch (\Exception $e) {
+            error_log("Error getting users with privacy: " . $e->getMessage());
+            return [];
+        }
     }
     
     /**
-     * Verstuur een nieuw bericht
+     * 🔒 BIJGEWERKT: Verstuur bericht MET privacy check
      */
     public function send()
     {
-        // Debug logging
-        file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-            date('Y-m-d H:i:s') . " - Send method called\n" .
-            "POST data: " . print_r($_POST, true) . "\n" .
-            "FILES data: " . print_r($_FILES, true) . "\n",
-            FILE_APPEND
-        );
-
-        // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
             redirect('login');
             return;
         }
-        
-        // Controleer of het een POST request is
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('messages');
             return;
         }
-        
+
         $senderId = $_SESSION['user_id'];
-        $receiverId = $_POST['receiver_id'] ?? null;
-        $subject = $_POST['subject'] ?? '';
-        $content = $_POST['content'] ?? '';
         
-        // Process emoji shortcuts
-        $content = $this->processEmojiShortcuts($content);
+        // 🔧 FIX: Support voor beide field namen
+        $recipientId = $_POST['recipient_id'] ?? $_POST['receiver_id'] ?? null;
+        $recipientUsername = $_POST['recipient_username'] ?? $_POST['receiver_username'] ?? null;
+        $subject = trim($_POST['subject'] ?? '');
         
-        // Validatie
-        $errors = [];
-        
-        if (empty($receiverId) || !is_numeric($receiverId)) {
-            $errors[] = 'Selecteer een ontvanger.';
-        }
-        
-        if (empty(trim($content))) {
-            $errors[] = 'Bericht mag niet leeg zijn.';
-        }
-        
-        if (strlen($content) > 5000) {
-            $errors[] = 'Bericht mag maximaal 5000 karakters bevatten.';
-        }
-        
-        // Controleer of ontvanger bestaat
-        if ($receiverId) {
-            $receiver = $this->getUserById($receiverId);
-            if (!$receiver) {
-                $errors[] = 'Ontvanger niet gevonden.';
+        // 🔧 FIX: Support voor beide field namen
+        $message = trim($_POST['message'] ?? $_POST['content'] ?? '');
+
+        // Als recipient_id leeg is maar username wel gevuld, zoek dan de ID op
+        if (empty($recipientId) && !empty($recipientUsername)) {
+            try {
+                $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
+                $stmt->execute([$recipientUsername]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($user) {
+                    $recipientId = $user['id'];
+                }
+            } catch (\Exception $e) {
+                error_log("Error finding user by username: " . $e->getMessage());
             }
         }
-        
-        // Als er fouten zijn, ga terug naar formulier
-        if (!empty($errors)) {
-            $_SESSION['error_message'] = implode('<br>', $errors);
-            $_SESSION['form_data'] = $_POST;
+
+        // Validatie
+        if (empty($recipientId)) {
+            $_SESSION['error_message'] = 'Geen geldige ontvanger geselecteerd.';
             redirect('messages/compose');
             return;
         }
         
+        if (empty($message)) {
+            $_SESSION['error_message'] = 'Bericht mag niet leeg zijn.';
+            redirect('messages/compose');
+            return;
+        }
+
+        // 🔒 PRIVACY CHECK
+        if (!$this->canSendMessageTo($recipientId, $senderId)) {
+            $_SESSION['error_message'] = 'Je kunt geen berichten sturen naar deze gebruiker. Deze gebruiker accepteert alleen berichten van vrienden.';
+            redirect('messages/compose');
+            return;
+        }
+
         try {
-            // Begin database transactie
-            $this->db->beginTransaction();
-            
-            // Bepaal message type
-            $messageType = 'text'; // Default type
-            $attachmentPath = null;
-            $attachmentType = null;
-            
-            // GEFIXTE FOTO UPLOAD: Check op juiste $_FILES key
-            if (!empty($_FILES['message_photo']['name']) && $_FILES['message_photo']['error'] === 0) {
-                file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-                    "Processing photo upload for message_photo\n", FILE_APPEND);
-                
-                $uploadResult = $this->handlePhotoUpload($_FILES['message_photo']);
-                
-                if ($uploadResult && isset($uploadResult['success']) && $uploadResult['success']) {
-                    $attachmentPath = $uploadResult['file_path'];
-                    $attachmentType = 'image';
-                    $messageType = 'image'; // Update message type
-                    
-                    file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-                        "Photo upload successful: " . $attachmentPath . "\n", FILE_APPEND);
-                } else {
-                    file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-                        "Photo upload failed\n", FILE_APPEND);
-                }
-            }
-            
-            // GEVIXTE DATABASE INSERT: Include attachment columns
+            // Verstuur het bericht
             $stmt = $this->db->prepare("
-                INSERT INTO messages (sender_id, receiver_id, subject, content, type, attachment_path, attachment_type, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+                INSERT INTO messages (sender_id, recipient_id, subject, message, created_at)
+                VALUES (?, ?, ?, ?, NOW())
             ");
             
-            $stmt->execute([
-                $senderId,
-                $receiverId,
-                $subject,
-                $content,
-                $messageType,
-                $attachmentPath,
-                $attachmentType
-            ]);
-            
-            $messageId = $this->db->lastInsertId();
-
-            file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-                "Message inserted with ID: " . $messageId . 
-                " | Type: " . $messageType . 
-                " | Attachment: " . ($attachmentPath ? $attachmentPath : 'none') . "\n", 
-                FILE_APPEND);
-            
-            // Commit transactie
-            $this->db->commit();
+            $stmt->execute([$senderId, $recipientId, $subject, $message]);
             
             $_SESSION['success_message'] = 'Bericht succesvol verzonden!';
+            redirect('messages/conversation?user=' . $recipientId);
             
-            // Redirect naar conversatie met ontvanger
-            redirect('?route=messages/conversation&user=' . $receiverId);
-            
-        } catch (\Exception $e) {
-            // Rollback bij fout
-            $this->db->rollBack();
-            
-            file_put_contents('/var/www/socialcore.local/debug/send_debug.log', 
-                "ERROR: " . $e->getMessage() . "\n" .
-                "Stack trace: " . $e->getTraceAsString() . "\n", 
-                FILE_APPEND);
-            
+        } catch (Exception $e) {
             error_log("Error sending message: " . $e->getMessage());
-            $_SESSION['error_message'] = 'Er ging iets mis bij het verzenden van het bericht: ' . $e->getMessage();
+            $_SESSION['error_message'] = 'Er ging iets mis bij het verzenden van het bericht.';
             redirect('messages/compose');
         }
     }
+
     
     /**
-     * Antwoord op een bericht (AJAX of form)
+     * 🔒 GEFIXED: Antwoord op bericht met betere error handling
      */
-    
     public function reply()
     {
-        // Set headers voor AJAX response
-        header('Content-Type: application/json');
-        header('Cache-Control: no-cache');
+        if (!isset($_SESSION['user_id'])) {
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
+                return;
+            }
+            redirect('login');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('messages');
+            return;
+        }
+
+        $senderId = $_SESSION['user_id'];
         
-        // Clear any previous output
-        while (ob_get_level()) {
-            ob_end_clean();
+        // 🔧 FIX: Support voor beide field namen
+        $recipientId = $_POST['recipient_id'] ?? $_POST['receiver_id'] ?? null;
+        $message = trim($_POST['message'] ?? $_POST['content'] ?? '');
+
+        $errorMessage = null;
+
+        // Validatie
+        if (empty($recipientId)) {
+            $errorMessage = 'Geen ontvanger gevonden';
+        } elseif (empty($message)) {
+            $errorMessage = 'Bericht mag niet leeg zijn';
+        } else {
+            // 🔒 PRIVACY CHECK
+            if (!$this->canSendMessageTo($recipientId, $senderId)) {
+                $errorMessage = 'Je kunt geen berichten meer sturen naar deze gebruiker. Deze gebruiker accepteert alleen berichten van vrienden.';
+            } else {
+                // Alles OK, verstuur bericht
+                try {
+                    $stmt = $this->db->prepare("
+                        INSERT INTO messages (sender_id, recipient_id, message, created_at)
+                        VALUES (?, ?, ?, NOW())
+                    ");
+                    
+                    $stmt->execute([$senderId, $recipientId, $message]);
+                    
+                    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => true, 'message' => 'Bericht verzonden']);
+                        return;
+                    }
+                    
+                    $_SESSION['success_message'] = 'Bericht succesvol verzonden!';
+                    redirect('messages/conversation?user=' . $recipientId);
+                    return;
+                    
+                } catch (Exception $e) {
+                    error_log("Error sending reply: " . $e->getMessage());
+                    $errorMessage = 'Er ging iets mis bij het verzenden van het bericht';
+                }
+            }
+        }
+
+        // Als we hier komen, is er een fout opgetreden
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => $errorMessage]);
+            return;
         }
         
-        try {
-            // Controleer of gebruiker is ingelogd
-            if (!isset($_SESSION['user_id'])) {
-                echo json_encode(['success' => false, 'message' => 'Not logged in']);
-                exit;
-            }
-            
-            $senderId = $_SESSION['user_id'];
-            $receiverId = $_POST['receiver_id'] ?? null;
-            $content = $_POST['content'] ?? '';
-            
-            // Process emoji shortcuts
-            $content = $this->processEmojiShortcuts($content);
-            
-            // Validatie
-            if (empty($receiverId) || (empty(trim($content)) && empty($_FILES['image']['name']))) {
-                echo json_encode(['success' => false, 'message' => 'Content or photo required']);
-                exit;
-            }
-            
-            // Bepaal bericht type
-            $messageType = !empty($_FILES['image']['name']) ? 'photo' : 'text';
-            
-            // Sla bericht op in database
-            $stmt = $this->db->prepare("INSERT INTO messages (sender_id, receiver_id, content, type, created_at) VALUES (?, ?, ?, ?, NOW())");
-            $stmt->execute([$senderId, $receiverId, $content, $messageType]);
-            $messageId = $this->db->lastInsertId();
-            
-            $photoUrl = null;
-            
-            // Verwerk foto upload indien aanwezig
-            if (!empty($_FILES['image']['name'])) {
-                $photoUrl = $this->handlePhotoUpload($_FILES['image'], $messageId);
-            }
-            
-            // Success response
-            echo json_encode([
-                'success' => true,
-                'message' => [
-                    'id' => $messageId,
-                    'content' => htmlspecialchars($content),
-                    'created_at_formatted' => 'Net nu',
-                    'attachment_url' => $photoUrl
-                ]
-            ]);
-            
-        } catch (Exception $e) {
-            error_log("Message reply error: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'Server error']);
-        }
-        
-        exit;
+        $_SESSION['error_message'] = $errorMessage;
+        redirect('messages');
     }
     
     /**
@@ -836,18 +853,18 @@ class MessagesController extends Controller
         }
     }
     
-    private function getAvatarUrl($avatarPath)
-    {
-        if (empty($avatarPath)) {
-            return base_url('theme-assets/default/images/default-avatar.png');
-        }
+    // private function getAvatarUrl($avatarPath)
+    // {
+    //     if (empty($avatarPath)) {
+    //         return base_url('theme-assets/default/images/default-avatar.png');
+    //     }
         
-        if (str_starts_with($avatarPath, 'theme-assets')) {
-            return base_url($avatarPath);
-        }
+    //     if (str_starts_with($avatarPath, 'theme-assets')) {
+    //         return base_url($avatarPath);
+    //     }
         
-        return base_url('uploads/' . $avatarPath);
-    }
+    //     return base_url('uploads/' . $avatarPath);
+    // }
     
     private function formatDate($datetime)
     {
@@ -987,6 +1004,144 @@ class MessagesController extends Controller
             
         } catch (\Exception $e) {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    private function jsonResponse($data)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+
+    /**
+     * Haal een specifiek bericht op met alle gegevens
+     */
+    private function getMessageById($messageId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    m.id,
+                    m.sender_id,
+                    m.receiver_id,
+                    m.content,
+                    m.created_at,
+                    m.attachment_path,
+                    m.attachment_type,
+                    sender.username as sender_username,
+                    COALESCE(sender_profile.display_name, sender.username) as sender_name,
+                    sender_profile.avatar as sender_avatar
+                FROM messages m
+                JOIN users sender ON m.sender_id = sender.id
+                LEFT JOIN user_profiles sender_profile ON sender.id = sender_profile.user_id
+                WHERE m.id = ?
+            ");
+            
+            $stmt->execute([$messageId]);
+            $message = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($message) {
+                // Format data voor frontend
+                $message['created_at_formatted'] = $this->formatDate($message['created_at']);
+                $message['sender_avatar_url'] = $this->getAvatarUrl($message['sender_avatar']);
+                $message['is_own_message'] = $message['sender_id'] == $_SESSION['user_id'];
+                
+                // Format bijlage URL
+                if ($message['attachment_path']) {
+                    $message['attachment_url'] = base_url('uploads/' . $message['attachment_path']);
+                    
+                    // Thumbnail URL voor foto's
+                    if ($message['attachment_type'] === 'photo') {
+                        $pathInfo = pathinfo($message['attachment_path']);
+                        $thumbnailPath = $pathInfo['dirname'] . '/thumb_' . $pathInfo['basename'];
+                        $thumbnailFullPath = BASE_PATH . '/public/uploads/' . $thumbnailPath;
+                        
+                        if (file_exists($thumbnailFullPath)) {
+                            $message['thumbnail_url'] = base_url('uploads/' . $thumbnailPath);
+                        } else {
+                            $message['thumbnail_url'] = $message['attachment_url'];
+                        }
+                    }
+                }
+            }
+            
+            return $message;
+            
+        } catch (Exception $e) {
+            error_log('Get message by ID error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of viewer berichten mag sturen naar doelgebruiker
+     */
+    private function canSendMessageTo($recipientUserId, $senderUserId)
+    {
+        // Kan niet naar jezelf sturen
+        if ($recipientUserId == $senderUserId) {
+            return false;
+        }
+
+        // Haal privacy instellingen van ontvanger op
+        $privacySettings = $this->getPrivacySettings($recipientUserId);
+        
+        if (!$privacySettings) {
+            // Geen privacy instellingen = iedereen mag berichten sturen (backwards compatibility)
+            return true;
+        }
+
+        switch ($privacySettings['messages_from']) {
+            case 'everyone':
+                return true;
+                
+            case 'nobody':
+                return false;
+                
+            case 'friends':
+                return $this->areFriends($recipientUserId, $senderUserId);
+                
+            default:
+                return true; // Fallback
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Haal privacy instellingen op voor een gebruiker
+     */
+    private function getPrivacySettings($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT * FROM user_privacy_settings 
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$userId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Error getting privacy settings: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of twee gebruikers vrienden zijn
+     */
+    private function areFriends($userId1, $userId2)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM friendships 
+                WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
+                AND status = 'accepted'
+            ");
+            $stmt->execute([$userId1, $userId2, $userId2, $userId1]);
+            
+            return $stmt->fetchColumn() > 0;
+        } catch (\Exception $e) {
+            error_log("Error checking friendship: " . $e->getMessage());
+            return false;
         }
     }
 }

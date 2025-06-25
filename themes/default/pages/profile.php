@@ -304,8 +304,9 @@
                                     <h4 class="font-bold text-blue-700 mb-3 border-b border-blue-200 pb-2">Berichten</h4>
                                     <?php foreach ($posts as $post): ?>
                                         <div class="bg-white p-4 rounded-lg shadow mb-4">
+                                            
                                             <div class="flex items-center mb-3">
-                                                <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                                <img src="<?= get_avatar_url($post['avatar']) ?>" 
                                                     alt="<?= htmlspecialchars($post['user_name']) ?>" 
                                                     class="w-10 h-10 rounded-full mr-3">
                                                 <div class="flex-grow">
@@ -353,6 +354,11 @@
                                                             class="w-full h-auto max-h-96 object-contain">
                                                     </div>
                                                 <?php endif; ?>
+                                                
+                                                    <?php if ($post['type'] === 'link' && !empty($post['preview_url'])): ?>
+                                                    <?php get_theme_component('link-preview', ['post' => $post]); ?>
+                                                <?php endif; ?>
+
                                             </div>
                                             
                                             <!-- Post actions -->

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Database\Database;
 use App\Auth\Auth;
 use PDO;
+use Exception;
 
 class FriendsController extends Controller
 {
@@ -19,62 +20,113 @@ class FriendsController extends Controller
      * Verstuur vriendschapsverzoek
      */
     public function add()
-    {
-        // Controleer of gebruiker is ingelogd
-        if (!Auth::check()) {
-            header('Location: /auth/login');
-            exit;
+{
+    // Controleer of gebruiker is ingelogd
+    if (!Auth::check()) {
+        if ($this->isAjaxRequest()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Je moet ingelogd zijn']);
         }
-        
-        // Haal username uit URL (bijv. /friends/add?user=Willem)
-        $username = $_GET['user'] ?? null;
-        if (!$username) {
-            $_SESSION['error'] = 'Gebruiker niet gevonden';
-            header('Location: /');
-            exit;
+        header('Location: /auth/login');
+        exit;
+    }
+    
+    // Haal username uit URL of POST data
+    $username = $_GET['user'] ?? $_POST['user'] ?? null;
+    if (!$username) {
+        if ($this->isAjaxRequest()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Gebruiker niet gevonden']);
         }
-        
-        // Zoek de gebruiker op
-        $friend = $this->getUserByUsername($username);
-        if (!$friend) {
-            $_SESSION['error'] = 'Gebruiker niet gevonden';
-            header('Location: /');
-            exit;
+        $_SESSION['error'] = 'Gebruiker niet gevonden';
+        header('Location: /');
+        exit;
+    }
+    
+    // Zoek de gebruiker op
+    $friend = $this->getUserByUsername($username);
+    if (!$friend) {
+        if ($this->isAjaxRequest()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Gebruiker niet gevonden']);
         }
-        
-        $currentUserId = $_SESSION['user_id'];
-        $friendId = $friend['id'];
-        
-        // Controleer of je niet jezelf probeert toe te voegen
-        if ($currentUserId == $friendId) {
-            $_SESSION['error'] = 'Je kunt jezelf niet als vriend toevoegen';
-            header("Location: /profile/$username");
-            exit;
+        $_SESSION['error'] = 'Gebruiker niet gevonden';
+        header('Location: /');
+        exit;
+    }
+    
+    $currentUserId = $_SESSION['user_id'];
+    $friendId = $friend['id'];
+    
+    // Controleer of je niet jezelf probeert toe te voegen
+    if ($currentUserId == $friendId) {
+        if ($this->isAjaxRequest()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Je kunt jezelf niet als vriend toevoegen']);
         }
-        
-        // Controleer of er al een vriendschap bestaat
-        if ($this->friendshipExists($currentUserId, $friendId)) {
-            $_SESSION['error'] = 'Vriendschapsverzoek al verstuurd of jullie zijn al vrienden';
-            header("Location: /profile/$username");
-            exit;
-        }
-        
-        // Verstuur vriendschapsverzoek
-        try {
-            $stmt = $this->db->prepare("
-                INSERT INTO friendships (user_id, friend_id, status, created_at, updated_at) 
-                VALUES (?, ?, 'pending', NOW(), NOW())
-            ");
-            $stmt->execute([$currentUserId, $friendId]);
-            
-            $_SESSION['success'] = "Vriendschapsverzoek verstuurd naar {$friend['display_name']}!";
-        } catch (Exception $e) {
-            $_SESSION['error'] = 'Er ging iets mis bij het versturen van het verzoek';
-        }
-        
+        $_SESSION['error'] = 'Je kunt jezelf niet als vriend toevoegen';
         header("Location: /profile?user=$username");
         exit;
     }
+    
+    // Controleer of er al een vriendschap bestaat
+    if ($this->friendshipExists($currentUserId, $friendId)) {
+        if ($this->isAjaxRequest()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Vriendschapsverzoek al verstuurd of jullie zijn al vrienden']);
+        }
+        $_SESSION['error'] = 'Vriendschapsverzoek al verstuurd of jullie zijn al vrienden';
+        header("Location: /profile?user=$username");
+        exit;
+    }
+    
+    // Verstuur vriendschapsverzoek
+    try {
+        $stmt = $this->db->prepare("
+            INSERT INTO friendships (user_id, friend_id, status, created_at, updated_at) 
+            VALUES (?, ?, 'pending', NOW(), NOW())
+        ");
+        $stmt->execute([$currentUserId, $friendId]);
+        
+        $successMessage = "Vriendschapsverzoek verstuurd naar {$friend['display_name']}!";
+        
+        if ($this->isAjaxRequest()) {
+            $this->jsonResponse([
+                'success' => true, 
+                'message' => $successMessage,
+                'friend_name' => $friend['display_name']
+            ]);
+        }
+        
+        $_SESSION['success'] = $successMessage;
+        
+    } catch (Exception $e) {
+        error_log('Friendship request error: ' . $e->getMessage());
+        
+        if ($this->isAjaxRequest()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Er ging iets mis bij het versturen van het verzoek']);
+        }
+        
+        $_SESSION['error'] = 'Er ging iets mis bij het versturen van het verzoek';
+    }
+    
+    header("Location: /profile?user=$username");
+    exit;
+}
+
+/**
+ * Controleer of het een AJAX request is
+ */
+private function isAjaxRequest()
+{
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+           strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
+/**
+ * Stuur JSON response en stop uitvoering
+ */
+private function jsonResponse($data)
+{
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
     
     /**
      * Accepteer vriendschapsverzoek
@@ -310,25 +362,6 @@ class FriendsController extends Controller
 
     /**
      * Helper functie om de volledige avatar URL te krijgen
+     * Verplaatst naar Controller.php
      */
-    private function getAvatarUrl($avatarPath)
-    {
-        if (empty($avatarPath)) {
-            return base_url('theme-assets/default/images/default-avatar.png');
-        }
-        
-        // Als het pad al een volledige URL is
-        if (str_starts_with($avatarPath, 'http')) {
-            return $avatarPath;
-        }
-        
-        // Als het een theme asset is
-        if (str_starts_with($avatarPath, 'theme-assets')) {
-            return base_url($avatarPath);
-        }
-        
-        // Voor uploads: gebruik base_url zonder extra 'public'
-        // Want de upload path bevat al de juiste structuur
-        return base_url('uploads/' . $avatarPath);
-    }
 }

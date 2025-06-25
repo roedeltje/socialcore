@@ -147,3 +147,47 @@ FILES data: Array
 
 )
 
+2025-06-25 10:32:21 - Send method called
+POST data: Array
+(
+    [receiver_id] => 1
+    [subject] => Test mail
+    [content] => Dit is een ets🤣
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+2025-06-25 10:35:14 - Send method called
+POST data: Array
+(
+    [receiver_id] => 1
+    [subject] => Test mail
+    [content] => Test berichtje
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+

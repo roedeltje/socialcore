@@ -321,13 +321,10 @@ echo "</div>";
                             <?php foreach ($online_friends as $friend): ?>
                                 <div class="friend-item">
                                     <div class="friend-avatar-wrapper">
-                                        <img src="<?= base_url('theme-assets/default/images/' . (strpos($friend['name'], 'Lucas') !== false ? 
-                                                                        'default-avatar-male.png' : 
-                                                                        (strpos($friend['name'], 'Emma') !== false || strpos($friend['name'], 'Sophie') !== false ? 
-                                                                         'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                             alt="<?= htmlspecialchars($friend['name']) ?>" 
-                                             class="friend-avatar">
-                                        <span class="online-indicator"></span>
+                                        <img src="<?= get_avatar_url($friend['avatar']) ?>" 
+                                                alt="<?= htmlspecialchars($friend['name']) ?>" 
+                                                class="friend-avatar">
+                                            <span class="online-indicator"></span>
                                     </div>
                                     <div class="friend-info">
                                         <a href="<?= base_url('profile/' . $friend['id']) ?>" class="friend-name">
@@ -335,7 +332,7 @@ echo "</div>";
                                         </a>
                                         <span class="friend-status">Online</span>
                                     </div>
-                                    <a href="<?= base_url('messages/chat/' . $friend['id']) ?>" class="message-btn">
+                                    <a href="<?= base_url('?route=messages/conversation&user=' . $friend['id']) ?>" class="message-btn">
                                         💬
                                     </a>
                                 </div>
@@ -382,18 +379,21 @@ echo "</div>";
                     <div class="suggestions-list">
                         <?php foreach ($suggested_users as $user): ?>
                             <div class="suggestion-item">
-                                <img src="<?= base_url('theme-assets/default/images/' . (strpos($user['name'], 'Tim') !== false || 
-                                                                strpos($user['name'], 'Robin') !== false ? 
-                                                                'default-avatar-male.png' : 
-                                                                (strpos($user['name'], 'Nina') !== false || strpos($user['name'], 'Laura') !== false ? 
-                                                                 'default-avatar-female.png' : 'default-avatar.png'))) ?>" 
-                                     alt="<?= htmlspecialchars($user['name']) ?>" 
-                                     class="suggestion-avatar">
+                                <img src="<?= $this->getAvatarUrl($user['avatar']) ?>" 
+                                    alt="<?= htmlspecialchars($user['name']) ?>" 
+                                    class="suggestion-avatar">
                                 <div class="suggestion-info">
-                                    <a href="<?= base_url('profile/' . $user['id']) ?>" class="suggestion-name">
+                                    <a href="<?= base_url('?route=profile&user=' . $user['username']) ?>" class="suggestion-name">
                                         <?= htmlspecialchars($user['name']) ?>
                                     </a>
-                                    <button class="hyves-btn mini primary">+ Toevoegen</button>
+                                    
+                                    <!-- GEFIXTE KNOP: Link naar vriendschapsverzoek -->
+                                    <a href="<?= base_url('?route=friends/add&user=' . $user['username']) ?>" 
+                                    class="hyves-btn mini primary add-friend-btn"
+                                    data-user-id="<?= $user['id'] ?>"
+                                    data-username="<?= htmlspecialchars($user['username']) ?>">
+                                        + Toevoegen
+                                    </a>
                                 </div>
                             </div>
                         <?php endforeach; ?>

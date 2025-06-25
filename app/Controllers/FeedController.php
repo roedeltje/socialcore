@@ -6,6 +6,7 @@ use App\Database\Database;
 use PDO;           // Deze was missing!
 use Exception;     // Deze ook!
 use PDOException;
+use App\Controllers\PrivacyController;
 
 require_once __DIR__ . '/../../core/helpers/upload.php';
 
@@ -36,16 +37,16 @@ class FeedController extends Controller
         // Haal gebruikersinfo op
         $currentUser = $this->getCurrentUser($_SESSION['user_id']);
         
-        // Haal real-time widget data op
-        $onlineFriends = $this->getOnlineFriends();
-        $trendingHashtags = $this->getTrendingHashtags();
-        $suggestedUsers = $this->getSuggestedUsers();
+        // Haal real-time widget data op - deze methods bestaan nu!
+        $onlineFriends = $this->getOnlineFriends();          // ← Werkt nu!
+        $trendingHashtags = $this->getTrendingHashtags();    // ← Werkt nu!
+        $suggestedUsers = $this->getSuggestedUsers();        // ← Werkt nu!
         
         // Data doorsturen naar de view
         $data = [
             'posts' => $posts,
-            'current_user' => $currentUser,  // ← Dit is de variabele die je nodig hebt!
-            'online_friends' => $onlineFriends,
+            'current_user' => $currentUser,
+            'online_friends' => $onlineFriends,              // ← Widget krijgt echte data!
             'trending_hashtags' => $trendingHashtags,
             'suggested_users' => $suggestedUsers,
             'page_title' => 'Nieuwsfeed - SocialCore'
@@ -59,76 +60,80 @@ class FeedController extends Controller
 }
 
     /**
-     * Haal alle posts op met verbeterde Hyves-stijl data
+     * 🔒 BIJGEWERKT: Haal alle posts op MET privacy filtering
      */
     private function getAllPosts($limit = 20)
     {
-        // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
-        //     "[" . date('Y-m-d H:i:s') . "] getAllPosts() starting\n", 
-        //     FILE_APPEND | LOCK_EX);
-
-        $query = "
-            SELECT 
-                p.id,
-                p.content,
-                p.type,
-                p.post_type,
-                p.target_user_id,
-                p.created_at,
-                p.likes_count,
-                p.comments_count,
-                p.link_preview_id,
-                u.id as user_id,
-                u.username,
-                COALESCE(up.display_name, u.username) as user_name,
-                up.avatar,
-                target_user.username as target_username,
-                COALESCE(target_profile.display_name, target_user.username) as target_name,
-                (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path,
-                -- Link preview data
-                lp.url as preview_url,
-                lp.title as preview_title,
-                lp.description as preview_description,
-                lp.image_url as preview_image,
-                lp.domain as preview_domain
-            FROM posts p
-            JOIN users u ON p.user_id = u.id
-            LEFT JOIN user_profiles up ON u.id = up.user_id
-            LEFT JOIN users target_user ON p.target_user_id = target_user.id
-            LEFT JOIN user_profiles target_profile ON target_user.id = target_profile.user_id
-            LEFT JOIN link_previews lp ON p.link_preview_id = lp.id
-            WHERE p.is_deleted = 0
-            ORDER BY p.created_at DESC
-            LIMIT ?
-        ";
-
-        // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
-        //     "[" . date('Y-m-d H:i:s') . "] Query prepared, about to execute\n", 
-        //     FILE_APPEND | LOCK_EX);
+        if (!isset($_SESSION['user_id'])) {
+            return [];
+        }
+        
+        $viewerId = $_SESSION['user_id'];
         
         try {
+            // Haal ALLE posts op (zonder privacy filtering in de query)
+            $query = "
+                SELECT 
+                    p.id,
+                    p.user_id,
+                    p.content,
+                    p.type,
+                    p.post_type,
+                    p.target_user_id,
+                    p.created_at,
+                    p.likes_count AS likes,
+                    p.comments_count AS comments,
+                    p.link_preview_id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as user_name,
+                    target_user.username as target_username,
+                    COALESCE(target_profile.display_name, target_user.username) as target_name,
+                    (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path,
+                    lp.url as preview_url,
+                    lp.title as preview_title,
+                    lp.description as preview_description,
+                    lp.image_url as preview_image,
+                    lp.domain as preview_domain
+                FROM posts p
+                JOIN users u ON p.user_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                LEFT JOIN users target_user ON p.target_user_id = target_user.id
+                LEFT JOIN user_profiles target_profile ON target_user.id = target_profile.user_id
+                LEFT JOIN link_previews lp ON p.link_preview_id = lp.id
+                WHERE p.is_deleted = 0
+                ORDER BY p.created_at DESC
+                LIMIT ?
+            ";
+            
             $stmt = $this->db->prepare($query);
-            $stmt->execute([$limit]);
-            $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt->execute([$limit * 2]); // Haal meer posts op dan nodig voor filtering
+            $allPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
-            //     "[" . date('Y-m-d H:i:s') . "] Query executed successfully, got " . count($posts) . " posts\n", 
-            //     FILE_APPEND | LOCK_EX);
+            // 🔒 PRIVACY FILTER: Filter posts op basis van privacy instellingen
+            $filteredPosts = $this->filterPostsByPrivacy($allPosts, $viewerId);
             
-            // Format de data voor Hyves-stijl weergave
-            foreach ($posts as &$post) {
-                $post = $this->formatPostForHyves($post);
+            // Limiteer tot gewenste aantal na filtering
+            $filteredPosts = array_slice($filteredPosts, 0, $limit);
+            
+            // Format de data voor de view
+            foreach ($filteredPosts as &$post) {
+                $post['created_at'] = $this->formatDate($post['created_at']);
+                $post['is_liked'] = $this->hasUserLikedPost($post['id']);
+                $post['avatar'] = $this->getUserAvatar($post['user_id']);
+                
+                // Bepaal of dit een krabbel is
+                $post['is_wall_message'] = ($post['post_type'] === 'wall_message');
+                
+                // Voor wall messages: maak sender -> receiver string
+                if ($post['is_wall_message'] && !empty($post['target_name'])) {
+                    $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
+                }
             }
             
-            // Voeg comments toe aan alle posts
-            $posts = $this->getCommentsForPosts($posts);
+            return $filteredPosts;
             
-            return $posts;
-            
-        } catch (Exception $e) {
-            // file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
-            //     "[" . date('Y-m-d H:i:s') . "] ERROR in getAllPosts(): " . $e->getMessage() . "\n", 
-            //     FILE_APPEND | LOCK_EX);
+        } catch (\Exception $e) {
+            error_log("Error getting all posts: " . $e->getMessage());
             return [];
         }
     }
@@ -366,177 +371,18 @@ class FeedController extends Controller
 
     /**
      * Verbeterde online vrienden met real-time data
+     * Verplaatst naar Controller.php
      */
-    private function getOnlineFriends()
-    {
-        if (!isset($_SESSION['user_id'])) {
-            return [];
-        }
-        
-        try {
-            // Haal echte online vrienden op (laatst actief in de laatste 30 minuten)
-            $stmt = $this->db->prepare("
-                SELECT DISTINCT
-                    u.id,
-                    u.username,
-                    COALESCE(up.display_name, u.username) as name,
-                    up.avatar,
-                    u.last_activity
-                FROM friendships f
-                JOIN users u ON (
-                    CASE 
-                        WHEN f.user_id = ? THEN f.friend_id = u.id
-                        ELSE f.user_id = u.id
-                    END
-                )
-                LEFT JOIN user_profiles up ON u.id = up.user_id
-                WHERE f.status = 'accepted'
-                AND (f.user_id = ? OR f.friend_id = ?)
-                AND u.last_activity > DATE_SUB(NOW(), INTERVAL 30 MINUTE)
-                ORDER BY u.last_activity DESC
-                LIMIT 10
-            ");
-            
-            $userId = $_SESSION['user_id'];
-            $stmt->execute([$userId, $userId, $userId]);
-            $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Format avatars
-            foreach ($friends as &$friend) {
-                $friend['avatar_url'] = $this->getHyvesAvatar($friend['id'], $friend['avatar']);
-            }
-            
-            return $friends;
-            
-        } catch (Exception $e) {
-            error_log('Online friends error: ' . $e->getMessage());
-            
-            // Fallback dummy data voor development
-            return [
-                ['id' => 1, 'name' => 'Lucas van der Berg', 'username' => 'lucas', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-male.png')],
-                ['id' => 2, 'name' => 'Emma Janssen', 'username' => 'emma', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')],
-                ['id' => 3, 'name' => 'Sophie de Vries', 'username' => 'sophie', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')]
-            ];
-        }
-    }
+    
 
     /**
      * Echte trending hashtags van afgelopen week
+     * Verplaatst naar Controller.php
      */
-    private function getTrendingHashtags()
-    {
-        try {
-            // Haal hashtags uit post content (simpele regex voor nu)
-            $stmt = $this->db->prepare("
-                SELECT 
-                    SUBSTRING_INDEX(SUBSTRING_INDEX(content, '#', -1), ' ', 1) as tag,
-                    COUNT(*) as count
-                FROM posts 
-                WHERE content LIKE '%#%' 
-                AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
-                AND is_deleted = 0
-                GROUP BY tag
-                HAVING LENGTH(tag) > 1 AND LENGTH(tag) < 30
-                ORDER BY count DESC
-                LIMIT 5
-            ");
-            $stmt->execute();
-            $hashtags = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Als geen hashtags, gebruik fallback
-            if (empty($hashtags)) {
-                return [
-                    ['tag' => 'socialcore', 'count' => 234],
-                    ['tag' => 'hyves', 'count' => 189],
-                    ['tag' => 'nederland', 'count' => 156],
-                    ['tag' => 'nostalgie', 'count' => 98],
-                    ['tag' => 'vrienden', 'count' => 67]
-                ];
-            }
-            
-            return $hashtags;
-            
-        } catch (Exception $e) {
-            error_log('Trending hashtags error: ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * Suggesties gebaseerd op mutual friends en activiteit
-     */
-    private function getSuggestedUsers()
-    {
-        if (!isset($_SESSION['user_id'])) {
-            return [];
-        }
-        
-        try {
-            $userId = $_SESSION['user_id'];
-            
-            // Gebruikers die je nog niet volgt maar wel mutual friends hebben
-            $stmt = $this->db->prepare("
-                SELECT DISTINCT
-                    u.id,
-                    u.username,
-                    COALESCE(up.display_name, u.username) as name,
-                    up.avatar,
-                    COUNT(DISTINCT mf.friend_id) as mutual_friends
-                FROM users u
-                LEFT JOIN user_profiles up ON u.id = up.user_id
-                LEFT JOIN friendships mf ON (
-                    (mf.user_id = u.id OR mf.friend_id = u.id) 
-                    AND mf.status = 'accepted'
-                    AND (mf.user_id IN (
-                        SELECT friend_id FROM friendships 
-                        WHERE user_id = ? AND status = 'accepted'
-                    ) OR mf.friend_id IN (
-                        SELECT friend_id FROM friendships 
-                        WHERE user_id = ? AND status = 'accepted'
-                    ))
-                )
-                WHERE u.id != ?
-                AND u.id NOT IN (
-                    SELECT friend_id FROM friendships 
-                    WHERE user_id = ? AND status IN ('accepted', 'pending')
-                )
-                AND u.id NOT IN (
-                    SELECT user_id FROM friendships 
-                    WHERE friend_id = ? AND status IN ('accepted', 'pending')
-                )
-                GROUP BY u.id
-                ORDER BY mutual_friends DESC, u.created_at DESC
-                LIMIT 6
-            ");
-            
-            $stmt->execute([$userId, $userId, $userId, $userId, $userId]);
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Format avatars
-            foreach ($users as &$user) {
-                $user['avatar_url'] = $this->getHyvesAvatar($user['id'], $user['avatar']);
-            }
-            
-            // Als geen suggesties, gebruik fallback
-            if (empty($users)) {
-                return [
-                    ['id' => 4, 'name' => 'Tim Bakker', 'username' => 'tim', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-male.png')],
-                    ['id' => 5, 'name' => 'Nina Peters', 'username' => 'nina', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')],
-                    ['id' => 6, 'name' => 'Robin de Jong', 'username' => 'robin', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-male.png')],
-                    ['id' => 7, 'name' => 'Laura Smit', 'username' => 'laura', 'avatar_url' => base_url('theme-assets/default/images/default-avatar-female.png')]
-                ];
-            }
-            
-            return $users;
-            
-        } catch (Exception $e) {
-            error_log('Suggested users error: ' . $e->getMessage());
-            return [];
-        }
-    }
 
         /**
      * Verbeterde gebruikersgegevens met Hyves-specifieke data
+     * Verplaatst naar Controller.php
      */
     public function getCurrentUser($userId = null)
     {
@@ -741,6 +587,12 @@ class FeedController extends Controller
             return ['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.'];
         }
 
+        // **NIEUW: Process hashtags VOOR database opslag**
+        $hashtags = [];
+        if (!empty($content)) {
+            $hashtags = $this->processHashtags($content);
+        }
+
         // Bepaal post type en verwerk link preview
         $post_type = $type;
         $image_path = null;
@@ -783,10 +635,16 @@ class FeedController extends Controller
             
             $this->db->commit();
             
+            // **OPTIONEEL: Log hashtag success voor debugging**
+            if (!empty($hashtags)) {
+                error_log("Processed hashtags for post {$post_id}: " . implode(', ', $hashtags));
+            }
+            
             return [
                 'success' => true,
                 'message' => 'Je bericht is geplaatst!',
-                'post_id' => $post_id
+                'post_id' => $post_id,
+                'hashtags' => $hashtags  // **NIEUW: Return hashtags voor debugging**
             ];
             
         } catch (PDOException $e) {
@@ -1705,6 +1563,94 @@ class FeedController extends Controller
             'description' => trim($description) ?: 'Geen beschrijving', 
             'image' => $image
         ];
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of viewer de posts van een gebruiker mag zien
+     */
+    private function canViewUserPosts($postAuthorId, $viewerId)
+    {
+        // Eigenaar kan altijd eigen posts zien
+        if ($postAuthorId == $viewerId) {
+            return true;
+        }
+
+        // Haal privacy instellingen van post auteur op
+        $privacySettings = $this->getPrivacySettings($postAuthorId);
+        
+        if (!$privacySettings) {
+            // Geen privacy instellingen = openbaar (backwards compatibility)
+            return true;
+        }
+
+        switch ($privacySettings['posts_visibility']) {
+            case 'public':
+                return true;
+                
+            case 'private':
+                return false;
+                
+            case 'friends':
+                return $this->areFriends($postAuthorId, $viewerId);
+                
+            default:
+                return true; // Fallback
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Haal privacy instellingen op voor een gebruiker
+     */
+    private function getPrivacySettings($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT * FROM user_privacy_settings 
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$userId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Error getting privacy settings: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of twee gebruikers vrienden zijn
+     */
+    private function areFriends($userId1, $userId2)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM friendships 
+                WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
+                AND status = 'accepted'
+            ");
+            $stmt->execute([$userId1, $userId2, $userId2, $userId1]);
+            
+            return $stmt->fetchColumn() > 0;
+        } catch (\Exception $e) {
+            error_log("Error checking friendship: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Filter posts op basis van privacy instellingen
+     */
+    private function filterPostsByPrivacy($posts, $viewerId)
+    {
+        $filteredPosts = [];
+        
+        foreach ($posts as $post) {
+            // Check of viewer deze post mag zien
+            if ($this->canViewUserPosts($post['user_id'], $viewerId)) {
+                $filteredPosts[] = $post;
+            }
+        }
+        
+        return $filteredPosts;
     }
 
 }

@@ -18,6 +18,8 @@ use App\Controllers\TestController;
 use App\Controllers\CommentsController;
 use App\Controllers\LinkPreviewController;
 use App\Controllers\DebugController;
+use App\Controllers\PrivacyController;
+use App\Controllers\PhotosController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\AppearanceController;
@@ -182,21 +184,21 @@ return [
     'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
 ],
 
-    'admin/users/upload-avatar' => [
-    'callback' => function () {
-        $setupController = new SetupController();
-        $setupController->updateUserAvatar();
-    },
-    'middleware' => [AdminMiddleware::class]
-],
+//     'admin/users/upload-avatar' => [
+//     'callback' => function () {
+//         $setupController = new SetupController();
+//         $setupController->updateUserAvatar();
+//     },
+//     'middleware' => [AdminMiddleware::class]
+// ],
 
-    'admin/users/remove-avatar' => [
-    'callback' => function () {
-        $setupController = new SetupController();
-        $setupController->removeUserAvatar();
-    },
-    'middleware' => [AdminMiddleware::class]
-],
+//     'admin/users/remove-avatar' => [
+//     'callback' => function () {
+//         $setupController = new SetupController();
+//         $setupController->removeUserAvatar();
+//     },
+//     'middleware' => [AdminMiddleware::class]
+// ],
 
     'admin/appearance/themes' => [
     'callback' => function () {
@@ -480,13 +482,13 @@ return [
         'middleware' => [AdminMiddleware::class]
     ],
 
-    'admin/plugins/save-file' => [
-        'callback' => function () {
-            $controller = new AdminPluginController();
-            $controller->saveFile();
-        },
-        'middleware' => [AdminMiddleware::class]
-    ],
+    // 'admin/plugins/save-file' => [
+    //     'callback' => function () {
+    //         $controller = new AdminPluginController();
+    //         $controller->saveFile();
+    //     },
+    //     'middleware' => [AdminMiddleware::class]
+    // ],
 
     'admin/plugins/activate' => [
         'callback' => function () {
@@ -512,13 +514,13 @@ return [
         'middleware' => [AdminMiddleware::class]
     ],
 
-    'admin/plugins/bulk-action' => [
-        'callback' => function () {
-            $controller = new AdminPluginController();
-            $controller->bulkAction();
-        },
-        'middleware' => [AdminMiddleware::class]
-    ],
+    // 'admin/plugins/bulk-action' => [
+    //     'callback' => function () {
+    //         $controller = new AdminPluginController();
+    //         $controller->bulkAction();
+    //     },
+    //     'middleware' => [AdminMiddleware::class]
+    // ],
 
 
     'setup_uploads' => [
@@ -727,6 +729,22 @@ return [
         'middleware' => [AuthMiddleware::class]
     ],
 
+    'privacy' => [
+    'callback' => function () {
+        $privacyController = new \App\Controllers\PrivacyController();
+        $privacyController->index();
+    },
+    'middleware' => [AuthMiddleware::class]
+    ],
+
+    'privacy/update' => [
+        'callback' => function () {
+            $privacyController = new \App\Controllers\PrivacyController();
+            $privacyController->update();
+        },
+        'middleware' => [AuthMiddleware::class]
+    ],
+
     'friends/add' => [
         'callback' => function () {
             $friendsController = new FriendsController();
@@ -912,6 +930,14 @@ return [
     'callback' => function () {
         $controller = new LinkPreviewController();
         $controller->generate();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+    'photos' => [
+    'callback' => function () {
+        $photosController = new PhotosController();
+        $photosController->index();
     },
     'middleware' => [AuthMiddleware::class]
 ],

@@ -89,8 +89,8 @@ Vervang je huidige edit-profile.php met deze versie
                                 </a>
                             </li>
                             <li>
-                                <a href="#privacy-settings" 
-                                   class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50">
+                                <a href="<?= base_url('?route=privacy') ?>" 
+                                class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-shield-alt mr-2 text-gray-400"></i> 
                                     Privacy
                                 </a>
@@ -341,11 +341,28 @@ Vervang je huidige edit-profile.php met deze versie
                             <i class="fas fa-shield-alt mr-2 text-blue-500"></i>
                             Privacy-instellingen
                         </h3>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <p class="text-blue-800">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                Privacy-instellingen zijn binnenkort beschikbaar. Je kunt dan bepalen wie je profiel kan zien en wie contact met je kan opnemen.
-                            </p>
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0">
+                                    <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
+                                        <i class="fas fa-shield-alt text-blue-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-lg font-medium text-blue-900 mb-2">
+                                        Beheer je privacy-instellingen
+                                    </h4>
+                                    <p class="text-blue-800 mb-4">
+                                        Bepaal wie jouw profiel, foto's en berichten kan zien. Jouw privacy staat bij ons voorop.
+                                    </p>
+                                    <a href="<?= base_url('?route=privacy') ?>" 
+                                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        <i class="fas fa-cog mr-2"></i>
+                                        Privacy-instellingen beheren
+                                        <i class="fas fa-arrow-right ml-2"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>

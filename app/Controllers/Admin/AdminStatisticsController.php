@@ -22,7 +22,7 @@ class AdminStatisticsController extends Controller
     /**
      * View methode die admin layout gebruikt
      */
-    protected function view($view, $data = [])
+    protected function view($view, $data = [], $forceNewSystem = false)
     {
         $title = $data['title'] ?? 'Statistieken';
         $contentView = BASE_PATH . "/app/Views/{$view}.php";

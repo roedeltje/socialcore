@@ -343,22 +343,22 @@ class NotificationsController extends Controller
     /**
      * Helper functie om avatar URL te krijgen
      */
-    private function getAvatarUrl($avatarPath)
-    {
-        if (empty($avatarPath)) {
-            return base_url('theme-assets/default/images/default-avatar.png');
-        }
+    // private function getAvatarUrl($avatarPath)
+    // {
+    //     if (empty($avatarPath)) {
+    //         return base_url('theme-assets/default/images/default-avatar.png');
+    //     }
         
-        if (str_starts_with($avatarPath, 'http')) {
-            return $avatarPath;
-        }
+    //     if (str_starts_with($avatarPath, 'http')) {
+    //         return $avatarPath;
+    //     }
         
-        if (str_starts_with($avatarPath, 'theme-assets')) {
-            return base_url($avatarPath);
-        }
+    //     if (str_starts_with($avatarPath, 'theme-assets')) {
+    //         return base_url($avatarPath);
+    //     }
         
-        return base_url('uploads/' . $avatarPath);
-    }
+    //     return base_url('uploads/' . $avatarPath);
+    // }
 
     /**
      * Format datetime voor weergave

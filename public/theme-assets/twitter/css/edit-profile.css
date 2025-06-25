@@ -1,0 +1,500 @@
+/* 
+Twitter Edit Profile - Dedicated CSS
+Bestand: /theme-assets/twitter/css/edit-profile.css
+HOOGSTE PRIORITEIT - Override alle bestaande stijlen
+*/
+
+/* ===== FORCE OVERRIDE ALL EXISTING STYLES ===== */
+body .edit-profile-page,
+html body .edit-profile-page,
+.container .edit-profile-page {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    background-color: #ffffff !important;
+    color: #0000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+    min-height: 100vh !important;
+    position: relative !important;
+    width: 100% !important;
+    z-index: 999 !important;
+}
+
+/* Hide ALL existing navigation/headers inside edit-profile */
+.edit-profile-page nav,
+.edit-profile-page header,
+.edit-profile-page .nav,
+.edit-profile-page .header,
+.edit-profile-page .navbar,
+.edit-profile-page .navigation,
+.edit-profile-page .main-nav {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Override existing containers */
+.edit-profile-page .container,
+.edit-profile-page .main-content,
+.edit-profile-page .content,
+.edit-profile-page .wrapper {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Reset ALL typography */
+.edit-profile-page h1,
+.edit-profile-page h2,
+.edit-profile-page h3,
+.edit-profile-page p,
+.edit-profile-page div,
+.edit-profile-page span {
+    color: inherit !important;
+    font-family: inherit !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ===== EDIT PROFILE SPECIFIC HEADER ===== */
+.edit-profile-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.edit-profile-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 16px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.edit-profile-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    color: #0f1419;
+    cursor: pointer;
+    margin-right: 16px;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+
+.edit-profile-back-btn:hover {
+    background-color: #f7f9fa;
+}
+
+.edit-profile-title-section h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f1419;
+    margin: 0;
+}
+
+.edit-profile-title-section p {
+    font-size: 13px;
+    color: #536471;
+    margin: 2px 0 0 0;
+}
+
+.edit-profile-save-btn {
+    background-color: #0f1419;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.edit-profile-save-btn:hover {
+    background-color: #272c30;
+}
+
+/* ===== COVER PHOTO SECTION ===== */
+.edit-profile-cover {
+    position: relative;
+    height: 200px;
+    background-color: #cfd9de;
+    background-size: cover;
+    background-position: center;
+}
+
+.edit-profile-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-profile-cover-btn {
+    background-color: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.edit-profile-cover-btn:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* ===== PROFILE PHOTO SECTION ===== */
+.edit-profile-avatar-container {
+    position: absolute;
+    bottom: -64px;
+    left: 16px;
+    width: 128px;
+    height: 128px;
+}
+
+.edit-profile-avatar {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    border: 4px solid #ffffff;
+    object-fit: cover;
+}
+
+.edit-profile-avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+}
+
+.edit-profile-avatar-container:hover .edit-profile-avatar-overlay {
+    opacity: 1;
+}
+
+/* ===== FORM SECTION ===== */
+.edit-profile-form {
+    padding: 80px 16px 32px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.edit-profile-form-group {
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.edit-profile-label {
+    display: block;
+    color: #536471;
+    font-size: 13px;
+    margin-bottom: 8px;
+    font-weight: 400;
+}
+
+.edit-profile-input {
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #cfd9de;
+    border-radius: 4px;
+    padding: 12px 16px;
+    color: #0f1419;
+    font-size: 17px;
+    line-height: 1.25;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.edit-profile-input:focus {
+    outline: none;
+    border-color: #1d9bf0;
+    box-shadow: 0 0 0 1px #1d9bf0;
+}
+
+.edit-profile-input::placeholder {
+    color: #536471;
+}
+
+.edit-profile-textarea {
+    resize: none;
+    font-family: inherit;
+}
+
+.edit-profile-counter {
+    text-align: right;
+    font-size: 13px;
+    margin-top: 4px;
+    color: #536471;
+}
+
+.edit-profile-counter.warning {
+    color: #ffad1f;
+}
+
+.edit-profile-counter.error {
+    color: #f4212e;
+}
+
+.edit-profile-help-text {
+    color: #536471;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+/* ===== MODAL STYLES ===== */
+.edit-profile-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.edit-profile-modal.hidden {
+    display: none;
+}
+
+.edit-profile-modal-content {
+    background-color: #15202b;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 480px;
+    width: 100%;
+}
+
+.edit-profile-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.edit-profile-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.edit-profile-modal-close {
+    background: none;
+    border: none;
+    color: #71767b;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: color 0.2s ease;
+}
+
+.edit-profile-modal-close:hover {
+    color: #ffffff;
+}
+
+.edit-profile-modal-body {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.edit-profile-modal-preview {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto;
+}
+
+.edit-profile-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.edit-profile-modal-btn {
+    flex: 1;
+    border: none;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-profile-modal-btn-primary {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.edit-profile-modal-btn-primary:hover {
+    background-color: #e7e7e8;
+}
+
+.edit-profile-modal-btn-secondary {
+    background-color: transparent;
+    color: #ffffff;
+    border: 1px solid #536471;
+}
+
+.edit-profile-modal-btn-secondary:hover {
+    background-color: #1e1e1e;
+}
+
+/* ===== NOTIFICATIONS ===== */
+.edit-profile-notification {
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    max-width: 320px;
+    animation: slideIn 0.3s ease;
+}
+
+.edit-profile-notification.success {
+    background-color: #00ba7c;
+    color: #ffffff;
+}
+
+.edit-profile-notification.error {
+    background-color: #f4212e;
+    color: #ffffff;
+}
+
+.edit-profile-notification-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .edit-profile-header-content {
+        padding: 0 8px;
+    }
+    
+    .edit-profile-form {
+        padding: 80px 8px 32px;
+    }
+    
+    .edit-profile-cover {
+        height: 150px;
+    }
+    
+    .edit-profile-avatar-container {
+        width: 96px;
+        height: 96px;
+        bottom: -48px;
+    }
+    
+    .edit-profile-avatar {
+        width: 96px;
+        height: 96px;
+    }
+    
+    .edit-profile-form {
+        padding-top: 60px;
+    }
+    
+    .edit-profile-modal-content {
+        margin: 16px;
+        padding: 20px;
+    }
+    
+    .edit-profile-modal-preview {
+        width: 96px;
+        height: 96px;
+    }
+}
+
+@media (max-width: 480px) {
+    .edit-profile-title-section h1 {
+        font-size: 18px;
+    }
+    
+    .edit-profile-input {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .edit-profile-notification {
+        right: 8px;
+        left: 8px;
+        max-width: none;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.edit-profile-hidden {
+    display: none !important;
+}
+
+.edit-profile-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+    .edit-profile-page * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus styles voor keyboard navigation */
+.edit-profile-save-btn:focus-visible,
+.edit-profile-input:focus-visible,
+.edit-profile-back-btn:focus-visible,
+.edit-profile-modal-btn:focus-visible {
+    outline: 2px solid #1d9bf0;
+    outline-offset: 2px;
+}

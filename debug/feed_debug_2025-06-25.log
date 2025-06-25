@@ -1,0 +1,21 @@
+[2025-06-25 11:41:12] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hahaha wat leuk 😂
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => banana-1155494_1280.jpg
+            [full_path] => banana-1155494_1280.jpg
+            [type] => image/jpeg
+            [tmp_name] => /tmp/phpxPkY0i
+            [error] => 0
+            [size] => 145169
+        )
+
+)
+

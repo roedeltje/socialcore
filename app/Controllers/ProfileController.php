@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Database\Database;
 use App\Auth\Auth;
 use PDO;
+use Exception;
 
 class ProfileController extends Controller
 {
@@ -16,109 +17,116 @@ class ProfileController extends Controller
     }
 
     /**
-     * Toon de profielpagina
+     * 🔒 BIJGEWERKT: Toon de profielpagina MET privacy checks
      */
     public function index($userIdFromRoute = null, $usernameFromRoute = null)
-{
-    // Controleer eerst of gebruiker is ingelogd
-    if (!isset($_SESSION['user_id'])) {
-        redirect('login');
-        return;
-    }
-    
-    // Bepaal welke tab actief is
-    $activeTab = $_GET['tab'] ?? 'over';
-    
-    // Bepaal de gebruiker wiens profiel wordt bekeken
-    $targetUserId = null;
-    $targetUsername = null;
-    
-    // Prioriteit: Route parameters > GET parameters > eigen profiel
-    if ($userIdFromRoute !== null) {
-        // User ID uit route (bijv. /profile/1)
-        $targetUserId = $userIdFromRoute;
-    } elseif ($usernameFromRoute !== null) {
-        // Username uit route (bijv. /profile/johndoe)
-        $targetUsername = $usernameFromRoute;
-    } elseif (isset($_GET['username'])) {
-        // Username uit query parameter (bijv. ?username=johndoe) - backward compatibility
-        $targetUsername = $_GET['username'];
-    } else {
-        // Geen specifieke gebruiker, toon eigen profiel
-        $targetUserId = $_SESSION['user_id'];
-    }
-    
-    // Haal gebruikersgegevens op
-    $user = $this->getTargetUser($targetUserId, $targetUsername);
-    
-    if (!$user) {
-        // Gebruiker niet gevonden, redirect naar eigen profiel
-        $_SESSION['error_message'] = 'Gebruiker niet gevonden.';
-        redirect('profile');
-        return;
-    }
-    
-    // Bepaal of de kijker de eigenaar is
-    $viewerIsOwner = $_SESSION['user_id'] == $user['id'];
-
-    // Haal vriendschapsstatus op als het niet je eigen profiel is
-    $friendshipStatus = null;
-    $friendshipData = null;
-
-    if (!$viewerIsOwner) {
-        // Gebruik de FriendsController helper methode
-        $friendsController = new \App\Controllers\FriendsController();
-        $friendshipData = $friendsController->getFriendshipStatus($_SESSION['user_id'], $user['id']);
-        
-        if ($friendshipData) {
-            $friendshipStatus = $friendshipData['status'];
-            
-            // Bepaal wie het verzoek heeft verstuurd
-            if ($friendshipData['user_id'] == $_SESSION['user_id']) {
-                // Ik heb het verzoek verstuurd
-                $friendshipDirection = 'sent';
-            } else {
-                // Ik heb een verzoek ontvangen
-                $friendshipDirection = 'received';
-            }
-        } else {
-            // Geen vriendschap gevonden
-            $friendshipStatus = 'none';
-            $friendshipDirection = null;
+    {
+        // Controleer eerst of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
         }
-    }
-    
-    // Laad vrienden
-    $friends = $this->getFriends($user['id']);
-    
-    // Laad posts
-    $posts = $this->getUserPosts($user['id']);
+        
+        $viewerUserId = $_SESSION['user_id'];
+        
+        // Bepaal welke tab actief is
+        $activeTab = $_GET['tab'] ?? 'over';
+        
+        // Bepaal de gebruiker wiens profiel wordt bekeken
+        $targetUserId = null;
+        $targetUsername = null;
+        
+        // Prioriteit: Route parameters > GET parameters > eigen profiel
+        if ($userIdFromRoute !== null) {
+            $targetUserId = $userIdFromRoute;
+        } elseif ($usernameFromRoute !== null) {
+            $targetUsername = $usernameFromRoute;
+        } elseif (isset($_GET['username'])) {
+            $targetUsername = $_GET['username'];
+        } else {
+            // Geen specifieke gebruiker, toon eigen profiel
+            $targetUserId = $_SESSION['user_id'];
+        }
+        
+        // Haal gebruikersgegevens op
+        $user = $this->getTargetUser($targetUserId, $targetUsername);
+        
+        if (!$user) {
+            $_SESSION['error_message'] = 'Gebruiker niet gevonden.';
+            redirect('profile');
+            return;
+        }
+        
+        // 🔒 PRIVACY CHECK: Mag viewer dit profiel bekijken?
+        if (!$this->canViewProfile($user['id'], $viewerUserId)) {
+            $_SESSION['error_message'] = 'Je hebt geen toestemming om dit profiel te bekijken.';
+            redirect('profile');
+            return;
+        }
+        
+        // Bepaal of de kijker de eigenaar is
+        $viewerIsOwner = $viewerUserId == $user['id'];
 
-    // Laadt comments
-    $posts = $this->getCommentsForPosts($posts);
-    $fotos = [];
-    
-    if ($activeTab === 'krabbels') {
-    } elseif ($activeTab === 'fotos') {
-        $fotos = $this->getFotos($user['id']);
+        // 🔒 PRIVACY: Filter contactgegevens
+        $user = $this->filterContactInfo($user, $viewerUserId);
+
+        // Haal vriendschapsstatus op als het niet je eigen profiel is
+        $friendshipStatus = null;
+        $friendshipData = null;
+
+        if (!$viewerIsOwner) {
+            $friendsController = new \App\Controllers\FriendsController();
+            $friendshipData = $friendsController->getFriendshipStatus($viewerUserId, $user['id']);
+            
+            if ($friendshipData) {
+                $friendshipStatus = $friendshipData['status'];
+                $friendshipDirection = ($friendshipData['user_id'] == $viewerUserId) ? 'sent' : 'received';
+            } else {
+                $friendshipStatus = 'none';
+                $friendshipDirection = null;
+            }
+        }
+        
+        // 🔒 PRIVACY: Check wat viewer mag zien en doen
+        $canViewPhotos = $this->canViewPhotos($user['id'], $viewerUserId);
+        $canSendMessage = $this->canSendMessage($user['id'], $viewerUserId);
+        
+        // Laad vrienden (altijd - privacy wordt niet toegepast op vriendenlijst voor nu)
+        $friends = $this->getFriends($user['id']);
+        
+        // Laad posts (altijd - privacy wordt later toegepast op posts zelf)
+        $posts = $this->getUserPosts($user['id']);
+        $posts = $this->getCommentsForPosts($posts);
+        
+        // 🔒 PRIVACY: Laad foto's alleen als toegestaan
+        $fotos = [];
+        if ($activeTab === 'fotos' && $canViewPhotos) {
+            $fotos = $this->getFotos($user['id']);
+        } elseif ($activeTab === 'fotos' && !$canViewPhotos) {
+            // Zet een bericht dat foto's niet zichtbaar zijn
+            $_SESSION['info_message'] = 'Foto\'s zijn alleen zichtbaar voor vrienden.';
+        }
+        
+        $data = [
+            'title' => $user['name'] . ' - Profiel',
+            'user' => $user,
+            'friends' => $friends,
+            'posts' => $posts,
+            'krabbels' => [],
+            'fotos' => $fotos,
+            'viewer_is_owner' => $viewerIsOwner,
+            'active_tab' => $activeTab,
+            'friendship_status' => $friendshipStatus,
+            'friendship_direction' => $friendshipDirection ?? null,
+            'friendship_data' => $friendshipData,
+            // 🔒 NIEUWE PRIVACY DATA
+            'can_view_photos' => $canViewPhotos,
+            'can_send_message' => $canSendMessage,
+            'privacy_blocked_photos' => !$canViewPhotos && $activeTab === 'fotos'
+        ];
+        
+        $this->view('profile/index', $data);
     }
-    
-    $data = [
-        'title' => $user['name'] . ' - Profiel',
-        'user' => $user,
-        'friends' => $friends,
-        'posts' => $posts,
-        'krabbels' => [],
-        'fotos' => $fotos,
-        'viewer_is_owner' => $viewerIsOwner,
-        'active_tab' => $activeTab,
-        'friendship_status' => $friendshipStatus,
-        'friendship_direction' => $friendshipDirection ?? null,
-        'friendship_data' => $friendshipData
-    ];
-    
-    $this->view('profile/index', $data);
-}
     
     /**
      * Haal de doelgebruiker op (door ID of username)
@@ -192,7 +200,7 @@ class ProfileController extends Controller
             
             if ($dbUser) {
                 // ✅ Gebruik de verbeterde avatar URL functie
-                $avatarPath = $this->getAvatarUrl($dbUser['avatar']);
+                $avatarPath = get_avatar_url($dbUser['avatar']);
                     
                 // Formateer de join datum
                 $joinDate = !empty($dbUser['created_at']) 
@@ -361,17 +369,25 @@ class ProfileController extends Controller
                     p.created_at,
                     p.likes_count AS likes,
                     p.comments_count AS comments,
+                    p.link_preview_id,
                     u.id as user_id,
                     u.username,
                     COALESCE(up.display_name, u.username) as user_name,
                     target_user.username as target_username,
                     COALESCE(target_profile.display_name, target_user.username) as target_name,
-                    (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path
+                    (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path,
+                    -- ✨ TOEGEVOEGD: Link preview data (net als FeedController)
+                    lp.url as preview_url,
+                    lp.title as preview_title,
+                    lp.description as preview_description,
+                    lp.image_url as preview_image,
+                    lp.domain as preview_domain
                 FROM posts p
                 JOIN users u ON p.user_id = u.id
                 LEFT JOIN user_profiles up ON u.id = up.user_id
                 LEFT JOIN users target_user ON p.target_user_id = target_user.id
                 LEFT JOIN user_profiles target_profile ON target_user.id = target_profile.user_id
+                LEFT JOIN link_previews lp ON p.link_preview_id = lp.id
                 WHERE (p.user_id = ? OR p.target_user_id = ?) 
                 AND p.is_deleted = 0
                 ORDER BY p.created_at DESC
@@ -902,14 +918,15 @@ class ProfileController extends Controller
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($result && !empty($result['avatar'])) {
-                return $this->getAvatarUrl($result['avatar']);
+                // ✅ FIXED: Gebruik globale get_avatar_url() functie
+                return get_avatar_url($result['avatar']);
             }
         } catch (\Exception $e) {
             error_log('Fout bij ophalen avatar: ' . $e->getMessage());
         }
         
         // Fallback naar default avatar
-        return base_url('theme-assets/default/images/default-avatar.png');
+        return get_avatar_url(null);
     }
 
     /**
@@ -1133,40 +1150,270 @@ class ProfileController extends Controller
     }
 
     /**
-     * Helper functie om de volledige avatar URL te krijgen
+     * Toon beveiligingsinstellingen pagina
      */
-    private function getAvatarUrl($avatarPath)
+    public function security()
     {
-        // Als er geen avatar path is, gebruik default
-        if (empty($avatarPath)) {
-            return base_url('theme-assets/default/images/default-avatar.png');
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
         }
-        
-        // Als het al een volledige URL is
-        if (str_starts_with($avatarPath, 'http')) {
-            return $avatarPath;
+
+        $data = [
+            'title' => 'Beveiligingsinstellingen',
+            'user' => $this->getCurrentUserProfile()
+        ];
+
+        $this->view('profile/security', $data);
+    }
+
+    /**
+     * Toon avatar beheer pagina (aparte pagina voor avatar upload)
+     */
+    public function avatar()
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
         }
-        
-        // Als het een theme asset is (bijv. "theme-assets/default/images/default-avatar.png") 
-        if (str_starts_with($avatarPath, 'theme-assets')) {
-            return base_url($avatarPath);
+
+        $userId = $_SESSION['user_id'];
+        $user = $this->getUserData($userId, $_SESSION['username'] ?? '');
+
+        $data = [
+            'title' => 'Profielfoto beheren',
+            'user' => $user
+        ];
+
+        $this->view('profile/avatar', $data);
+    }
+
+    /**
+     * Toon privacy instellingen pagina (redirect naar nieuwe PrivacyController)
+     */
+    public function privacy()
+    {
+        // Redirect naar de nieuwe privacy controller
+        header('Location: /?route=privacy');
+        exit;
+    }
+
+    /**
+     * Toon notificatie voorkeuren pagina
+     */
+    public function notifications()
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
         }
-        
-        // Voor uploads - zorg voor correcte path structuur
-        // Avatar path uit database is bijv: "avatars/2025/05/avatar_1_68348a9ba26262.13561588.jpg"
-        $uploadPath = 'uploads/' . ltrim($avatarPath, '/');
-        $fullServerPath = $_SERVER['DOCUMENT_ROOT'] . '/' . $uploadPath;
-        
-        // Check of bestand daadwerkelijk bestaat
-        if (file_exists($fullServerPath)) {
-            return base_url($uploadPath);
+
+        $data = [
+            'title' => 'Notificatie voorkeuren',
+            'user' => $this->getCurrentUserProfile()
+        ];
+
+        $this->view('profile/notifications', $data);
+    }
+
+    /**
+     * Helper: Haal huidige gebruiker profiel data op
+     */
+    private function getCurrentUserProfile()
+    {
+        if (!isset($_SESSION['user_id'])) {
+            return null;
         }
+
+        return $this->getUserData($_SESSION['user_id'], $_SESSION['username'] ?? '');
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of viewer het profiel mag bekijken
+     */
+    private function canViewProfile($profileUserId, $viewerUserId)
+    {
+        // Eigenaar kan altijd eigen profiel zien
+        if ($profileUserId == $viewerUserId) {
+            return true;
+        }
+
+        // Haal privacy instellingen op
+        $privacySettings = $this->getPrivacySettings($profileUserId);
         
-        // Debug logging als bestand niet bestaat (tijdelijk)
-        error_log("Avatar file not found: " . $fullServerPath . " for avatar path: " . $avatarPath);
+        if (!$privacySettings) {
+            // Geen privacy instellingen = openbaar (backwards compatibility)
+            return true;
+        }
+
+        switch ($privacySettings['profile_visibility']) {
+            case 'public':
+                return true;
+                
+            case 'private':
+                return false;
+                
+            case 'friends':
+                return $this->areFriends($profileUserId, $viewerUserId);
+                
+            default:
+                return true; // Fallback
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of viewer de foto's mag bekijken
+     */
+    private function canViewPhotos($profileUserId, $viewerUserId)
+    {
+        // Eigenaar kan altijd eigen foto's zien
+        if ($profileUserId == $viewerUserId) {
+            return true;
+        }
+
+        // Haal privacy instellingen op
+        $privacySettings = $this->getPrivacySettings($profileUserId);
         
-        // Fallback naar default avatar
-        return base_url('theme-assets/default/images/default-avatar.png');
+        if (!$privacySettings) {
+            // Geen privacy instellingen = openbaar
+            return true;
+        }
+
+        switch ($privacySettings['photos_visibility']) {
+            case 'public':
+                return true;
+                
+            case 'private':
+                return false;
+                
+            case 'friends':
+                return $this->areFriends($profileUserId, $viewerUserId);
+                
+            default:
+                return true; // Fallback
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of viewer berichten mag sturen
+     */
+    private function canSendMessage($profileUserId, $viewerUserId)
+    {
+        // Kan niet naar jezelf sturen (technisch wel mogelijk, maar onzinnig)
+        if ($profileUserId == $viewerUserId) {
+            return false;
+        }
+
+        // Haal privacy instellingen op
+        $privacySettings = $this->getPrivacySettings($profileUserId);
+        
+        if (!$privacySettings) {
+            // Geen privacy instellingen = iedereen mag berichten sturen
+            return true;
+        }
+
+        switch ($privacySettings['messages_from']) {
+            case 'everyone':
+                return true;
+                
+            case 'nobody':
+                return false;
+                
+            case 'friends':
+                return $this->areFriends($profileUserId, $viewerUserId);
+                
+            default:
+                return true; // Fallback
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Haal privacy instellingen op voor een gebruiker
+     */
+    private function getPrivacySettings($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT * FROM user_privacy_settings 
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$userId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Error getting privacy settings: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Check of twee gebruikers vrienden zijn
+     */
+    private function areFriends($userId1, $userId2)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM friendships 
+                WHERE ((user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?))
+                AND status = 'accepted'
+            ");
+            $stmt->execute([$userId1, $userId2, $userId2, $userId1]);
+            
+            return $stmt->fetchColumn() > 0;
+        } catch (\Exception $e) {
+            error_log("Error checking friendship: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 🔒 PRIVACY: Filter contactgegevens op basis van privacy instellingen
+     */
+    private function filterContactInfo($userData, $viewerUserId)
+    {
+        // Eigenaar ziet altijd alles
+        if ($userData['id'] == $viewerUserId) {
+            return $userData;
+        }
+
+        $privacySettings = $this->getPrivacySettings($userData['id']);
+        
+        if (!$privacySettings) {
+            // Geen privacy instellingen, alles tonen
+            return $userData;
+        }
+
+        $areFriends = $this->areFriends($userData['id'], $viewerUserId);
+
+        // Filter e-mail
+        switch ($privacySettings['show_email']) {
+            case 'private':
+                $userData['email'] = '';
+                break;
+            case 'friends':
+                if (!$areFriends) {
+                    $userData['email'] = '';
+                }
+                break;
+            // 'public' case: laat email zien
+        }
+
+        // Filter telefoon
+        switch ($privacySettings['show_phone']) {
+            case 'private':
+                $userData['phone'] = '';
+                break;
+            case 'friends':
+                if (!$areFriends) {
+                    $userData['phone'] = '';
+                }
+                break;
+            // 'public' case: laat telefoon zien
+        }
+
+        return $userData;
     }
 
 

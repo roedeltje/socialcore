@@ -139,6 +139,18 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_token'])) {
     }
 }
 
+// **Update user activity for logged in users**
+if (isset($_SESSION['user_id'])) {
+    try {
+        $db = \App\Database\Database::getInstance()->getPdo();
+        $stmt = $db->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+    } catch (Exception $e) {
+        // Log error maar laat de applicatie niet crashen
+        error_log("Failed to update user activity: " . $e->getMessage());
+    }
+}
+
 // Bepaal de route
 $route = $_GET['route'] ?? 'home';
 $isApiRoute = strpos($route, 'api/') === 0;

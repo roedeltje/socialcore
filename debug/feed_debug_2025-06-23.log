@@ -1,0 +1,106 @@
+[2025-06-23 09:26:10] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Ex-treem gênant: ‘Hij zei dat hij in ‘de filmwereld’ werkte, maar hij verkocht popcorn in de bioscoop’
+https://www.metronieuws.nl/lifestyle/relaties-seks/2025/06/ex-treem-genant-filmwereld-verkocht-popcorn-bioscoop/
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-23 14:57:37] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => #Hashtag
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-23 15:50:47] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Nog een #hashtag
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-23 16:10:30] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Hallo hier is een #hashtag en nog een #hashtag
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+
+[2025-06-23 16:11:58] === CREATE POST DEBUG ===
+POST data: Array
+(
+    [content] => Test post met #socialcore en #hyves hashtags!
+    [privacy] => public
+)
+
+FILES data: Array
+(
+    [image] => Array
+        (
+            [name] => 
+            [full_path] => 
+            [type] => 
+            [tmp_name] => 
+            [error] => 4
+            [size] => 0
+        )
+
+)
+

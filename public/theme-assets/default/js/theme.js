@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Post menus initialized');
 
     initAvatarUpload();
+    initAddFriendButtons();
     
     // Comment systeem en emoji picker gefaseerd laden
     initCommentsAndEmojis();
@@ -1574,6 +1575,54 @@ if (!document.querySelector('#link-preview-styles')) {
 document.addEventListener('DOMContentLoaded', function() {
     initLinkPreviewDetection();
 });
+
+// Vrienden toevoegen functionaliteit
+function initAddFriendButtons() {
+    const addFriendBtns = document.querySelectorAll('.add-friend-btn');
+    
+    addFriendBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const username = this.dataset.username;
+            const userId = this.dataset.userId;
+            
+            // Disable button tijdens request
+            this.style.pointerEvents = 'none';
+            this.textContent = 'Bezig...';
+            
+            // AJAX request
+            fetch(this.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'  // Zorgt voor AJAX detectie
+                },
+                body: 'user=' + encodeURIComponent(username)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = 'Verzonden ✓';
+                    this.classList.remove('primary');
+                    this.classList.add('success');
+                } else {
+                    this.textContent = '+ Toevoegen';
+                    this.style.pointerEvents = 'auto';
+                    alert(data.message || 'Er ging iets mis');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.textContent = '+ Toevoegen';
+                this.style.pointerEvents = 'auto';
+                alert('Er ging iets mis bij het toevoegen');
+            });
+        });
+    });
+}
+
+
 
 // TIJDELIJKE DEBUG - voeg toe onderaan theme.js
 // setTimeout(function() {

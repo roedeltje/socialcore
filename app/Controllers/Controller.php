@@ -2,11 +2,289 @@
 namespace App\Controllers;
 
 use App\Core\ThemeFunctions;
+use App\Database\Database;
+use PDO;
+use Exception;
 
 class Controller
 {
     // Nieuwe eigenschap om te kiezen welk thema systeem te gebruiken
     protected $useNewThemeSystem = false;
+
+    /**
+     * Constructor - Update user activity on every page load
+     */
+    // public function __construct()
+    // {
+    //     $this->updateUserActivity();
+    // }
+
+     /**
+     * Update last_activity for logged in users
+     */
+     /**
+     * Update last_activity for logged in users
+     */
+    private function updateUserActivity()
+    {
+        // Alleen bijwerken als gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            return;
+        }
+
+        try {
+            $db = Database::getInstance()->getPdo();
+            $stmt = $db->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+        } catch (Exception $e) {
+            // Log error maar laat de applicatie niet crashen
+            error_log("Failed to update user activity: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get online friends for the current user
+     * @param int $minutes How many minutes to consider "online" (default: 10)
+     * @return array Array of online friends with avatar URLs
+     */
+    protected function getOnlineFriends($minutes = 10)
+    {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            return [];
+        }
+
+        try {
+            $db = Database::getInstance()->getPdo();
+            
+            // Query om vrienden te vinden die online zijn
+            $stmt = $db->prepare("
+                SELECT DISTINCT 
+                    u.id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as name,
+                    up.avatar,
+                    u.last_activity
+                FROM users u
+                INNER JOIN friendships f ON (
+                    (f.user_id = ? AND f.friend_id = u.id) OR 
+                    (f.friend_id = ? AND f.user_id = u.id)
+                )
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE f.status = 'accepted' 
+                AND u.last_activity >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
+                AND u.id != ?
+                ORDER BY u.last_activity DESC
+                LIMIT 10
+            ");
+            
+            $stmt->execute([
+                $_SESSION['user_id'], 
+                $_SESSION['user_id'], 
+                $minutes, 
+                $_SESSION['user_id']
+            ]);
+            
+            $friends = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Voeg avatar URLs toe
+            foreach ($friends as &$friend) {
+                $friend['avatar_url'] = $this->getAvatarUrl($friend['avatar']);
+            }
+            
+            return $friends;
+            
+        } catch (Exception $e) {
+            error_log("Failed to get online friends: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    protected function getAvatarUrl($avatar)
+{
+    // Als avatar leeg is, gebruik default
+    if (empty($avatar)) {
+        return base_url('theme-assets/default/images/default-avatar.png');
+    }
+    
+    // Case 1: Avatar begint met 'avatars/' (geüploade avatar)
+    if (strpos($avatar, 'avatars/') === 0) {
+        return base_url('uploads/' . $avatar);
+    }
+    
+    // Case 2: Avatar begint met 'avatar_' (directe filename)
+    if (strpos($avatar, 'avatar_') === 0) {
+        return base_url('uploads/avatars/' . $avatar);
+    }
+    
+    // Case 3: Avatar begint met 'theme-assets/' (theme asset)
+    if (strpos($avatar, 'theme-assets/') === 0) {
+        return base_url($avatar);
+    }
+    
+    // Case 4: Avatar begint met 'default-avatar' (theme default)
+    if (strpos($avatar, 'default-avatar') === 0) {
+        return base_url('theme-assets/default/images/' . $avatar);
+    }
+    
+    // Case 5: Avatar is een volledige URL (begint met http)
+    if (strpos($avatar, 'http') === 0) {
+        return $avatar;
+    }
+    
+    // Fallback: Probeer eerst als upload, anders als theme asset
+    $uploadPath = base_url('uploads/' . $avatar);
+    return $uploadPath;
+}
+
+    protected function processHashtags($content)
+    {
+        // Extract hashtags using regex
+        preg_match_all('/#([a-zA-Z0-9_]+)/', $content, $matches);
+        $hashtags = $matches[1]; // Get captured groups (without #)
+        
+        if (empty($hashtags)) {
+            return [];
+        }
+        
+        try {
+            $db = Database::getInstance()->getPdo();
+            
+            foreach ($hashtags as $tag) {
+                // Convert to lowercase for consistency
+                $tag = strtolower($tag);
+                
+                // Check if hashtag already exists
+                $stmt = $db->prepare("SELECT id, usage_count FROM hashtags WHERE tag = ?");
+                $stmt->execute([$tag]);
+                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($existing) {
+                    // Update usage count
+                    $stmt = $db->prepare("
+                        UPDATE hashtags 
+                        SET usage_count = usage_count + 1, updated_at = NOW() 
+                        WHERE id = ?
+                    ");
+                    $stmt->execute([$existing['id']]);
+                } else {
+                    // Insert new hashtag
+                    $stmt = $db->prepare("
+                        INSERT INTO hashtags (tag, usage_count, created_at, updated_at) 
+                        VALUES (?, 1, NOW(), NOW())
+                    ");
+                    $stmt->execute([$tag]);
+                }
+            }
+            
+            return $hashtags;
+            
+        } catch (Exception $e) {
+            error_log("Failed to process hashtags: " . $e->getMessage());
+            return $hashtags; // Return extracted hashtags even if saving failed
+        }
+    }
+
+     /**
+     * Get trending hashtags (helper method that can be used by multiple controllers)
+     * @param int $limit Number of hashtags to return
+     * @return array Array of trending hashtags
+     */
+    protected function getTrendingHashtags($limit = 5)
+    {
+        try {
+            $db = Database::getInstance()->getPdo();
+            
+            // Query hashtags table ordered by usage_count
+            $stmt = $db->prepare("
+                SELECT tag, usage_count as count
+                FROM hashtags 
+                WHERE usage_count > 0
+                ORDER BY usage_count DESC, updated_at DESC
+                LIMIT ?
+            ");
+            
+            $stmt->execute([$limit]);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Format for timeline.php compatibility
+            $hashtags = [];
+            foreach ($results as $result) {
+                $hashtags[] = [
+                    'tag' => $result['tag'],
+                    'count' => $result['count']
+                ];
+            }
+            
+            return $hashtags;
+            
+        } catch (Exception $e) {
+            error_log("Failed to get trending hashtags: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get suggested users (helper method)
+     * @param int $limit Number of users to suggest
+     * @return array Array of suggested users
+     */
+    protected function getSuggestedUsers($limit = 5)
+    {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            return [];
+        }
+
+        try {
+            $db = Database::getInstance()->getPdo();
+            
+            // Query om gebruikers te vinden die niet al vrienden zijn
+            $stmt = $db->prepare("
+                SELECT 
+                    u.id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as name,
+                    up.avatar,
+                    up.bio
+                FROM users u
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE u.id != ?
+                AND u.id NOT IN (
+                    SELECT CASE 
+                        WHEN f.user_id = ? THEN f.friend_id 
+                        ELSE f.user_id 
+                    END
+                    FROM friendships f 
+                    WHERE (f.user_id = ? OR f.friend_id = ?) 
+                    AND f.status IN ('accepted', 'pending')
+                )
+                ORDER BY RAND()
+                LIMIT ?
+            ");
+            
+            $stmt->execute([
+                $_SESSION['user_id'],
+                $_SESSION['user_id'],
+                $_SESSION['user_id'], 
+                $_SESSION['user_id'],
+                $limit
+            ]);
+            
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Voeg avatar URLs toe
+            foreach ($users as &$user) {
+                $user['avatar_url'] = $this->getAvatarUrl($user['avatar']);
+            }
+            
+            return $users;
+            
+        } catch (Exception $e) {
+            error_log("Failed to get suggested users: " . $e->getMessage());
+            return [];
+        }
+    }
 
     /**
      * Load a view - supports both old and new theme systems
@@ -16,32 +294,32 @@ class Controller
      * @param bool $forceNewSystem Force use of new ThemeFunctions system
      */
     protected function view($view, $data = [], $forceNewSystem = false)
-{
-    echo "<!-- DEBUG: Loading view: $view -->";
-    
-    // Detecteer of dit een admin view is
-    $isAdminView = strpos($view, 'admin/') === 0;
-    
-    // Voor admin views, altijd het oude directe systeem gebruiken
-    if ($isAdminView) {
-        echo "<!-- DEBUG: Using admin view system -->";
-        $this->loadAdminView($view, $data);
-        return;
-    }
+    {
+        echo "<!-- DEBUG: Loading view: $view -->";
+        
+        // Detecteer of dit een admin view is
+        $isAdminView = strpos($view, 'admin/') === 0;
+        
+        // Voor admin views, altijd het oude directe systeem gebruiken
+        if ($isAdminView) {
+            echo "<!-- DEBUG: Using admin view system -->";
+            $this->loadAdminView($view, $data);
+            return;
+        }
 
-    // Bepaal welk thema systeem te gebruiken
-    $useNewSystem = $forceNewSystem || $this->useNewThemeSystem;
+        // Bepaal welk thema systeem te gebruiken
+        $useNewSystem = $forceNewSystem || $this->useNewThemeSystem;
 
-    if ($useNewSystem) {
-        echo "<!-- DEBUG: Using NEW theme system -->";
-        // === NIEUW GESTANDAARDISEERD SYSTEEM ===
-        $this->loadViewWithNewSystem($view, $data);
-    } else {
-        echo "<!-- DEBUG: Using CURRENT theme system -->";
-        // === BESTAAND WERKEND SYSTEEM ===
-        $this->loadViewWithCurrentSystem($view, $data);
+        if ($useNewSystem) {
+            echo "<!-- DEBUG: Using NEW theme system -->";
+            // === NIEUW GESTANDAARDISEERD SYSTEEM ===
+            $this->loadViewWithNewSystem($view, $data);
+        } else {
+            echo "<!-- DEBUG: Using CURRENT theme system -->";
+            // === BESTAAND WERKEND SYSTEEM ===
+            $this->loadViewWithCurrentSystem($view, $data);
+        }
     }
-}
 
     /**
      * Load view using new standardized theme system
