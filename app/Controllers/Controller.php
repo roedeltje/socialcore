@@ -101,41 +101,41 @@ class Controller
     }
 
     protected function getAvatarUrl($avatar)
-{
-    // Als avatar leeg is, gebruik default
-    if (empty($avatar)) {
-        return base_url('theme-assets/default/images/default-avatar.png');
+    {
+        // Als avatar leeg is, gebruik default
+        if (empty($avatar)) {
+            return base_url('theme-assets/default/images/default-avatar.png');
+        }
+        
+        // Case 1: Avatar begint met 'avatars/' (geüploade avatar)
+        if (strpos($avatar, 'avatars/') === 0) {
+            return base_url('uploads/' . $avatar);
+        }
+        
+        // Case 2: Avatar begint met 'avatar_' (directe filename)
+        if (strpos($avatar, 'avatar_') === 0) {
+            return base_url('uploads/avatars/' . $avatar);
+        }
+        
+        // Case 3: Avatar begint met 'theme-assets/' (theme asset)
+        if (strpos($avatar, 'theme-assets/') === 0) {
+            return base_url($avatar);
+        }
+        
+        // Case 4: Avatar begint met 'default-avatar' (theme default)
+        if (strpos($avatar, 'default-avatar') === 0) {
+            return base_url('theme-assets/default/images/' . $avatar);
+        }
+        
+        // Case 5: Avatar is een volledige URL (begint met http)
+        if (strpos($avatar, 'http') === 0) {
+            return $avatar;
+        }
+        
+        // Fallback: Probeer eerst als upload, anders als theme asset
+        $uploadPath = base_url('uploads/' . $avatar);
+        return $uploadPath;
     }
-    
-    // Case 1: Avatar begint met 'avatars/' (geüploade avatar)
-    if (strpos($avatar, 'avatars/') === 0) {
-        return base_url('uploads/' . $avatar);
-    }
-    
-    // Case 2: Avatar begint met 'avatar_' (directe filename)
-    if (strpos($avatar, 'avatar_') === 0) {
-        return base_url('uploads/avatars/' . $avatar);
-    }
-    
-    // Case 3: Avatar begint met 'theme-assets/' (theme asset)
-    if (strpos($avatar, 'theme-assets/') === 0) {
-        return base_url($avatar);
-    }
-    
-    // Case 4: Avatar begint met 'default-avatar' (theme default)
-    if (strpos($avatar, 'default-avatar') === 0) {
-        return base_url('theme-assets/default/images/' . $avatar);
-    }
-    
-    // Case 5: Avatar is een volledige URL (begint met http)
-    if (strpos($avatar, 'http') === 0) {
-        return $avatar;
-    }
-    
-    // Fallback: Probeer eerst als upload, anders als theme asset
-    $uploadPath = base_url('uploads/' . $avatar);
-    return $uploadPath;
-}
 
     protected function processHashtags($content)
     {
@@ -771,5 +771,37 @@ echo "<!-- DEBUG: Manual test - is_readable('$testPath'): " . (is_readable($test
         } else {
             echo $content;
         }
+    }
+
+        /**
+     * Convert hashtags in text to clickable links
+     * Voeg deze functie toe aan je Controller.php class
+     */
+    protected function makeHashtagsClickable($text)
+    {
+        // Regex om hashtags te vinden (#woord)
+        $pattern = '/#([a-zA-Z0-9_]+)/';
+        
+        // Vervang hashtags door klikbare links
+        $replacement = '<a href="/?route=search/hashtag&tag=$1" class="hashtag-link" title="Bekijk alle berichten met #$1">#$1</a>';
+        
+        return preg_replace($pattern, $replacement, $text);
+    }
+
+    /**
+     * Process post content for display (hashtags + mentions later)
+     */
+    protected function processPostContent($content)
+    {
+        // Escape HTML eerst voor veiligheid
+        $content = htmlspecialchars($content);
+        
+        // Maak hashtags klikbaar
+        $content = $this->makeHashtagsClickable($content);
+        
+        // Behoud line breaks
+        $content = nl2br($content);
+        
+        return $content;
     }
 }

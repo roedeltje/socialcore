@@ -2,18 +2,24 @@
 namespace App\Controllers;
 
 use App\Auth\Auth;
+use App\Helpers\SecuritySettings;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        // Je kunt hier data toevoegen voor de view
-        $data = [
-            'title' => 'Welkom bij SocialCore',
-            // Extra data indien nodig
-        ];
+        // Als gebruiker ingelogd is, redirect naar feed
+        if (Auth::check()) {
+            header('Location: ' . base_url('?route=feed'));
+            exit;
+        }
         
-        $this->view('home/index', $data);
+        // Check registration status voor homepage display
+        $registrationOpen = SecuritySettings::isEnabled('open_registration');
+        
+        $this->view('home/index', [
+            'registration_open' => $registrationOpen
+        ]);
     }
 
 //     public function index()

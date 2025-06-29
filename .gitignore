@@ -1,2 +1,4 @@
 /config/database.php
 /public/uploads/
+/debug/
+/logs/

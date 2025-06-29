@@ -83,6 +83,9 @@ class DebugController extends Controller
             die('Alleen admins kunnen de debug pagina bekijken');
         }
         
+        $themeManager = ThemeManager::getInstance();
+        $activeTheme = $themeManager->getActiveTheme();
+        
         // Test data voor verschillende component types
         $test_components = [
             'link-preview' => [
@@ -114,12 +117,15 @@ class DebugController extends Controller
             ]
         ];
         
+        // Scan for available components
+        $available_components = $this->scanThemeComponents($activeTheme);
+        
         $data = [
             'page_title' => 'Component System Debug',
-            'active_theme' => get_active_theme(),
+            'active_theme' => $activeTheme,
             'available_themes' => $this->getAvailableThemes(),
-            'components' => get_theme_components(),
-            'theme_support' => get_theme_component_support(),
+            'components' => $available_components,
+            'theme_support' => $this->getThemeSupport($activeTheme),
             'test_components' => $test_components
         ];
         
@@ -132,9 +138,83 @@ class DebugController extends Controller
         // Extract variables
         extract($data);
         
-        // Include de volledige debug view direct
-        include __DIR__ . '/../Views/debug/component.php';
-        exit; // Stop verdere theme processing
+        // Simple HTML output voor debug
+        echo "<!DOCTYPE html>";
+        echo "<html><head>";
+        echo "<title>Component Debug</title>";
+        echo "<style>body{font-family:Arial;margin:20px;} .debug-section{margin:20px 0;padding:15px;border:1px solid #ccc;} pre{background:#f5f5f5;padding:10px;}</style>";
+        echo "</head><body>";
+        
+        echo "<h1>🔧 Component System Debug</h1>";
+        
+        echo "<div class='debug-section'>";
+        echo "<h2>Theme Info</h2>";
+        echo "<p><strong>Actieve theme:</strong> " . htmlspecialchars($active_theme) . "</p>";
+        echo "<p><strong>Beschikbare themes:</strong> " . implode(', ', array_keys($available_themes)) . "</p>";
+        echo "</div>";
+        
+        echo "<div class='debug-section'>";
+        echo "<h2>Components</h2>";
+        if (!empty($components)) {
+            echo "<ul>";
+            foreach ($components as $component) {
+                echo "<li>" . htmlspecialchars($component) . "</li>";
+            }
+            echo "</ul>";
+        } else {
+            echo "<p>Geen components gevonden.</p>";
+        }
+        echo "</div>";
+        
+        echo "<div class='debug-section'>";
+        echo "<h2>Theme Support</h2>";
+        echo "<pre>" . print_r($theme_support, true) . "</pre>";
+        echo "</div>";
+        
+        echo "<p><a href='?route=debug'>← Terug naar debug homepage</a></p>";
+        echo "</body></html>";
+        exit;
+    }
+    
+    /**
+     * Scan theme directory for components
+     */
+    private function scanThemeComponents($theme)
+    {
+        $components = [];
+        $componentPath = BASE_PATH . "/themes/{$theme}/components";
+        
+        if (is_dir($componentPath)) {
+            $files = scandir($componentPath);
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..' && pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+                    $components[] = pathinfo($file, PATHINFO_FILENAME);
+                }
+            }
+        }
+        
+        return $components;
+    }
+    
+    /**
+     * Get theme support info
+     */
+    private function getThemeSupport($theme)
+    {
+        $support = [];
+        $themeConfigPath = BASE_PATH . "/themes/{$theme}/theme.json";
+        
+        if (file_exists($themeConfigPath)) {
+            $config = json_decode(file_get_contents($themeConfigPath), true);
+            $support = $config['support'] ?? [];
+        }
+        
+        // Add basic info
+        $support['theme_path'] = BASE_PATH . "/themes/{$theme}";
+        $support['assets_path'] = BASE_PATH . "/public/theme-assets/{$theme}";
+        $support['components_path'] = BASE_PATH . "/themes/{$theme}/components";
+        
+        return $support;
     }
     
     /**
@@ -143,23 +223,111 @@ class DebugController extends Controller
     public function theme()
     {
         $themeManager = ThemeManager::getInstance();
+        $activeTheme = $themeManager->getActiveTheme();
         
         $data = [
             'page_title' => 'Theme System Debug',
-            'active_theme' => get_active_theme(),
-            'theme_config' => get_theme_config(),
-            'theme_path' => get_theme_path(),
+            'active_theme' => $activeTheme,
+            'theme_config' => $this->getThemeConfig($activeTheme),
+            'theme_path' => BASE_PATH . "/themes/{$activeTheme}",
             'all_themes' => $themeManager->getAllThemes(),
-            'theme_assets' => $themeManager->getThemeAssets(),
-            'theme_validation' => $themeManager->validateTheme(get_active_theme()),
+            'theme_assets' => $this->getThemeAssets($activeTheme),
+            'theme_validation' => $this->validateTheme($activeTheme),
             'asset_urls' => [
-                'css' => theme_style(),
-                'js' => theme_script(),
-                'images' => theme_image('logo.png')
+                'css' => base_url("theme-assets/{$activeTheme}/css/style.css"),
+                'js' => base_url("theme-assets/{$activeTheme}/js/theme.js"),
+                'images' => base_url("theme-assets/{$activeTheme}/images/logo.png")
             ]
         ];
         
         $this->view('debug/theme', $data);
+    }
+    
+    /**
+     * Get theme config
+     */
+    private function getThemeConfig($theme)
+    {
+        $configPath = BASE_PATH . "/themes/{$theme}/theme.json";
+        if (file_exists($configPath)) {
+            return json_decode(file_get_contents($configPath), true);
+        }
+        return [];
+    }
+    
+    /**
+     * Get theme assets
+     */
+    private function getThemeAssets($theme)
+    {
+        $assets = [];
+        $assetsPath = BASE_PATH . "/public/theme-assets/{$theme}";
+        
+        if (is_dir($assetsPath)) {
+            $assets['css'] = $this->scanDirectory($assetsPath . '/css', 'css');
+            $assets['js'] = $this->scanDirectory($assetsPath . '/js', 'js');
+            $assets['images'] = $this->scanDirectory($assetsPath . '/images', ['png', 'jpg', 'jpeg', 'gif', 'svg']);
+        }
+        
+        return $assets;
+    }
+    
+    /**
+     * Validate theme
+     */
+    private function validateTheme($theme)
+    {
+        $validation = ['valid' => true, 'errors' => [], 'warnings' => []];
+        
+        $themePath = BASE_PATH . "/themes/{$theme}";
+        $assetsPath = BASE_PATH . "/public/theme-assets/{$theme}";
+        
+        // Check required files
+        $requiredFiles = [
+            'theme.json',
+            'layouts/header.php',
+            'layouts/footer.php',
+            'pages/home.php'
+        ];
+        
+        foreach ($requiredFiles as $file) {
+            if (!file_exists($themePath . '/' . $file)) {
+                $validation['errors'][] = "Missing required file: {$file}";
+                $validation['valid'] = false;
+            }
+        }
+        
+        // Check assets
+        if (!is_dir($assetsPath)) {
+            $validation['warnings'][] = "Assets directory missing: {$assetsPath}";
+        }
+        
+        return $validation;
+    }
+    
+    /**
+     * Scan directory for files
+     */
+    private function scanDirectory($path, $extensions)
+    {
+        $files = [];
+        if (!is_array($extensions)) {
+            $extensions = [$extensions];
+        }
+        
+        if (is_dir($path)) {
+            $dirFiles = scandir($path);
+            foreach ($dirFiles as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    $ext = pathinfo($file, PATHINFO_EXTENSION);
+                    if (in_array($ext, $extensions)) {
+                        $files[] = $file;
+                    }
+                }
+            }
+        }
+        
+        return $files;
     }
     
     /**
@@ -202,9 +370,9 @@ class DebugController extends Controller
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 $database_info['recent_posts'] = $result['total'];
                 
-                // Active users
+                // Active users (gebruik last_login in plaats van last_activity)
                 $stmt = $this->db->query("
-                    SELECT COUNT(*) as total FROM users WHERE last_activity > DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+                    SELECT COUNT(*) as total FROM users WHERE last_login > DATE_SUB(NOW(), INTERVAL 30 MINUTE)
                 ");
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 $database_info['active_users'] = $result['total'];
@@ -234,8 +402,8 @@ class DebugController extends Controller
             'session_status' => session_status(),
             'session_data' => $_SESSION ?? [],
             'cookies' => $_COOKIE ?? [],
-            'logged_in' => is_logged_in(),
-            'is_admin' => is_admin(),
+            'logged_in' => isset($_SESSION['user_id']),
+            'is_admin' => isset($_SESSION['role']) && $_SESSION['role'] === 'admin',
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
             'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'Unknown'
         ];
@@ -279,8 +447,8 @@ class DebugController extends Controller
         foreach ($routes as $route => $handler) {
             $route_info[] = [
                 'route' => $route,
-                'type' => is_array($handler) ? 'Controller' : 'Closure',
-                'handler' => is_array($handler) ? $handler[0] . '::' . $handler[1] : 'Closure function',
+                'type' => is_array($handler) ? 'Array Config' : 'Closure',
+                'handler' => is_array($handler) ? 'See web.php' : 'Closure function',
                 'url' => base_url('?route=' . $route)
             ];
         }
@@ -333,46 +501,6 @@ class DebugController extends Controller
         ];
         
         $this->view('debug/performance', $data);
-    }
-    
-    /**
-     * AJAX endpoint voor component testing
-     */
-    public function testComponent()
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Method not allowed']);
-            return;
-        }
-        
-        $component = $_POST['component'] ?? '';
-        $theme = $_POST['theme'] ?? get_active_theme();
-        
-        if (empty($component)) {
-            echo json_encode(['error' => 'Component name required']);
-            return;
-        }
-        
-        // Test component loading
-        $debug_info = debug_component_loading($component);
-        $exists = theme_component_exists($component, $theme);
-        
-        // Try to render component with dummy data
-        $output = '';
-        if ($exists) {
-            ob_start();
-            get_theme_component($component, ['test_data' => true], $theme);
-            $output = ob_get_clean();
-        }
-        
-        echo json_encode([
-            'component' => $component,
-            'theme' => $theme,
-            'exists' => $exists,
-            'debug_info' => $debug_info,
-            'output' => $output
-        ]);
     }
     
     /**

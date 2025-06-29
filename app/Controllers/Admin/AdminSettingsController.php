@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Helpers\SecuritySettings;
 use App\Database\Database;
 use PDO;
 
@@ -21,7 +22,7 @@ class AdminSettingsController extends Controller
     /**
      * View methode die admin layout gebruikt
      */
-    protected function view($view, $data = [])
+    public function view($view, $data = [], $forceNewSystem = false)
     {
         $title = $data['title'] ?? 'Instellingen';
         $contentView = BASE_PATH . "/app/Views/{$view}.php";
@@ -153,30 +154,126 @@ class AdminSettingsController extends Controller
     public function security()
     {
         try {
-            $settings = $this->getSettings([
-                'password_min_length', 'password_require_uppercase', 'password_require_numbers',
-                'password_require_symbols', 'login_attempts_limit', 'login_lockout_duration',
-                'session_lifetime', 'force_secure_login', 'enable_two_factor',
-                'privacy_policy_page', 'terms_of_service_page', 'cookie_consent_enabled'
-            ]);
-            
+            // Verwerk formulier submission
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $this->updateSecuritySettings();
+                $this->updateSecuritySettingsNew();
                 return;
+            }
+
+            // Haal alle security settings op via de SecuritySettings helper
+            $settings = SecuritySettings::getByCategory('security');
+            
+            // Voeg extra metadata toe voor de form
+            $settingsWithMeta = [];
+            foreach ($settings as $key => $value) {
+                $settingsWithMeta[$key] = SecuritySettings::getWithMeta($key);
             }
             
             $data = [
                 'title' => 'Beveiliging & Privacy',
-                'settings' => $settings
+                'settings' => $settings,
+                'settingsWithMeta' => $settingsWithMeta,
+                'success' => $_SESSION['security_success'] ?? null,
+                'error' => $_SESSION['security_error'] ?? null
             ];
             
             $this->view('admin/settings/security', $data);
             
+            // Clear messages na weergave
+            unset($_SESSION['security_success'], $_SESSION['security_error']);
+            
         } catch (\Exception $e) {
-            $_SESSION['error_message'] = "Fout bij laden beveiligingsinstellingen: " . $e->getMessage();
+            $_SESSION['security_error'] = "Fout bij laden beveiligingsinstellingen: " . $e->getMessage();
             header('Location: ' . base_url('?route=admin/settings'));
             exit;
         }
+    }
+
+    /**
+     * Update security settings - Nieuwe versie met SecuritySettings helper
+     */
+    private function updateSecuritySettingsNew()
+    {
+        try {
+            $updated = 0;
+            $errors = [];
+
+            // Get all security settings from database to know which ones exist
+            $allSecuritySettings = SecuritySettings::getByCategory('security');
+            
+            // Handle regular form fields first
+            foreach ($_POST as $key => $value) {
+                // Skip non-setting fields
+                if (in_array($key, ['csrf_token', 'submit'])) {
+                    continue;
+                }
+
+                // Skip if this is not a known security setting
+                if (!array_key_exists($key, $allSecuritySettings)) {
+                    continue;
+                }
+
+                // Validate setting
+                $validation = SecuritySettings::validateSetting($key, $value);
+                if (!$validation['valid']) {
+                    $errors[] = "{$key}: {$validation['error']}";
+                    continue;
+                }
+
+                // Update setting
+                if (SecuritySettings::set($key, $value)) {
+                    $updated++;
+                } else {
+                    $errors[] = "Failed to update {$key}";
+                }
+            }
+
+            // Handle checkboxes separately - they need special treatment
+            $checkboxSettings = [
+                'password_require_uppercase',
+                'password_require_numbers', 
+                'password_require_special',
+                'force_logout_on_password_change',
+                'scan_uploads',
+                'enable_profanity_filter',
+                'open_registration',
+                'email_verification_required',
+                'admin_approval_required',
+                'admin_login_notification'
+            ];
+
+            foreach ($checkboxSettings as $checkboxKey) {
+                // Only process if this setting actually exists in database
+                if (array_key_exists($checkboxKey, $allSecuritySettings)) {
+                    // Checkbox is checked if it exists in $_POST, unchecked if it doesn't
+                    $value = isset($_POST[$checkboxKey]) ? '1' : '0';
+                    
+                    if (SecuritySettings::set($checkboxKey, $value)) {
+                        $updated++;
+                    } else {
+                        $errors[] = "Failed to update {$checkboxKey}";
+                    }
+                }
+            }
+
+            // Set appropriate message
+            if (!empty($errors)) {
+                $_SESSION['security_error'] = 'Some settings could not be updated: ' . implode(', ', $errors);
+            } elseif ($updated > 0) {
+                $_SESSION['security_success'] = "{$updated} security settings updated successfully.";
+                
+                // Clear cache zodat nieuwe instellingen direct actief zijn
+                SecuritySettings::clearCache();
+            } else {
+                $_SESSION['security_error'] = 'No settings were updated.';
+            }
+
+        } catch (\Exception $e) {
+            $_SESSION['security_error'] = 'Error updating settings: ' . $e->getMessage();
+        }
+
+        header('Location: ' . base_url('?route=admin/settings/security'));
+        exit;
     }
     
     /**

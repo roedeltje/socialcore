@@ -1,3 +1,31 @@
+<?php
+// Extract data from the new controller structure
+$logFiles = $log_files['files'] ?? [];
+$logDirectory = $log_files['directory'] ?? '/var/www/socialcore.local/debug';
+$logWritable = $log_files['writable'] ?? false;
+$totalLogFiles = $log_files['total_files'] ?? 0;
+$totalLogSize = $log_files['total_size'] ?? 0;
+$logError = $log_files['error'] ?? null;
+
+// Fix for recent_logs - make sure it's an array
+$recentLogs = is_array($recent_logs) ? $recent_logs : [];
+
+// Helper functions
+function formatBytes($bytes, $precision = 2) {
+    if (empty($bytes) || !is_numeric($bytes)) {
+        return '0 B';
+    }
+    
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    
+    for ($i = 0; $bytes >= 1024 && $i < count($units) - 1; $i++) {
+        $bytes /= 1024;
+    }
+    
+    return round($bytes, $precision) . ' ' . $units[$i];
+}
+?>
+
 <!-- /app/Views/admin/maintenance/logs.php -->
 <div class="admin-content-wrapper">
     <div class="page-header">
@@ -26,6 +54,13 @@
         </div>
     <?php endif; ?>
 
+    <?php if ($logError): ?>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            <?= htmlspecialchars($logError) ?>
+        </div>
+    <?php endif; ?>
+
     <div class="logs-maintenance">
         <!-- Log Statistieken -->
         <div class="maintenance-section">
@@ -39,7 +74,7 @@
                     </div>
                     <div class="stat-content">
                         <h3>Logbestanden</h3>
-                        <p class="stat-value"><?= count($log_files) ?></p>
+                        <p class="stat-value"><?= $totalLogFiles ?></p>
                         <small>beschikbare logs</small>
                     </div>
                 </div>
@@ -50,7 +85,19 @@
                     </div>
                     <div class="stat-content">
                         <h3>Fouten Vandaag</h3>
-                        <p class="stat-value"><?= count(array_filter($recent_logs, function($log) { return $log['level'] === 'ERROR' && date('Y-m-d', strtotime($log['timestamp'])) === date('Y-m-d'); })) ?></p>
+                        <p class="stat-value">
+                            <?php 
+                            $todayErrors = 0;
+                            if (!empty($recentLogs)) {
+                                $todayErrors = count(array_filter($recentLogs, function($log) { 
+                                    return isset($log['level']) && $log['level'] === 'ERROR' && 
+                                           isset($log['timestamp']) && 
+                                           date('Y-m-d', $log['timestamp']) === date('Y-m-d'); 
+                                }));
+                            }
+                            echo $todayErrors;
+                            ?>
+                        </p>
                         <small>foutmeldingen</small>
                     </div>
                 </div>
@@ -63,8 +110,8 @@
                         <h3>Laatste Update</h3>
                         <p class="stat-value">
                             <?php 
-                            if (!empty($recent_logs)) {
-                                echo date('H:i', strtotime($recent_logs[0]['timestamp']));
+                            if (!empty($recentLogs) && isset($recentLogs[0]['timestamp'])) {
+                                echo date('H:i', $recentLogs[0]['timestamp']);
                             } else {
                                 echo 'Geen';
                             }
@@ -80,7 +127,7 @@
                     </div>
                     <div class="stat-content">
                         <h3>Logs Grootte</h3>
-                        <p class="stat-value"><?= formatLogSize($log_files) ?></p>
+                        <p class="stat-value"><?= formatBytes($totalLogSize) ?></p>
                         <small>totale grootte</small>
                     </div>
                 </div>
@@ -88,10 +135,10 @@
         </div>
 
         <!-- Recente Log Entries -->
-        <?php if (!empty($recent_logs)): ?>
+        <?php if (!empty($recentLogs)): ?>
         <div class="maintenance-section">
             <h2><i class="fas fa-clock"></i> Recente Log Entries</h2>
-            <p>Laatste 20 log entries uit alle logbestanden.</p>
+            <p>Laatste log entries uit alle logbestanden.</p>
             
             <div class="log-filters">
                 <div class="filter-group">
@@ -118,17 +165,17 @@
             </div>
             
             <div class="log-entries">
-                <?php foreach ($recent_logs as $log): ?>
-                    <div class="log-entry <?= strtolower($log['level']) ?>" 
-                         data-level="<?= $log['level'] ?>" 
-                         data-date="<?= date('Y-m-d', strtotime($log['timestamp'])) ?>">
+                <?php foreach ($recentLogs as $log): ?>
+                    <div class="log-entry <?= strtolower($log['level'] ?? 'info') ?>" 
+                         data-level="<?= $log['level'] ?? 'INFO' ?>" 
+                         data-date="<?= isset($log['timestamp']) ? date('Y-m-d', $log['timestamp']) : date('Y-m-d') ?>">
                         <div class="log-meta">
                             <span class="log-timestamp">
                                 <i class="fas fa-clock"></i>
-                                <?= date('Y-m-d H:i:s', strtotime($log['timestamp'])) ?>
+                                <?= isset($log['timestamp_formatted']) ? $log['timestamp_formatted'] : (isset($log['timestamp']) ? date('Y-m-d H:i:s', $log['timestamp']) : 'Onbekend') ?>
                             </span>
-                            <span class="log-level level-<?= strtolower($log['level']) ?>">
-                                <?= $log['level'] ?>
+                            <span class="log-level level-<?= strtolower($log['level'] ?? 'info') ?>">
+                                <?= $log['level'] ?? 'INFO' ?>
                             </span>
                             <span class="log-source">
                                 <i class="fas fa-file"></i>
@@ -136,7 +183,7 @@
                             </span>
                         </div>
                         <div class="log-message">
-                            <?= htmlspecialchars($log['message']) ?>
+                            <?= htmlspecialchars($log['message'] ?? $log['raw'] ?? 'Geen bericht') ?>
                         </div>
                         <?php if (isset($log['context']) && !empty($log['context'])): ?>
                             <div class="log-context">
@@ -157,9 +204,9 @@
             <h2><i class="fas fa-folder-open"></i> Log Bestanden</h2>
             <p>Beschikbare logbestanden en beheeropties.</p>
             
-            <?php if (!empty($log_files)): ?>
+            <?php if (!empty($logFiles)): ?>
                 <div class="log-files-grid">
-                    <?php foreach ($log_files as $logFile): ?>
+                    <?php foreach ($logFiles as $logFile): ?>
                         <div class="log-file-card">
                             <div class="file-header">
                                 <div class="file-icon">
@@ -170,22 +217,22 @@
                                     <p class="file-path"><?= htmlspecialchars($logFile['path']) ?></p>
                                 </div>
                                 <div class="file-size">
-                                    <?= formatBytes($logFile['size']) ?>
+                                    <?= $logFile['size_formatted'] ?? formatBytes($logFile['size'] ?? 0) ?>
                                 </div>
                             </div>
                             
                             <div class="file-stats">
                                 <div class="stat-item">
                                     <span class="stat-label">Grootte:</span>
-                                    <span class="stat-value"><?= formatBytes($logFile['size']) ?></span>
+                                    <span class="stat-value"><?= $logFile['size_formatted'] ?? formatBytes($logFile['size'] ?? 0) ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <span class="stat-label">Gewijzigd:</span>
-                                    <span class="stat-value"><?= date('Y-m-d H:i', $logFile['modified']) ?></span>
+                                    <span class="stat-value"><?= $logFile['modified_formatted'] ?? date('Y-m-d H:i', $logFile['modified'] ?? time()) ?></span>
                                 </div>
                                 <div class="stat-item">
-                                    <span class="stat-label">Regels:</span>
-                                    <span class="stat-value"><?= number_format($logFile['lines'] ?? 0) ?></span>
+                                    <span class="stat-label">Type:</span>
+                                    <span class="stat-value"><?= ucfirst($logFile['type'] ?? 'unknown') ?></span>
                                 </div>
                             </div>
                             
@@ -218,7 +265,7 @@
                         <h4><i class="fas fa-info-circle"></i> Logging Activeren</h4>
                         <p>Om logging te activeren, zorg ervoor dat:</p>
                         <ul>
-                            <li>De map <code>/storage/logs</code> bestaat en schrijfbaar is</li>
+                            <li>De map <code><?= htmlspecialchars($logDirectory) ?></code> bestaat en schrijfbaar is</li>
                             <li>PHP error logging is ingeschakeld</li>
                             <li>Je applicatie is geconfigureerd om logs te schrijven</li>
                         </ul>
@@ -238,9 +285,9 @@
                         <i class="fas fa-folder"></i> Log Directory
                     </div>
                     <div class="config-value">
-                        <code><?= BASE_PATH ?>/storage/logs</code>
-                        <span class="config-status <?= is_dir(BASE_PATH . '/storage/logs') ? 'status-ok' : 'status-error' ?>">
-                            <?= is_dir(BASE_PATH . '/storage/logs') ? '✓ Bestaat' : '✗ Niet gevonden' ?>
+                        <code><?= htmlspecialchars($logDirectory) ?></code>
+                        <span class="config-status <?= is_dir($logDirectory) ? 'status-ok' : 'status-error' ?>">
+                            <?= is_dir($logDirectory) ? '✓ Bestaat' : '✗ Niet gevonden' ?>
                         </span>
                     </div>
                 </div>
@@ -250,12 +297,8 @@
                         <i class="fas fa-shield-alt"></i> Schrijfrechten
                     </div>
                     <div class="config-value">
-                        <?php 
-                        $logsDir = BASE_PATH . '/storage/logs';
-                        $writable = is_dir($logsDir) && is_writable($logsDir);
-                        ?>
-                        <span class="config-status <?= $writable ? 'status-ok' : 'status-error' ?>">
-                            <?= $writable ? '✓ Schrijfbaar' : '✗ Niet schrijfbaar' ?>
+                        <span class="config-status <?= $logWritable ? 'status-ok' : 'status-error' ?>">
+                            <?= $logWritable ? '✓ Schrijfbaar' : '✗ Niet schrijfbaar' ?>
                         </span>
                     </div>
                 </div>
@@ -665,21 +708,3 @@ function confirmDeleteLog(filename) {
     }
 }
 </script>
-
-<?php
-// Helper functies voor deze view
-function formatBytes($bytes, $precision = 2) {
-    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    
-    for ($i = 0; $bytes >= 1024 && $i < count($units) - 1; $i++) {
-        $bytes /= 1024;
-    }
-    
-    return round($bytes, $precision) . ' ' . $units[$i];
-}
-
-function formatLogSize($logFiles) {
-    $totalSize = array_sum(array_column($logFiles, 'size'));
-    return formatBytes($totalSize);
-}
-?>

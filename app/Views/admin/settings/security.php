@@ -10,6 +10,22 @@
         </div>
     </div>
 
+    <!-- Success/Error Messages - Updated voor nieuwe structure -->
+    <?php if (isset($success) && $success): ?>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <?= htmlspecialchars($success) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($error) && $error): ?>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Legacy fallback for existing session messages -->
     <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success">
             <i class="fas fa-check-circle"></i>
@@ -38,7 +54,7 @@
                            id="password_min_length" 
                            name="password_min_length" 
                            class="form-control" 
-                           value="<?= $settings['password_min_length'] ?>"
+                           value="<?= $settings['password_min_length'] ?? 8 ?>"
                            min="4" 
                            max="50" 
                            step="1">
@@ -54,7 +70,8 @@
                                id="password_require_uppercase" 
                                name="password_require_uppercase" 
                                class="form-check-input" 
-                               <?= $settings['password_require_uppercase'] === '1' ? 'checked' : '' ?>>
+                               value="1"
+                               <?= ($settings['password_require_uppercase'] ?? false) ? 'checked' : '' ?>>
                         <label for="password_require_uppercase" class="form-check-label">
                             <strong>Hoofdletters Vereist</strong>
                             <br><small>Wachtwoord moet minimaal één hoofdletter bevatten</small>
@@ -66,7 +83,8 @@
                                id="password_require_numbers" 
                                name="password_require_numbers" 
                                class="form-check-input" 
-                               <?= $settings['password_require_numbers'] === '1' ? 'checked' : '' ?>>
+                               value="1"
+                               <?= ($settings['password_require_numbers'] ?? false) ? 'checked' : '' ?>>
                         <label for="password_require_numbers" class="form-check-label">
                             <strong>Cijfers Vereist</strong>
                             <br><small>Wachtwoord moet minimaal één cijfer bevatten</small>
@@ -75,11 +93,12 @@
 
                     <div class="form-check">
                         <input type="checkbox" 
-                               id="password_require_symbols" 
-                               name="password_require_symbols" 
+                               id="password_require_special" 
+                               name="password_require_special" 
                                class="form-check-input" 
-                               <?= $settings['password_require_symbols'] === '1' ? 'checked' : '' ?>>
-                        <label for="password_require_symbols" class="form-check-label">
+                               value="1"
+                               <?= ($settings['password_require_special'] ?? false) ? 'checked' : '' ?>>
+                        <label for="password_require_special" class="form-check-label">
                             <strong>Speciale Tekens Vereist</strong>
                             <br><small>Wachtwoord moet minimaal één speciaal teken bevatten (!@#$%^&*)</small>
                         </label>
@@ -94,12 +113,12 @@
             
             <div class="form-row">
                 <div class="form-group">
-                    <label for="login_attempts_limit">Max Login Pogingen</label>
+                    <label for="max_login_attempts">Max Login Pogingen</label>
                     <input type="number" 
-                           id="login_attempts_limit" 
-                           name="login_attempts_limit" 
+                           id="max_login_attempts" 
+                           name="max_login_attempts" 
                            class="form-control" 
-                           value="<?= $settings['login_attempts_limit'] ?>"
+                           value="<?= $settings['max_login_attempts'] ?? 5 ?>"
                            min="1" 
                            max="20" 
                            step="1">
@@ -107,12 +126,12 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="login_lockout_duration">Blokkering Duur (minuten)</label>
+                    <label for="lockout_duration">Blokkering Duur (minuten)</label>
                     <input type="number" 
-                           id="login_lockout_duration" 
-                           name="login_lockout_duration" 
+                           id="lockout_duration" 
+                           name="lockout_duration" 
                            class="form-control" 
-                           value="<?= $settings['login_lockout_duration'] ?>"
+                           value="<?= $settings['lockout_duration'] ?? 15 ?>"
                            min="1" 
                            max="1440" 
                            step="1">
@@ -122,12 +141,12 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="session_lifetime">Sessie Levensduur (minuten)</label>
+                    <label for="session_timeout">Sessie Levensduur (minuten)</label>
                     <input type="number" 
-                           id="session_lifetime" 
-                           name="session_lifetime" 
+                           id="session_timeout" 
+                           name="session_timeout" 
                            class="form-control" 
-                           value="<?= $settings['session_lifetime'] ?>"
+                           value="<?= $settings['session_timeout'] ?? 120 ?>"
                            min="15" 
                            max="10080" 
                            step="15">
@@ -138,70 +157,211 @@
             <div class="security-options">
                 <div class="form-check">
                     <input type="checkbox" 
-                           id="force_secure_login" 
-                           name="force_secure_login" 
+                           id="force_logout_on_password_change" 
+                           name="force_logout_on_password_change" 
                            class="form-check-input" 
-                           <?= $settings['force_secure_login'] === '1' ? 'checked' : '' ?>>
-                    <label for="force_secure_login" class="form-check-label">
-                        <strong>Forceer HTTPS voor Login</strong>
-                        <br><small>Verplicht veilige verbinding voor login en registratie</small>
-                    </label>
-                </div>
-
-                <div class="form-check">
-                    <input type="checkbox" 
-                           id="enable_two_factor" 
-                           name="enable_two_factor" 
-                           class="form-check-input" 
-                           <?= $settings['enable_two_factor'] === '1' ? 'checked' : '' ?>>
-                    <label for="enable_two_factor" class="form-check-label">
-                        <strong>Twee-Factor Authenticatie Inschakelen</strong>
-                        <br><small>Sta gebruikers toe om 2FA in te schakelen (Toekomstige functie)</small>
+                           value="1"
+                           <?= ($settings['force_logout_on_password_change'] ?? true) ? 'checked' : '' ?>>
+                    <label for="force_logout_on_password_change" class="form-check-label">
+                        <strong>Forceer Logout bij Wachtwoord Wijziging</strong>
+                        <br><small>Log gebruiker uit wanneer wachtwoord wordt gewijzigd</small>
                     </label>
                 </div>
             </div>
         </div>
 
         <div class="settings-section">
-            <h3><i class="fas fa-user-shield"></i> Privacy Instellingen</h3>
-            <p class="section-description">Privacy gerelateerde instellingen en wettelijke vereisten.</p>
+            <h3><i class="fas fa-upload"></i> Upload Beveiliging</h3>
+            <p class="section-description">Instellingen voor bestandsupload en media beveiliging.</p>
             
             <div class="form-row">
                 <div class="form-group">
-                    <label for="privacy_policy_page">Privacy Policy Pagina URL</label>
-                    <input type="url" 
-                           id="privacy_policy_page" 
-                           name="privacy_policy_page" 
+                    <label for="max_avatar_size">Max Avatar Grootte (MB)</label>
+                    <input type="number" 
+                           id="max_avatar_size" 
+                           name="max_avatar_size" 
                            class="form-control" 
-                           value="<?= htmlspecialchars($settings['privacy_policy_page']) ?>"
-                           placeholder="https://socialcoreproject.nl/privacy">
-                    <small class="form-hint">Link naar je privacy beleid pagina</small>
+                           value="<?= $settings['max_avatar_size'] ?? 2 ?>"
+                           min="1" 
+                           max="50" 
+                           step="1">
+                    <small class="form-hint">Maximum bestandsgrootte voor avatar uploads</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="terms_of_service_page">Algemene Voorwaarden URL</label>
-                    <input type="url" 
-                           id="terms_of_service_page" 
-                           name="terms_of_service_page" 
+                    <label for="max_post_media_size">Max Post Media Grootte (MB)</label>
+                    <input type="number" 
+                           id="max_post_media_size" 
+                           name="max_post_media_size" 
                            class="form-control" 
-                           value="<?= htmlspecialchars($settings['terms_of_service_page']) ?>"
-                           placeholder="https://socialcoreproject.nl/terms">
-                    <small class="form-hint">Link naar je algemene voorwaarden</small>
+                           value="<?= $settings['max_post_media_size'] ?? 10 ?>"
+                           min="1" 
+                           max="100" 
+                           step="1">
+                    <small class="form-hint">Maximum bestandsgrootte voor media in posts</small>
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="allowed_image_formats">Toegestane Afbeelding Formaten</label>
+                    <input type="text" 
+                           id="allowed_image_formats" 
+                           name="allowed_image_formats" 
+                           class="form-control" 
+                           value="<?= htmlspecialchars($settings['allowed_image_formats'] ?? 'jpg,jpeg,png,gif,webp') ?>"
+                           placeholder="jpg,jpeg,png,gif,webp">
+                    <small class="form-hint">Komma-gescheiden lijst van toegestane bestandsextensies</small>
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input type="checkbox" 
+                       id="scan_uploads" 
+                       name="scan_uploads" 
+                       class="form-check-input" 
+                       value="1"
+                       <?= ($settings['scan_uploads'] ?? true) ? 'checked' : '' ?>>
+                <label for="scan_uploads" class="form-check-label">
+                    <strong>Scan Uploads voor Malware</strong>
+                    <br><small>Controleer geüploade bestanden op verdachte inhoud</small>
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3><i class="fas fa-comments"></i> Content Beveiliging</h3>
+            <p class="section-description">Instellingen voor content moderatie en spam preventie.</p>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="max_posts_per_hour">Max Posts per Uur</label>
+                    <input type="number" 
+                           id="max_posts_per_hour" 
+                           name="max_posts_per_hour" 
+                           class="form-control" 
+                           value="<?= $settings['max_posts_per_hour'] ?? 20 ?>"
+                           min="1" 
+                           max="100" 
+                           step="1">
+                    <small class="form-hint">Maximum aantal posts per gebruiker per uur</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="max_post_length">Max Post Lengte (karakters)</label>
+                    <input type="number" 
+                           id="max_post_length" 
+                           name="max_post_length" 
+                           class="form-control" 
+                           value="<?= $settings['max_post_length'] ?? 1000 ?>"
+                           min="100" 
+                           max="10000" 
+                           step="50">
+                    <small class="form-hint">Maximum aantal karakters in een post</small>
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input type="checkbox" 
+                       id="enable_profanity_filter" 
+                       name="enable_profanity_filter" 
+                       class="form-check-input" 
+                       value="1"
+                       <?= ($settings['enable_profanity_filter'] ?? false) ? 'checked' : '' ?>>
+                <label for="enable_profanity_filter" class="form-check-label">
+                    <strong>Profanity Filter Inschakelen</strong>
+                    <br><small>Filter grove taal uit posts en comments</small>
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3><i class="fas fa-user-plus"></i> Registratie Beveiliging</h3>
+            <p class="section-description">Controle over nieuwe gebruikersregistraties.</p>
+            
+            <div class="security-options">
                 <div class="form-check">
                     <input type="checkbox" 
-                           id="cookie_consent_enabled" 
-                           name="cookie_consent_enabled" 
+                           id="open_registration" 
+                           name="open_registration" 
                            class="form-check-input" 
-                           <?= $settings['cookie_consent_enabled'] === '1' ? 'checked' : '' ?>>
-                    <label for="cookie_consent_enabled" class="form-check-label">
-                        <strong>Cookie Toestemming Banner</strong>
-                        <br><small>Toon cookie toestemming banner voor GDPR compliance</small>
+                           value="1"
+                           <?= ($settings['open_registration'] ?? true) ? 'checked' : '' ?>>
+                    <label for="open_registration" class="form-check-label">
+                        <strong>Open Registratie</strong>
+                        <br><small>Sta nieuwe gebruikers toe om zich te registreren</small>
                     </label>
                 </div>
+
+                <div class="form-check">
+                    <input type="checkbox" 
+                           id="email_verification_required" 
+                           name="email_verification_required" 
+                           class="form-check-input" 
+                           value="1"
+                           <?= ($settings['email_verification_required'] ?? true) ? 'checked' : '' ?>>
+                    <label for="email_verification_required" class="form-check-label">
+                        <strong>Email Verificatie Vereist</strong>
+                        <br><small>Nieuwe gebruikers moeten hun email adres verifiëren</small>
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" 
+                           id="admin_approval_required" 
+                           name="admin_approval_required" 
+                           class="form-check-input" 
+                           value="1"
+                           <?= ($settings['admin_approval_required'] ?? false) ? 'checked' : '' ?>>
+                    <label for="admin_approval_required" class="form-check-label">
+                        <strong>Admin Goedkeuring Vereist</strong>
+                        <br><small>Nieuwe accounts moeten door admin worden goedgekeurd</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3><i class="fas fa-user-shield"></i> Admin Beveiliging</h3>
+            <p class="section-description">Extra beveiligingsmaatregelen voor admin accounts.</p>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="admin_ip_whitelist">Admin IP Whitelist</label>
+                    <input type="text" 
+                           id="admin_ip_whitelist" 
+                           name="admin_ip_whitelist" 
+                           class="form-control" 
+                           value="<?= htmlspecialchars($settings['admin_ip_whitelist'] ?? '') ?>"
+                           placeholder="192.168.1.1,10.0.0.1">
+                    <small class="form-hint">Komma-gescheiden lijst van IP adressen die admin toegang hebben (leeg = alle IPs)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin_session_timeout">Admin Sessie Timeout (minuten)</label>
+                    <input type="number" 
+                           id="admin_session_timeout" 
+                           name="admin_session_timeout" 
+                           class="form-control" 
+                           value="<?= $settings['admin_session_timeout'] ?? 60 ?>"
+                           min="15" 
+                           max="480" 
+                           step="15">
+                    <small class="form-hint">Hoe lang admin sessies actief blijven</small>
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input type="checkbox" 
+                       id="admin_login_notification" 
+                       name="admin_login_notification" 
+                       class="form-check-input" 
+                       value="1"
+                       <?= ($settings['admin_login_notification'] ?? true) ? 'checked' : '' ?>>
+                <label for="admin_login_notification" class="form-check-label">
+                    <strong>Admin Login Notificaties</strong>
+                    <br><small>Stuur email notificatie bij admin logins</small>
+                </label>
             </div>
         </div>
 
@@ -248,6 +408,16 @@
                         <div class="status-content">
                             <span class="status-label">Upload Directory</span>
                             <span class="status-value"><?= is_writable(BASE_PATH . '/public/uploads') ? 'Schrijfbaar' : 'Niet schrijfbaar' ?></span>
+                        </div>
+                    </div>
+
+                    <div class="status-item">
+                        <div class="status-icon status-good">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="status-content">
+                            <span class="status-label">Security Settings</span>
+                            <span class="status-value"><?= count($settings) ?> instellingen geladen</span>
                         </div>
                     </div>
                 </div>
@@ -351,3 +521,4 @@
         grid-template-columns: 1fr;
     }
 }
+</style>

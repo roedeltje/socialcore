@@ -128,6 +128,9 @@ class FeedController extends Controller
                 if ($post['is_wall_message'] && !empty($post['target_name'])) {
                     $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
                 }
+                
+                // NIEUW: Process content voor klikbare hashtags
+                $post['content_formatted'] = $this->processPostContent($post['content']);
             }
             
             return $filteredPosts;
@@ -587,10 +590,10 @@ class FeedController extends Controller
             return ['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.'];
         }
 
-        // **NIEUW: Process hashtags VOOR database opslag**
+        // **HASHTAG PROCESSING: Gebruik parent method**
         $hashtags = [];
         if (!empty($content)) {
-            $hashtags = $this->processHashtags($content);
+            $hashtags = $this->processHashtags($content); // ← Parent method
         }
 
         // Bepaal post type en verwerk link preview
@@ -608,7 +611,7 @@ class FeedController extends Controller
             $post_type = 'photo';
         }
         
-        // Link preview verwerking (nieuwe functionaliteit)
+        // Link preview verwerking
         if (!empty($content)) {
             $link_preview_id = $this->processLinkPreview($content);
             if ($link_preview_id && $post_type === 'text') {
@@ -619,7 +622,7 @@ class FeedController extends Controller
         try {
             $this->db->beginTransaction();
             
-            // Verbeterde post insert met Hyves velden EN link preview
+            // Post insert met Hyves velden EN link preview
             $stmt = $this->db->prepare("
                 INSERT INTO posts (
                     user_id, content, type, privacy_level, mood, location, link_preview_id, created_at
@@ -633,24 +636,37 @@ class FeedController extends Controller
                 $this->savePostMedia($post_id, $image_path, $_FILES['image']);
             }
             
+            // **HASHTAG LINKING: Link hashtags aan post (eigen method)**
+            if (!empty($hashtags)) {
+                $this->linkHashtagsToPost($post_id, $hashtags);
+            }
+            
             $this->db->commit();
             
-            // **OPTIONEEL: Log hashtag success voor debugging**
+            // **DEBUG: Log success**
             if (!empty($hashtags)) {
-                error_log("Processed hashtags for post {$post_id}: " . implode(', ', $hashtags));
+                file_put_contents('/var/www/socialcore.local/debug/hashtag_success_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] Successfully linked hashtags to post {$post_id}: " . implode(', ', $hashtags) . "\n", 
+                    FILE_APPEND | LOCK_EX);
             }
             
             return [
                 'success' => true,
                 'message' => 'Je bericht is geplaatst!',
                 'post_id' => $post_id,
-                'hashtags' => $hashtags  // **NIEUW: Return hashtags voor debugging**
+                'hashtags' => $hashtags  // Return hashtag names voor debugging
             ];
             
         } catch (PDOException $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            
+            // **DEBUG: Log error**
+            file_put_contents('/var/www/socialcore.local/debug/hashtag_error_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Create post error: " . $e->getMessage() . "\n", 
+                FILE_APPEND | LOCK_EX);
+                
             error_log('Create post error: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Er is een fout opgetreden bij het plaatsen van je bericht.'];
         }
@@ -1651,6 +1667,67 @@ class FeedController extends Controller
         }
         
         return $filteredPosts;
+    }
+    
+    /**
+     * Haal bestaande hashtag op of creëer nieuwe
+     */
+    private function getOrCreateHashtag($tag)
+    {
+        try {
+            // Check of hashtag al bestaat
+            $stmt = $this->db->prepare("SELECT id, usage_count FROM hashtags WHERE tag = ?");
+            $stmt->execute([$tag]);
+            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($existing) {
+                // Update usage count
+                $stmt = $this->db->prepare("UPDATE hashtags SET usage_count = usage_count + 1 WHERE id = ?");
+                $stmt->execute([$existing['id']]);
+                
+                return $existing['id'];
+            } else {
+                // Creëer nieuwe hashtag
+                $stmt = $this->db->prepare("INSERT INTO hashtags (tag, usage_count, created_at) VALUES (?, 1, NOW())");
+                $stmt->execute([$tag]);
+                
+                return $this->db->lastInsertId();
+            }
+            
+        } catch (\Exception $e) {
+            error_log("Error getting/creating hashtag: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Link hashtags aan een post
+     */
+    private function linkHashtagsToPost($postId, $hashtags)
+    {
+        if (empty($hashtags)) {
+            return;
+        }
+        
+        try {
+            $db = Database::getInstance()->getPdo();
+            
+            foreach ($hashtags as $tag) {
+                // Haal hashtag ID op
+                $stmt = $db->prepare("SELECT id FROM hashtags WHERE tag = ?");
+                $stmt->execute([strtolower($tag)]);
+                $hashtagData = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($hashtagData) {
+                    // Link hashtag aan post
+                    $stmt = $db->prepare("INSERT IGNORE INTO post_hashtags (post_id, hashtag_id) VALUES (?, ?)");
+                    $stmt->execute([$postId, $hashtagData['id']]);
+                }
+            }
+            
+        } catch (\Exception $e) {
+            error_log("Error linking hashtags to post: " . $e->getMessage());
+        }
     }
 
 }

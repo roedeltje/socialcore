@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Database\Database;
 use App\Auth\Auth;
+use App\Helpers\SecuritySettings;
 use PDO;
 use Exception;
 
@@ -411,6 +412,9 @@ class ProfileController extends Controller
                 if ($post['is_wall_message'] && !empty($post['target_name'])) {
                     $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
                 }
+                
+                // NIEUW: Process content voor klikbare hashtags
+                $post['content_formatted'] = $this->processProfilePostContent($post['content']);
             }
             
             return $posts;
@@ -520,38 +524,24 @@ class ProfileController extends Controller
         }
         
         $userId = $_SESSION['user_id'];
+        
+        // 🔒 SECURITY: Check profile update rate limiting
+        if (!$this->checkProfileUpdateRateLimit($userId)) {
+            $_SESSION['error_message'] = 'Je kunt je profiel maar 5 keer per uur bijwerken. Probeer het later opnieuw.';
+            redirect('profile/edit');
+            return;
+        }
+        
         $form = new \App\Helpers\FormHelper();
         
-        // Validatie
-        $errors = [];
-        
-        // Display name is verplicht
-        if (empty($_POST['display_name'])) {
-            $errors['display_name'] = 'Weergavenaam is verplicht';
-        }
-        
-        // Website URL validatie (als ingevuld)
-        if (!empty($_POST['website']) && !filter_var($_POST['website'], FILTER_VALIDATE_URL)) {
-            $errors['website'] = 'Voer een geldige website URL in';
-        }
-        
-        // Telefoonnummer validatie (basis)
-        if (!empty($_POST['phone']) && !preg_match('/^[\+\-\s\(\)\d]+$/', $_POST['phone'])) {
-            $errors['phone'] = 'Voer een geldig telefoonnummer in';
-        }
-        
-        // Geboortedatum validatie
-        if (!empty($_POST['date_of_birth'])) {
-        $birthDate = \DateTime::createFromFormat('Y-m-d', $_POST['date_of_birth']);
-        if (!$birthDate || $birthDate > new \DateTime()) {
-            $errors['date_of_birth'] = 'Voer een geldige geboortedatum in';
-            }
-        }
+        // 🔒 SECURITY: Sanitize en valideer alle input
+        $sanitizedData = $this->sanitizeProfileInput($_POST);
+        $errors = $this->validateProfileData($sanitizedData);
         
         // Als er fouten zijn, ga terug naar het formulier
         if (!empty($errors)) {
             $_SESSION['form_errors'] = $errors;
-            $_SESSION['form_data'] = $_POST;
+            $_SESSION['form_data'] = $sanitizedData; // Gebruik gesanitizeerde data
             $_SESSION['error_message'] = 'Er zijn fouten in het formulier. Controleer je invoer.';
             redirect('profile/edit');
             return;
@@ -582,13 +572,13 @@ class ProfileController extends Controller
                 ");
                 
                 $stmt->execute([
-                    $_POST['display_name'],
-                    $_POST['bio'] ?? '',
-                    $_POST['location'] ?? '',
-                    $_POST['website'] ?? '',
-                    $_POST['phone'] ?? '',
-                    $_POST['date_of_birth'] ?? null,
-                    $_POST['gender'] ?? '',
+                    $sanitizedData['display_name'],
+                    $sanitizedData['bio'],
+                    $sanitizedData['location'],
+                    $sanitizedData['website'],
+                    $sanitizedData['phone'],
+                    $sanitizedData['date_of_birth'],
+                    $sanitizedData['gender'],
                     $userId
                 ]);
             } else {
@@ -602,21 +592,24 @@ class ProfileController extends Controller
                 
                 $stmt->execute([
                     $userId,
-                    $_POST['display_name'],
-                    $_POST['bio'] ?? '',
-                    $_POST['location'] ?? '',
-                    $_POST['website'] ?? '',
-                    $_POST['phone'] ?? '',
-                    $_POST['date_of_birth'] ?? null,
-                    $_POST['gender'] ?? ''
+                    $sanitizedData['display_name'],
+                    $sanitizedData['bio'],
+                    $sanitizedData['location'],
+                    $sanitizedData['website'],
+                    $sanitizedData['phone'],
+                    $sanitizedData['date_of_birth'],
+                    $sanitizedData['gender']
                 ]);
             }
+            
+            // 🔒 SECURITY: Log profile update activiteit
+            $this->logProfileUpdate($userId);
             
             // Commit de transactie
             $this->db->commit();
             
             // Update ook de sessie met de nieuwe display name
-            $_SESSION['display_name'] = $_POST['display_name'];
+            $_SESSION['display_name'] = $sanitizedData['display_name'];
             
             // Succes bericht
             $_SESSION['success_message'] = 'Je profiel is succesvol bijgewerkt!';
@@ -929,8 +922,10 @@ class ProfileController extends Controller
         return get_avatar_url(null);
     }
 
+    
     /**
      * Update de profielfoto via AJAX of form submission
+     * 🔒 SECURITY: Met rate limiting en logging
      */
     public function uploadAvatar() 
     {
@@ -942,6 +937,23 @@ class ProfileController extends Controller
                 return;
             }
             redirect('login');
+            return;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        // 🔒 SECURITY: Check upload rate limiting (NU WEL ACTIEF!)
+        if (!$this->checkAvatarUploadRateLimit($userId)) {
+            $message = 'Je kunt maar 1 profielfoto per uur uploaden. Probeer het later opnieuw.';
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $message]);
+                return;
+            }
+            
+            $_SESSION['error_message'] = $message;
+            redirect('profile/edit');
             return;
         }
         
@@ -960,30 +972,50 @@ class ProfileController extends Controller
             return;
         }
         
-        // Toegestane bestandstypen voor avatars
-        $allowedTypes = [
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'image/webp'
-        ];
+        // 🔒 SECURITY: Gebruik configureerbare upload instellingen
+        if (class_exists('App\Helpers\SecuritySettings')) {
+            try {
+                $allowedTypes = SecuritySettings::getAllowedImageFormats();
+                $maxSize = SecuritySettings::get('max_avatar_size', 2 * 1024 * 1024);
+            } catch (\Exception $e) {
+                // Fallback bij SecuritySettings fout
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $maxSize = 2 * 1024 * 1024;
+            }
+        } else {
+            // Fallback zonder SecuritySettings
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $maxSize = 2 * 1024 * 1024;
+        }
         
-        // Maximale bestandsgrootte (2MB)
-        $maxSize = 2 * 1024 * 1024;
+        // 🔒 SECURITY: Extra bestandsvalidatie
+        $securityCheck = $this->validateUploadedFile($_FILES['avatar'], $allowedTypes, $maxSize);
+        if (!$securityCheck['valid']) {
+            $message = $securityCheck['message'];
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $message]);
+                return;
+            }
+            
+            $_SESSION['error_message'] = $message;
+            redirect('profile/edit');
+            return;
+        }
         
-        // Upload de avatar met een prefix voor herkenning
+        // Upload de avatar
         $uploadResult = upload_file(
             $_FILES['avatar'],
             'avatars',
             $allowedTypes,
             $maxSize,
-            'avatar_' . $_SESSION['user_id'] . '_'
+            'avatar_' . $userId . '_'
         );
         
         if ($uploadResult['success']) {
             try {
                 // Update de database met het nieuwe avatar pad
-                $userId = $_SESSION['user_id'];
                 $avatarPath = $uploadResult['path'];
                 
                 // Start database transactie
@@ -1017,6 +1049,9 @@ class ProfileController extends Controller
                     ");
                     $stmt->execute([$userId, $avatarPath]);
                 }
+                
+                // 🔒 SECURITY: Log avatar upload activiteit (NU WEL ACTIEF!)
+                $this->logAvatarUpload($userId);
                 
                 // Commit transactie
                 $this->db->commit();
@@ -1072,6 +1107,59 @@ class ProfileController extends Controller
         
         redirect('profile/edit');
     }
+
+    /**
+     * 🔒 SECURITY: Valideer geüploade bestanden tegen malicious content
+     */
+    private function validateUploadedFile($file, $allowedTypes, $maxSize)
+    {
+        $result = ['valid' => false, 'message' => ''];
+        
+        // Check bestandsgrootte
+        if ($file['size'] > $maxSize) {
+            $result['message'] = 'Bestand is te groot. Maximaal ' . round($maxSize / (1024*1024), 1) . 'MB toegestaan.';
+            return $result;
+        }
+        
+        // Check MIME type
+        if (!in_array($file['type'], $allowedTypes)) {
+            $result['message'] = 'Bestandstype niet toegestaan. Alleen ' . implode(', ', $allowedTypes) . ' zijn toegestaan.';
+            return $result;
+        }
+        
+        // Check file extension tegen MIME type mismatch
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        if (!in_array($fileExtension, $allowedExtensions)) {
+            $result['message'] = 'Bestandsextensie niet toegestaan.';
+            return $result;
+        }
+        
+        // Basic header check voor images
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            $result['message'] = 'Bestand is geen geldige afbeelding.';
+            return $result;
+        }
+        
+        // Check of MIME type en getimagesize overeenkomen
+        $imageMimeTypes = [
+            IMAGETYPE_JPEG => 'image/jpeg',
+            IMAGETYPE_PNG => 'image/png', 
+            IMAGETYPE_GIF => 'image/gif',
+            IMAGETYPE_WEBP => 'image/webp'
+        ];
+        
+        if (!isset($imageMimeTypes[$imageInfo[2]]) || $imageMimeTypes[$imageInfo[2]] !== $file['type']) {
+            $result['message'] = 'Bestandstype komt niet overeen met bestandsinhoud.';
+            return $result;
+        }
+        
+        $result['valid'] = true;
+        return $result;
+    }
+
 
     /**
      * Verwijder huidige avatar en zet terug naar default
@@ -1166,28 +1254,6 @@ class ProfileController extends Controller
         ];
 
         $this->view('profile/security', $data);
-    }
-
-    /**
-     * Toon avatar beheer pagina (aparte pagina voor avatar upload)
-     */
-    public function avatar()
-    {
-        // Controleer of de gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            redirect('login');
-            return;
-        }
-
-        $userId = $_SESSION['user_id'];
-        $user = $this->getUserData($userId, $_SESSION['username'] ?? '');
-
-        $data = [
-            'title' => 'Profielfoto beheren',
-            'user' => $user
-        ];
-
-        $this->view('profile/avatar', $data);
     }
 
     /**
@@ -1414,6 +1480,450 @@ class ProfileController extends Controller
         }
 
         return $userData;
+    }
+
+    /**
+     * 🔒 SECURITY: Check avatar upload rate limiting (1 per uur)
+     */
+    private function checkAvatarUploadRateLimit($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM user_activity_log 
+                WHERE user_id = ? 
+                AND action = 'avatar_upload' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            ");
+            $stmt->execute([$userId]);
+            $recentUploads = $stmt->fetchColumn();
+            
+            return $recentUploads < 1;
+        } catch (\Exception $e) {
+            error_log("Rate limit check error: " . $e->getMessage());
+            return true; // Bij fout, sta upload toe
+        }
+    }
+
+    /**
+     * 🔒 SECURITY: Check profile update rate limiting (5 per uur)
+     */
+    private function checkProfileUpdateRateLimit($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM user_activity_log 
+                WHERE user_id = ? 
+                AND action = 'profile_update' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            ");
+            $stmt->execute([$userId]);
+            $recentUpdates = $stmt->fetchColumn();
+            
+            $maxUpdatesPerHour = SecuritySettings::get('max_profile_updates_per_hour', 5);
+            return $recentUpdates < $maxUpdatesPerHour;
+        } catch (\Exception $e) {
+            error_log("Rate limit check error: " . $e->getMessage());
+            return true; // Bij fout, sta update toe
+        }
+    }
+
+
+    /**
+     * 🔒 SECURITY: Log avatar upload activity
+     */
+    private function logAvatarUpload($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO user_activity_log (user_id, action, details, ip_address, user_agent, created_at)
+                VALUES (?, 'avatar_upload', ?, ?, ?, NOW())
+            ");
+            
+            $details = json_encode([
+                'type' => 'avatar_upload',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            
+            $stmt->execute([
+                $userId,
+                $details,
+                $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Activity logging error: " . $e->getMessage());
+        }
+    }
+
+
+    /**
+     * 🔒 SECURITY: Sanitize profile input data
+     */
+    private function sanitizeProfileInput($data)
+    {
+        return [
+            'display_name' => htmlspecialchars(trim($data['display_name'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'bio' => htmlspecialchars(trim($data['bio'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'location' => htmlspecialchars(trim($data['location'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'website' => filter_var(trim($data['website'] ?? ''), FILTER_SANITIZE_URL),
+            'phone' => preg_replace('/[^+\-\s\(\)\d]/', '', trim($data['phone'] ?? '')),
+            'date_of_birth' => trim($data['date_of_birth'] ?? ''),
+            'gender' => in_array($data['gender'] ?? '', ['male', 'female', 'other', '']) ? $data['gender'] : ''
+        ];
+    }
+
+    /**
+     * 🔒 SECURITY: Validate profile data met configureerbare limits
+     */
+    private function validateProfileData($data)
+    {
+        $errors = [];
+        
+        // Display name is verplicht
+        if (empty($data['display_name'])) {
+            $errors['display_name'] = 'Weergavenaam is verplicht';
+        } elseif (strlen($data['display_name']) > 50) {
+            $errors['display_name'] = 'Weergavenaam mag maximaal 50 karakters bevatten';
+        }
+        
+        // Bio length check
+        $maxBioLength = SecuritySettings::get('max_bio_length', 500);
+        if (strlen($data['bio']) > $maxBioLength) {
+            $errors['bio'] = "Bio mag maximaal {$maxBioLength} karakters bevatten";
+        }
+        
+        // Website URL validatie (als ingevuld)
+        if (!empty($data['website']) && !filter_var($data['website'], FILTER_VALIDATE_URL)) {
+            $errors['website'] = 'Voer een geldige website URL in';
+        }
+        
+        // Telefoonnummer validatie (basis)
+        if (!empty($data['phone']) && !preg_match('/^[\+\-\s\(\)\d]+$/', $data['phone'])) {
+            $errors['phone'] = 'Voer een geldig telefoonnummer in';
+        }
+        
+        // Geboortedatum validatie
+        if (!empty($data['date_of_birth'])) {
+            $birthDate = \DateTime::createFromFormat('Y-m-d', $data['date_of_birth']);
+            if (!$birthDate || $birthDate > new \DateTime()) {
+                $errors['date_of_birth'] = 'Voer een geldige geboortedatum in';
+            }
+            
+            // Check minimum leeftijd (13 jaar - COPPA compliance)
+            $minAge = new \DateTime('-13 years');
+            if ($birthDate > $minAge) {
+                $errors['date_of_birth'] = 'Je moet minimaal 13 jaar oud zijn om dit platform te gebruiken';
+            }
+        }
+        
+        return $errors;
+    }
+
+    /**
+     * 🔒 SECURITY: Check foto upload rate limiting (5 per uur)
+     */
+    private function checkPhotoUploadRateLimit($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM user_activity_log 
+                WHERE user_id = ? 
+                AND action = 'photo_upload' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            ");
+            $stmt->execute([$userId]);
+            $recentUploads = $stmt->fetchColumn();
+            
+            $maxUploadsPerHour = SecuritySettings::get('max_photo_uploads_per_hour', 5);
+            return $recentUploads < $maxUploadsPerHour;
+        } catch (\Exception $e) {
+            error_log("Rate limit check error: " . $e->getMessage());
+            return true; // Bij fout, sta upload toe
+        }
+    }
+
+    /**
+     * 🔒 SECURITY: Log foto upload activity
+     */
+    private function logPhotoUpload($userId, $postId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO user_activity_log (user_id, action, details, ip_address, user_agent, created_at)
+                VALUES (?, 'photo_upload', ?, ?, ?, NOW())
+            ");
+            
+            $details = json_encode([
+                'type' => 'photo_upload',
+                'post_id' => $postId,
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            
+            $stmt->execute([
+                $userId,
+                $details,
+                $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Activity logging error: " . $e->getMessage());
+        }
+    }
+
+    /**
+         * 🔒 SECURITY: Process en filter post content voor veiligheid
+         */
+        private function processProfilePostContent($content)
+        {
+            // Apply profanity filter als ingeschakeld
+            $filtered = SecuritySettings::filterProfanity($content);
+            
+            // Maak hashtags klikbaar (bestaande functionaliteit)
+            $filtered = preg_replace('/#([a-zA-Z0-9_]+)/', '<a href="/?route=search&q=%23$1" class="hashtag">#$1</a>', $filtered);
+            
+            // Maak @mentions klikbaar
+            $filtered = preg_replace('/@([a-zA-Z0-9_]+)/', '<a href="/?route=profile&username=$1" class="mention">@$1</a>', $filtered);
+            
+            return $filtered;
+        }
+
+        /**
+         * 🔒 SECURITY: Check krabbels rate limiting (10 per uur)
+         */
+        private function checkKrabbelsRateLimit($userId)
+        {
+            try {
+                $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM user_activity_log 
+                WHERE user_id = ? 
+                AND action = 'krabbel_post' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            ");
+                $stmt->execute([$userId]);
+                $recentKrabbels = $stmt->fetchColumn();
+
+                $maxKrabbelsPerHour = SecuritySettings::get('max_krabbels_per_hour', 10);
+                return $recentKrabbels < $maxKrabbelsPerHour;
+            } catch (\Exception $e) {
+                error_log("Rate limit check error: " . $e->getMessage());
+                return true; // Bij fout, sta actie toe
+            }
+        }
+
+        /**
+         * 🔒 SECURITY: Log krabbel activity
+         */
+        private function logKrabbel($senderId, $receiverId)
+        {
+            try {
+                $stmt = $this->db->prepare("
+                INSERT INTO user_activity_log (user_id, action, details, ip_address, user_agent, created_at)
+                VALUES (?, 'krabbel_post', ?, ?, ?, NOW())
+            ");
+
+                $details = json_encode([
+                    'type' => 'krabbel_post',
+                    'receiver_id' => $receiverId,
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]);
+
+                $stmt->execute([
+                    $senderId,
+                    $details,
+                    $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+                ]);
+            } catch (\Exception $e) {
+                error_log("Activity logging error: " . $e->getMessage());
+            }
+        }
+
+        /**
+         * 🔒 SECURITY: Check general rate limit voor verschillende acties
+         */
+        private function checkGeneralRateLimit($userId, $action, $maxPerHour = 10)
+        {
+            try {
+                $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM user_activity_log 
+                WHERE user_id = ? 
+                AND action = ? 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            ");
+                $stmt->execute([$userId, $action]);
+                $recentActions = $stmt->fetchColumn();
+
+                return $recentActions < $maxPerHour;
+            } catch (\Exception $e) {
+                error_log("Rate limit check error: " . $e->getMessage());
+                return true; // Bij fout, sta actie toe
+            }
+        }
+
+        /**
+         * 🔒 SECURITY: Check IP-based rate limiting
+         */
+        private function checkIpRateLimit($action, $maxPerHour = 20)
+        {
+            try {
+                $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+                $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM user_activity_log 
+                WHERE ip_address = ? 
+                AND action = ? 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            ");
+                $stmt->execute([$ipAddress, $action]);
+                $recentActions = $stmt->fetchColumn();
+
+                return $recentActions < $maxPerHour;
+            } catch (\Exception $e) {
+                error_log("IP rate limit check error: " . $e->getMessage());
+                return true; // Bij fout, sta actie toe
+            }
+        }
+
+        /**
+         * 🔒 SECURITY: Comprehensive security check voor alle profile acties
+         */
+        private function performSecurityChecks($userId, $action, $content = '', $fileData = null)
+        {
+            $result = ['passed' => true, 'message' => ''];
+
+            // Rate limiting check
+            $rateLimits = [
+                'profile_update' => 5,
+                'avatar_upload' => 1,
+                'photo_upload' => 5,
+                'krabbel_post' => 10
+            ];
+
+            $maxPerHour = $rateLimits[$action] ?? 10;
+            if (!$this->checkGeneralRateLimit($userId, $action, $maxPerHour)) {
+                $result['passed'] = false;
+                $result['message'] = "Te veel {$action} pogingen. Probeer het later opnieuw.";
+                return $result;
+            }
+
+            // IP rate limiting
+            if (!$this->checkIpRateLimit($action, 20)) {
+                $result['passed'] = false;
+                $result['message'] = 'Te veel activiteit vanaf dit IP-adres. Probeer het later opnieuw.';
+                return $result;
+            }
+
+            // Content validatie (als content aanwezig is)
+            if (!empty($content)) {
+                $contentCheck = $this->validateContentSecurity($content, $action);
+                if (!$contentCheck['valid']) {
+                    $result['passed'] = false;
+                    $result['message'] = $contentCheck['message'];
+                    return $result;
+                }
+            }
+
+            // File validatie (als bestand aanwezig is)
+            if ($fileData !== null) {
+                $uploadType = in_array($action, ['avatar_upload']) ? 'avatar' : 'general';
+                $validationResult = SecuritySettings::validateUploadSettings(
+                    $fileData['size'],
+                    $fileData['type'],
+                    $uploadType
+                );
+
+                if (!$validationResult['valid']) {
+                    $result['passed'] = false;
+                    $result['message'] = $validationResult['message'];
+                    return $result;
+                }
+            }
+
+            return $result;
+        }
+
+        /**
+     * 🔒 SECURITY: Log profile update activity
+     */
+    private function logProfileUpdate($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO user_activity_log (user_id, action, details, ip_address, user_agent, created_at)
+                VALUES (?, 'profile_update', ?, ?, ?, NOW())
+            ");
+            
+            $details = json_encode([
+                'type' => 'profile_update',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            
+            $stmt->execute([
+                $userId,
+                $details,
+                $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Activity logging error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * 🔒 SECURITY: Validate content tegen spam en misbruik
+     */
+    private function validateContentSecurity($content, $type = 'post')
+    {
+        $result = ['valid' => true, 'message' => ''];
+        
+        // Check lengte limits
+        $limits = SecuritySettings::getContentLimits();
+        $maxLength = $limits["max_{$type}_length"] ?? 1000;
+        
+        if (strlen($content) > $maxLength) {
+            $result['valid'] = false;
+            $result['message'] = "Content mag maximaal {$maxLength} karakters bevatten.";
+            return $result;
+        }
+        
+        // Check voor verdachte patronen (spam)
+        $suspiciousPatterns = [
+            '/(.)\1{10,}/', // Herhaalde karakters (meer dan 10x)
+            '/https?:\/\/[^\s]{50,}/', // Zeer lange URLs
+            '/\b(viagra|casino|lottery|winner)\b/i', // Veelgebruikte spam woorden
+        ];
+        
+        foreach ($suspiciousPatterns as $pattern) {
+            if (preg_match($pattern, $content)) {
+                $result['valid'] = false;
+                $result['message'] = 'Content bevat verdachte patronen en kan niet worden geplaatst.';
+                return $result;
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Toon avatar beheer pagina (aparte pagina voor avatar upload)
+     */
+    public function avatar()
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            redirect('login');
+            return;
+        }
+
+        $userId = $_SESSION['user_id'];
+        $user = $this->getUserData($userId, $_SESSION['username'] ?? '');
+
+        $data = [
+            'title' => 'Profielfoto beheren',
+            'user' => $user
+        ];
+
+        $this->view('profile/avatar', $data);
     }
 
 

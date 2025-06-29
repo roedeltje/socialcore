@@ -22,10 +22,10 @@
             
             <form method="POST" action="<?= base_url('login/process') ?>">
                 <div class="mb-4">
-                    <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Gebruikersnaam</label>
+                    <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Gebruikersnaam of Email</label>
                     <input type="text" id="username" name="username" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Voer je gebruikersnaam in" required>
+                        placeholder="Voer je gebruikersnaam of email in" required>
                 </div>
                 
                 <div class="mb-6">
@@ -51,20 +51,32 @@
                 
                 <div>
                     <button type="submit" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
                         Inloggen
                     </button>
                 </div>
             </form>
             
-            <div class="mt-6 text-center">
-                <p class="text-sm text-gray-600">
-                    Nog geen account? 
-                    <a href="<?= base_url('register') ?>" class="font-medium text-blue-600 hover:underline">
-                        Registreer hier
-                    </a>
-                </p>
-            </div>
+            <!-- Conditional registration link - only show if registration is open -->
+            <?php if (isset($registration_open) && $registration_open): ?>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Nog geen account? 
+                        <a href="<?= base_url('register') ?>" class="font-medium text-blue-600 hover:underline">
+                            Registreer hier
+                        </a>
+                    </p>
+                </div>
+            <?php else: ?>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-500">
+                        <svg class="inline-block w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                        Registratie is momenteel gesloten
+                    </p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

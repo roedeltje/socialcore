@@ -10,8 +10,19 @@
             </div>
             
             <div class="welcome-cta">
-                <a href="<?= base_url('register') ?>" class="btn btn-primary">Registreer nu</a>
-                <a href="<?= base_url('about') ?>" class="btn btn-outline">Meer informatie</a>
+                <?php if (isset($registration_open) && $registration_open): ?>
+                    <a href="<?= base_url('register') ?>" class="btn btn-primary">Registreer nu</a>
+                    <a href="<?= base_url('about') ?>" class="btn btn-outline">Meer informatie</a>
+                <?php else: ?>
+                    <a href="<?= base_url('login') ?>" class="btn btn-primary">Log in</a>
+                    <a href="<?= base_url('about') ?>" class="btn btn-outline">Meer informatie</a>
+                    <div style="margin-top: 10px;">
+                        <small style="color: #666;">
+                            <i class="fas fa-lock" style="margin-right: 5px;"></i>
+                            Registratie is momenteel gesloten
+                        </small>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -33,7 +44,7 @@
                     <label for="email">
                         <i class="icon-email"></i>
                     </label>
-                    <input type="text" id="username" name="username" placeholder="Gebruikersnaam" required>
+                    <input type="text" id="username" name="username" placeholder="Gebruikersnaam of Email" required>
                 </div>
                 
                 <div class="form-group">
@@ -44,7 +55,7 @@
                 </div>
                 
                 <div class="form-check">
-                    <input type="checkbox" id="remember" name="remember">
+                    <input type="checkbox" id="remember" name="remember_me">
                     <label for="remember">Onthouden</label>
                     <a href="<?= base_url('password/reset') ?>" class="forgot-link">Wachtwoord vergeten?</a>
                 </div>
@@ -53,7 +64,14 @@
             </form>
             
             <div class="login-footer">
-                <p>Heb je geen account? <a href="<?= base_url('register') ?>">Creëer je account</a></p>
+                <?php if (isset($registration_open) && $registration_open): ?>
+                    <p>Heb je geen account? <a href="<?= base_url('register') ?>">Creëer je account</a></p>
+                <?php else: ?>
+                    <p style="color: #666;">
+                        <i class="fas fa-lock" style="margin-right: 5px; font-size: 12px;"></i>
+                        Nieuwe registraties zijn momenteel niet mogelijk
+                    </p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

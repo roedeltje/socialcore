@@ -20,6 +20,8 @@ use App\Controllers\LinkPreviewController;
 use App\Controllers\DebugController;
 use App\Controllers\PrivacyController;
 use App\Controllers\PhotosController;
+use App\Controllers\SearchHandler;
+use App\Controllers\MigrationController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\AppearanceController;
@@ -183,23 +185,6 @@ return [
     },
     'middleware' => [AdminMiddleware::class]  // Alleen voor ingelogde gebruikers
 ],
-
-//     'admin/users/upload-avatar' => [
-//     'callback' => function () {
-//         $setupController = new SetupController();
-//         $setupController->updateUserAvatar();
-//     },
-//     'middleware' => [AdminMiddleware::class]
-// ],
-
-//     'admin/users/remove-avatar' => [
-//     'callback' => function () {
-//         $setupController = new SetupController();
-//         $setupController->removeUserAvatar();
-//     },
-//     'middleware' => [AdminMiddleware::class]
-// ],
-
     'admin/appearance/themes' => [
     'callback' => function () {
         try {
@@ -481,14 +466,6 @@ return [
         },
         'middleware' => [AdminMiddleware::class]
     ],
-
-    // 'admin/plugins/save-file' => [
-    //     'callback' => function () {
-    //         $controller = new AdminPluginController();
-    //         $controller->saveFile();
-    //     },
-    //     'middleware' => [AdminMiddleware::class]
-    // ],
 
     'admin/plugins/activate' => [
         'callback' => function () {
@@ -942,31 +919,18 @@ return [
     'middleware' => [AuthMiddleware::class]
 ],
 
-    'linkpreview/debug' => [
+    'search' => [
     'callback' => function () {
-        echo json_encode(['debug' => 'Route works!']);
-        exit;
+        $SearchHandler = new SearchHandler();
+        $SearchHandler->index();
     },
     'middleware' => [AuthMiddleware::class]
 ],
 
-    'linkpreview/controller-test' => [
+    'search/hashtag' => [
     'callback' => function () {
-        try {
-            $controller = new LinkPreviewController();
-            echo json_encode(['controller' => 'Controller created successfully!']);
-        } catch (Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
-        }
-        exit;
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-
-    'linkpreview/test' => [
-    'callback' => function () {
-        // Include de test pagina
-        include __DIR__ . '/../linkpreview-test.php';
+        $SearchHandler = new SearchHandler();
+        $SearchHandler->hashtag();
     },
     'middleware' => [AuthMiddleware::class]
 ],
@@ -1026,120 +990,6 @@ return [
             $debugController->performance();
         },
         'middleware' => [AuthMiddleware::class]
-],
-
-    'test-debug' => [
-    'callback' => function () {
-        echo "<h1>TEST DEBUG WERKT!</h1>";
-        echo "<p>Als je dit ziet, werkt routing wel</p>";
-        echo "<p>Actief thema: " . get_active_theme() . "</p>";
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-
-    'test-controller' => [
-    'callback' => function () {
-        try {
-            echo "<h1>Poging om DebugController te laden...</h1>";
-            $debugController = new \App\Controllers\DebugController();
-            echo "<p>✅ DebugController object aangemaakt!</p>";
-            
-            echo "<p>Poging om component() methode aan te roepen...</p>";
-            $debugController->component();
-            
-        } catch (Exception $e) {
-            echo "<h1>❌ FOUT bij laden DebugController:</h1>";
-            echo "<p><strong>Foutmelding:</strong> " . $e->getMessage() . "</p>";
-            echo "<p><strong>Bestand:</strong> " . $e->getFile() . "</p>";
-            echo "<p><strong>Lijn:</strong> " . $e->getLine() . "</p>";
-        }
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-
-    'debug-link' => [
-    'callback' => function () {
-        echo "<h1>🔍 Link Debug Tool</h1>";
-        echo "<p><strong>Middleware passed!</strong> User: " . ($_SESSION['username'] ?? 'onbekend') . "</p>";
-        echo "<p><strong>Request Method:</strong> " . $_SERVER['REQUEST_METHOD'] . "</p>";
-        echo "<p><strong>GET params:</strong></p>";
-        echo "<pre>" . print_r($_GET, true) . "</pre>";
-        
-        if (isset($_GET['url'])) {
-            echo "<h2>🔍 Testing URL: " . htmlspecialchars($_GET['url']) . "</h2>";
-            
-            $url = $_GET['url'];
-            
-            // Simpele test eerst
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 10,
-                    'user_agent' => 'Mozilla/5.0 (compatible; SocialCore/1.0)'
-                ]
-            ]);
-            
-            echo "<p>Attempting to fetch URL...</p>";
-            $html = @file_get_contents($url, false, $context);
-            
-            if ($html) {
-                echo "<p><strong>✅ Success!</strong> Downloaded " . strlen($html) . " characters</p>";
-                
-                // Check voor privacy wall
-                if (stripos($html, 'privacy') !== false || stripos($html, 'cookie') !== false) {
-                    echo "<p><strong>⚠️ Privacy/Cookie wall detected!</strong></p>";
-                }
-                
-                // Extract title
-                if (preg_match('/<title[^>]*>([^<]*)<\/title>/i', $html, $matches)) {
-                    echo "<p><strong>Title:</strong> " . htmlspecialchars(trim($matches[1])) . "</p>";
-                }
-                
-                // Show first 300 chars
-                echo "<h4>HTML Preview:</h4>";
-                echo "<pre style='background: #f5f5f5; padding: 10px; max-height: 150px; overflow: auto;'>";
-                echo htmlspecialchars(substr($html, 0, 300)) . "...";
-                echo "</pre>";
-                
-            } else {
-                echo "<p><strong>❌ Failed to fetch URL</strong></p>";
-                echo "<p>Possible reasons: timeout, blocked by server, invalid URL</p>";
-            }
-        } else {
-            echo "<h3>Enter a URL to test:</h3>";
-            echo "<form method='GET'>";
-            echo "<input type='hidden' name='route' value='debug-link'>";
-            echo "<input type='text' name='url' placeholder='https://nu.nl/example' style='width: 400px; padding: 8px;'>";
-            echo "<button type='submit' style='padding: 8px 16px;'>Test Link</button>";
-            echo "</form>";
-        }
-        exit;
-    },
-    'middleware' => [AuthMiddleware::class]
-],
-
-    'debug-link-test' => [
-    'callback' => function () {
-        echo "<h1>🎯 ROUTING TEST WERKT!</h1>";
-        echo "<p>Route: " . ($_GET['route'] ?? 'geen') . "</p>";
-        echo "<p>Alle GET params:</p>";
-        echo "<pre>" . print_r($_GET, true) . "</pre>";
-        exit;
-    }
-    // Geen middleware!
-],
-
-'check-admin' => [
-    'callback' => function () {
-        echo "<h1>🔍 Admin Rights Check</h1>";
-        echo "<p><strong>User ID:</strong> " . ($_SESSION['user_id'] ?? 'niet ingesteld') . "</p>";
-        echo "<p><strong>Role:</strong> " . ($_SESSION['role'] ?? 'niet ingesteld') . "</p>";
-        echo "<p><strong>Username:</strong> " . ($_SESSION['username'] ?? 'niet ingesteld') . "</p>";
-        echo "<p><strong>Is Admin:</strong> " . (($_SESSION['role'] ?? '') === 'admin' ? 'JA' : 'NEE') . "</p>";
-        echo "<h3>Volledige sessie:</h3>";
-        echo "<pre>" . print_r($_SESSION, true) . "</pre>";
-        exit;
-    }
-    // Geen middleware
 ],
     
     // Eventuele andere routes...

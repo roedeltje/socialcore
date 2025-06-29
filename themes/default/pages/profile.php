@@ -343,7 +343,7 @@
                                             
                                             <div class="mb-3">
                                                 <?php if (!empty($post['content'])): ?>
-                                                    <p class="text-gray-700"><?= nl2br(htmlspecialchars($post['content'])) ?></p>
+                                                    <p class="text-gray-700"><?= $post['content_formatted'] ?? nl2br(htmlspecialchars($post['content'])) ?></p>
                                                 <?php endif; ?>
                                                 
                                                 <!-- Afbeelding weergave -->

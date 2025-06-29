@@ -196,7 +196,7 @@ echo "</div>";
                                 <div class="post-content">
                                 <?php if (!empty($post['content'])): ?>
                                     <div class="post-text">
-                                        <?= nl2br(htmlspecialchars($post['content'])) ?>
+                                        <?= $post['content_formatted'] ?? nl2br(htmlspecialchars($post['content'])) ?>
                                     </div>
                                 <?php endif; ?>
                                 
@@ -358,7 +358,7 @@ echo "</div>";
                             <div class="trending-item">
                                 <span class="trending-icon">📈</span>
                                 <div class="trending-info">
-                                    <a href="<?= base_url('search?q=%23' . $hashtag['tag']) ?>" class="trending-tag">
+                                    <a href="<?= base_url('?route=search/hashtag&tag=' . urlencode($hashtag['tag'])) ?>">
                                         #<?= htmlspecialchars($hashtag['tag']) ?>
                                     </a>
                                     <span class="trending-count"><?= number_format($hashtag['count']) ?> berichten</span>

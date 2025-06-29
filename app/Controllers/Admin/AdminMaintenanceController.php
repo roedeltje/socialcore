@@ -121,13 +121,24 @@ class AdminMaintenanceController extends Controller
     public function logs()
     {
         try {
+            // Check for actions
+            $action = $_GET['action'] ?? null;
+            $filename = $_GET['file'] ?? null;
+            
+            if ($action && $filename) {
+                $this->handleLogAction($action, $filename);
+                return;
+            }
+            
             $logFiles = $this->getLogFiles();
             $recentLogs = $this->getRecentLogEntries();
+            $logConfig = $this->getLogConfiguration();
             
             $data = [
                 'title' => 'Systeem Logs',
                 'log_files' => $logFiles,
-                'recent_logs' => $recentLogs
+                'recent_logs' => $recentLogs,
+                'log_config' => $logConfig
             ];
             
             $this->view('admin/maintenance/logs', $data);
@@ -137,6 +148,149 @@ class AdminMaintenanceController extends Controller
             header('Location: ' . base_url('?route=admin/maintenance'));
             exit;
         }
+    }
+
+        private function handleLogAction($action, $filename)
+    {
+        $debugPath = '/var/www/socialcore.local/debug';
+        $filePath = $debugPath . '/' . basename($filename); // basename voor beveiliging
+        
+        // Security check
+        if (!file_exists($filePath) || !is_readable($filePath)) {
+            $_SESSION['error_message'] = "Logbestand niet gevonden of niet leesbaar: " . htmlspecialchars($filename);
+            header('Location: ' . base_url('?route=admin/maintenance/logs'));
+            exit;
+        }
+        
+        switch ($action) {
+            case 'view':
+                $this->viewLogFile($filePath, $filename);
+                break;
+                
+            case 'download':
+                $this->downloadLogFile($filePath, $filename);
+                break;
+                
+            case 'delete':
+                $this->deleteLogFile($filePath, $filename);
+                break;
+                
+            default:
+                $_SESSION['error_message'] = "Onbekende actie: " . htmlspecialchars($action);
+                header('Location: ' . base_url('?route=admin/maintenance/logs'));
+                exit;
+        }
+    }
+
+    /**
+     * View log file content
+     */
+    private function viewLogFile($filePath, $filename)
+    {
+        try {
+            $fileContent = file_get_contents($filePath);
+            $fileSize = filesize($filePath);
+            $fileModified = filemtime($filePath);
+            
+            // Parse log entries for better display
+            $logEntries = $this->parseLogFileForViewing($filePath);
+            
+            $data = [
+                'title' => 'Log Viewer - ' . $filename,
+                'filename' => $filename,
+                'file_path' => $filePath,
+                'file_size' => $this->formatBytes($fileSize),
+                'file_modified' => date('Y-m-d H:i:s', $fileModified),
+                'log_entries' => $logEntries,
+                'raw_content' => $fileContent,
+                'total_lines' => count(explode("\n", $fileContent))
+            ];
+            
+            $this->view('admin/maintenance/log-viewer', $data);
+            
+        } catch (\Exception $e) {
+            $_SESSION['error_message'] = "Fout bij lezen logbestand: " . $e->getMessage();
+            header('Location: ' . base_url('?route=admin/maintenance/logs'));
+            exit;
+        }
+    }
+
+    /**
+     * Download log file
+     */
+    private function downloadLogFile($filePath, $filename)
+    {
+        try {
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . filesize($filePath));
+            header('Cache-Control: must-revalidate');
+            header('Pragma: public');
+            
+            readfile($filePath);
+            exit;
+            
+        } catch (\Exception $e) {
+            $_SESSION['error_message'] = "Fout bij downloaden logbestand: " . $e->getMessage();
+            header('Location: ' . base_url('?route=admin/maintenance/logs'));
+            exit;
+        }
+    }
+
+    /**
+     * Delete log file
+     */
+    private function deleteLogFile($filePath, $filename)
+    {
+        try {
+            if (unlink($filePath)) {
+                $_SESSION['success_message'] = "Logbestand '{$filename}' succesvol verwijderd.";
+            } else {
+                $_SESSION['error_message'] = "Kon logbestand '{$filename}' niet verwijderen.";
+            }
+            
+        } catch (\Exception $e) {
+            $_SESSION['error_message'] = "Fout bij verwijderen logbestand: " . $e->getMessage();
+        }
+        
+        header('Location: ' . base_url('?route=admin/maintenance/logs'));
+        exit;
+    }
+
+    /**
+     * Parse log file for viewing with better structure
+     */
+    private function parseLogFileForViewing($filePath, $limit = 200)
+    {
+        $entries = [];
+        
+        try {
+            $content = file_get_contents($filePath);
+            
+            if (empty($content)) {
+                return [];
+            }
+            
+            $lines = explode("\n", $content);
+            $lines = array_filter($lines); // Remove empty lines
+            $lines = array_reverse($lines); // Newest first
+            $lines = array_slice($lines, 0, $limit); // Limit for performance
+            
+            foreach ($lines as $lineNumber => $line) {
+                $entry = $this->parseLogLine($line);
+                if ($entry) {
+                    $entry['line_number'] = count($lines) - $lineNumber;
+                    $entries[] = $entry;
+                }
+            }
+            
+        } catch (\Exception $e) {
+            return [
+                ['error' => 'Fout bij parsen bestand: ' . $e->getMessage()]
+            ];
+        }
+        
+        return $entries;
     }
     
     /**
@@ -611,10 +765,256 @@ class AdminMaintenanceController extends Controller
             return 'Onbekend';
         }
     }
+
+    /**
+     * Bepaal log bestand type
+     */
+    private function getLogFileType($filename)
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $basename = strtolower(pathinfo($filename, PATHINFO_FILENAME));
+        
+        // Bepaal type op basis van bestandsnaam en extensie
+        if (strpos($basename, 'error') !== false) {
+            return 'error';
+        } elseif (strpos($basename, 'access') !== false) {
+            return 'access';
+        } elseif (strpos($basename, 'debug') !== false) {
+            return 'debug';
+        } elseif (strpos($basename, 'system') !== false) {
+            return 'system';
+        } elseif ($extension === 'log') {
+            return 'log';
+        } elseif ($extension === 'txt') {
+            return 'text';
+        }
+        
+        return 'unknown';
+    }
+
     
-    // Placeholder functies voor toekomstige implementatie
-    private function getLogFiles() { return []; }
-    private function getRecentLogEntries() { return []; }
+    /**
+     * Log bestanden ophalen uit debug directory
+     */
+    private function getLogFiles()
+    {
+        $debugPath = '/var/www/socialcore.local/debug';
+        $logFiles = [];
+        
+        // Check of debug directory bestaat
+        if (!is_dir($debugPath)) {
+            return [
+                'error' => 'Debug directory niet gevonden: ' . $debugPath,
+                'files' => []
+            ];
+        }
+        
+        // Check schrijfrechten
+        $writable = is_writable($debugPath);
+        
+        try {
+            $files = scandir($debugPath);
+            
+            foreach ($files as $file) {
+                if ($file === '.' || $file === '..') {
+                    continue;
+                }
+                
+                $filePath = $debugPath . '/' . $file;
+                
+                if (is_file($filePath)) {
+                    $logFiles[] = [
+                        'name' => $file,
+                        'path' => $filePath,
+                        'size' => filesize($filePath),
+                        'size_formatted' => $this->formatBytes(filesize($filePath)),
+                        'modified' => filemtime($filePath),
+                        'modified_formatted' => date('Y-m-d H:i:s', filemtime($filePath)),
+                        'type' => $this->getLogFileType($file),
+                        'readable' => is_readable($filePath)
+                    ];
+                }
+            }
+            
+            // Sorteer op laatste wijziging (nieuwste eerst)
+            usort($logFiles, function($a, $b) {
+                return $b['modified'] - $a['modified'];
+            });
+            
+        } catch (\Exception $e) {
+            return [
+                'error' => 'Fout bij lezen debug directory: ' . $e->getMessage(),
+                'files' => []
+            ];
+        }
+        
+        return [
+            'directory' => $debugPath,
+            'writable' => $writable,
+            'files' => $logFiles,
+            'total_files' => count($logFiles),
+            'total_size' => array_sum(array_column($logFiles, 'size'))
+        ];
+    }
+
+
+    /**
+     * Recente log entries ophalen
+     */
+    private function getRecentLogEntries($limit = 50)
+    {
+        $debugPath = '/var/www/socialcore.local/debug';
+        $recentEntries = [];
+        
+        if (!is_dir($debugPath)) {
+            return [];
+        }
+        
+        try {
+            $files = glob($debugPath . '/*.log');
+            
+            // Voeg ook andere debug bestanden toe
+            $additionalFiles = glob($debugPath . '/*.txt');
+            $files = array_merge($files, $additionalFiles);
+            
+            foreach ($files as $filePath) {
+                if (!is_readable($filePath)) {
+                    continue;
+                }
+                
+                $fileName = basename($filePath);
+                $entries = $this->parseLogFile($filePath, $limit);
+                
+                foreach ($entries as $entry) {
+                    $recentEntries[] = [
+                        'file' => $fileName,
+                        'timestamp' => $entry['timestamp'] ?? filemtime($filePath),
+                        'level' => $entry['level'] ?? 'INFO',
+                        'message' => $entry['message'] ?? $entry,
+                        'context' => $entry['context'] ?? null
+                    ];
+                }
+            }
+            
+            // Sorteer op timestamp (nieuwste eerst)
+            usort($recentEntries, function($a, $b) {
+                return $b['timestamp'] - $a['timestamp'];
+            });
+            
+            // Limiteer tot gewenste aantal
+            return array_slice($recentEntries, 0, $limit);
+            
+        } catch (\Exception $e) {
+            return [
+                'error' => 'Fout bij lezen log entries: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Parse log bestand voor entries
+     */
+    private function parseLogFile($filePath, $limit = 20)
+    {
+        $entries = [];
+        
+        try {
+            $content = file_get_contents($filePath);
+            
+            if (empty($content)) {
+                return [];
+            }
+            
+            $lines = explode("\n", $content);
+            $lines = array_filter($lines); // Verwijder lege regels
+            $lines = array_reverse($lines); // Nieuwste eerst
+            $lines = array_slice($lines, 0, $limit); // Limiteer
+            
+            foreach ($lines as $line) {
+                $entry = $this->parseLogLine($line);
+                if ($entry) {
+                    $entries[] = $entry;
+                }
+            }
+            
+        } catch (\Exception $e) {
+            return [
+                'error' => 'Fout bij parsen bestand: ' . $e->getMessage()
+            ];
+        }
+        
+        return $entries;
+    }
+
+    /**
+     * Parse individuele log regel
+     */
+    private function parseLogLine($line)
+    {
+        $line = trim($line);
+        
+        if (empty($line)) {
+            return null;
+        }
+        
+        // Probeer timestamp te vinden (verschillende formaten)
+        $patterns = [
+            '/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\](.+)$/', // [2025-06-27 10:30:00] message
+            '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(.+)$/',     // 2025-06-27 10:30:00 message
+            '/^\[(\d{2}-\w{3}-\d{4} \d{2}:\d{2}:\d{2})\](.+)$/' // [27-Jun-2025 10:30:00] message
+        ];
+        
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $line, $matches)) {
+                $timestamp = strtotime($matches[1]);
+                $message = trim($matches[2]);
+                
+                // Probeer level te bepalen
+                $level = 'INFO';
+                if (preg_match('/\[(ERROR|WARNING|INFO|DEBUG|NOTICE)\]/', $message, $levelMatches)) {
+                    $level = $levelMatches[1];
+                    $message = preg_replace('/\[(ERROR|WARNING|INFO|DEBUG|NOTICE)\]\s*/', '', $message);
+                }
+                
+                return [
+                    'timestamp' => $timestamp ?: time(),
+                    'timestamp_formatted' => date('Y-m-d H:i:s', $timestamp ?: time()),
+                    'level' => $level,
+                    'message' => $message,
+                    'raw' => $line
+                ];
+            }
+        }
+        
+        // Als geen timestamp gevonden, gebruik huidige tijd
+        return [
+            'timestamp' => time(),
+            'timestamp_formatted' => 'Onbekend',
+            'level' => 'INFO',
+            'message' => $line,
+            'raw' => $line
+        ];
+    }
+
+    /**
+     * Log configuratie status ophalen
+     */
+    private function getLogConfiguration()
+    {
+        $debugPath = '/var/www/socialcore.local/debug';
+        
+        return [
+            'log_directory' => $debugPath,
+            'directory_exists' => is_dir($debugPath),
+            'directory_writable' => is_dir($debugPath) && is_writable($debugPath),
+            'php_error_log_enabled' => ini_get('log_errors') ? true : false,
+            'php_error_log_file' => ini_get('error_log'),
+            'log_level' => 'INFO', // Standaard level
+            'total_log_files' => is_dir($debugPath) ? count(glob($debugPath . '/*')) : 0
+        ];
+    }
+
+
     private function getBackupFiles() { return []; }
     private function getBackupSettings() { return []; }
     private function handleBackupActions() { }
