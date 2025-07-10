@@ -74,17 +74,8 @@
                     <!-- Gebruiker info voor ingelogde gebruikers -->
                     <div class="header-user-info">
                         <?php
-                        // Avatar URL bepalen
-                        $userAvatar = '';
-                        if (isset($_SESSION['avatar']) && !empty($_SESSION['avatar'])) {
-                            if (str_starts_with($_SESSION['avatar'], 'theme-assets')) {
-                                $userAvatar = base_url($_SESSION['avatar']);
-                            } else {
-                                $userAvatar = base_url('uploads/' . $_SESSION['avatar']);
-                            }
-                        } else {
-                            $userAvatar = base_url('theme-assets/default/images/default-avatar.png');
-                        }
+                        $profileService = new \App\Services\ProfileService();
+                        $userAvatar = $profileService->getSessionUserAvatarUrl();
                         ?>
                         <img src="<?= $userAvatar ?>" class="header-user-avatar" alt="Avatar">
                         <span>Welkom, <strong><?= htmlspecialchars($_SESSION['username'] ?? 'Gebruiker') ?></strong></span>
@@ -119,11 +110,11 @@
                 $currentRoute = $_GET['route'] ?? 'home';
                 ?>
                 <a href="<?= base_url('/') ?>" class="nav-item <?= ($currentRoute === 'home') ? 'active' : '' ?>">HOME</a>
-                <a href="<?= base_url('?route=friends') ?>" class="nav-item <?= (strpos($currentRoute, 'friends') === 0) ? 'active' : '' ?>">FRIENDS</a>
+                <a href="<?= base_url('?route=friends') ?>" class="nav-item <?= (strpos($currentRoute, 'friends') === 0) ? 'active' : '' ?>">VRIENDEN</a>
                 <a href="<?= base_url('?route=feed') ?>" class="nav-item <?= (strpos($currentRoute, 'feed') === 0) ? 'active' : '' ?>">HYVES</a>
-                <a href="<?= base_url('?route=photos') ?>" class="nav-item <?= (strpos($currentRoute, 'photos') === 0) ? 'active' : '' ?>">PHOTOS</a>
-                <a href="<?= base_url('?route=messages') ?>" class="nav-item <?= (strpos($currentRoute, 'messages') === 0) ? 'active' : '' ?>">MESSAGES</a>
-                <a href="<?= base_url('?route=more') ?>" class="nav-item <?= (strpos($currentRoute, 'more') === 0) ? 'active' : '' ?>">MORE...</a>
+                <a href="<?= base_url('?route=photos') ?>" class="nav-item <?= (strpos($currentRoute, 'photos') === 0) ? 'active' : '' ?>">FOTOS</a>
+                <a href="<?= base_url('?route=messages') ?>" class="nav-item <?= (strpos($currentRoute, 'messages') === 0) ? 'active' : '' ?>">BERICHTEN</a>
+                <a href="<?= base_url('?route=more') ?>" class="nav-item <?= (strpos($currentRoute, 'more') === 0) ? 'active' : '' ?>">MEER...</a>
             </div>
 
             <!-- Rechterkant navigatie -->

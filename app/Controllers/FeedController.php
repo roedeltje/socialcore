@@ -3,10 +3,14 @@
 namespace App\Controllers;
 
 use App\Database\Database;
-use PDO;           // Deze was missing!
-use Exception;     // Deze ook!
+use PDO;
+use Exception;
 use PDOException;
 use App\Controllers\PrivacyController;
+use App\Helpers\SecuritySettings;
+use App\Services\PostService;
+use App\Services\CommentService;
+use App\Services\LikeService;
 
 require_once __DIR__ . '/../../core/helpers/upload.php';
 
@@ -23,44 +27,45 @@ class FeedController extends Controller
      * Toon de Hyves-stijl homepage/nieuwsfeed
      */
     public function index()
-{
-    // Controleer of gebruiker is ingelogd
-    if (!isset($_SESSION['user_id'])) {
-        header('Location: /auth/login');
-        exit;
-    }
+    {
+        // Controleer of gebruiker is ingelogd
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /auth/login');
+            exit;
+        }
 
-    try {
-        // Haal echte posts op uit de database
-        $posts = $this->getAllPosts();
-        
-        // Haal gebruikersinfo op
-        $currentUser = $this->getCurrentUser($_SESSION['user_id']);
-        
-        // Haal real-time widget data op - deze methods bestaan nu!
-        $onlineFriends = $this->getOnlineFriends();          // ← Werkt nu!
-        $trendingHashtags = $this->getTrendingHashtags();    // ← Werkt nu!
-        $suggestedUsers = $this->getSuggestedUsers();        // ← Werkt nu!
-        
-        // Data doorsturen naar de view
-        $data = [
-            'posts' => $posts,
-            'current_user' => $currentUser,
-            'online_friends' => $onlineFriends,              // ← Widget krijgt echte data!
-            'trending_hashtags' => $trendingHashtags,
-            'suggested_users' => $suggestedUsers,
-            'page_title' => 'Nieuwsfeed - SocialCore'
-        ];
-        
-        $this->view('feed/index', $data);
-        
-    } catch (Exception $e) {
-        // Error handling...
+        try {
+            // Haal echte posts op uit de database
+            $posts = $this->getAllPosts();
+            
+            // Haal gebruikersinfo op
+            $currentUser = $this->getCurrentUser($_SESSION['user_id']);
+            
+            // Haal real-time widget data op
+            $onlineFriends = $this->getOnlineFriends();
+            $trendingHashtags = $this->getTrendingHashtags();
+            $suggestedUsers = $this->getSuggestedUsers();
+            
+            // Data doorsturen naar de view
+            $data = [
+                'posts' => $posts,
+                'current_user' => $currentUser,
+                'online_friends' => $onlineFriends,
+                'trending_hashtags' => $trendingHashtags,
+                'suggested_users' => $suggestedUsers,
+                'page_title' => 'Nieuwsfeed - SocialCore'
+            ];
+            
+            $this->view('feed/index', $data);
+            
+        } catch (Exception $e) {
+            error_log("Feed index error: " . $e->getMessage());
+            // Redirect to error page or show default content
+        }
     }
-}
 
     /**
-     * 🔒 BIJGEWERKT: Haal alle posts op MET privacy filtering
+     * Haal alle posts op met privacy filtering
      */
     private function getAllPosts($limit = 20)
     {
@@ -71,7 +76,6 @@ class FeedController extends Controller
         $viewerId = $_SESSION['user_id'];
         
         try {
-            // Haal ALLE posts op (zonder privacy filtering in de query)
             $query = "
                 SELECT 
                     p.id,
@@ -106,33 +110,29 @@ class FeedController extends Controller
             ";
             
             $stmt = $this->db->prepare($query);
-            $stmt->execute([$limit * 2]); // Haal meer posts op dan nodig voor filtering
+            $stmt->execute([$limit * 2]);
             $allPosts = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // 🔒 PRIVACY FILTER: Filter posts op basis van privacy instellingen
+            // Privacy filter
             $filteredPosts = $this->filterPostsByPrivacy($allPosts, $viewerId);
-            
-            // Limiteer tot gewenste aantal na filtering
             $filteredPosts = array_slice($filteredPosts, 0, $limit);
             
-            // Format de data voor de view
+            // Format data voor view
             foreach ($filteredPosts as &$post) {
                 $post['created_at'] = $this->formatDate($post['created_at']);
                 $post['is_liked'] = $this->hasUserLikedPost($post['id']);
                 $post['avatar'] = $this->getUserAvatar($post['user_id']);
                 
-                // Bepaal of dit een krabbel is
                 $post['is_wall_message'] = ($post['post_type'] === 'wall_message');
                 
-                // Voor wall messages: maak sender -> receiver string
                 if ($post['is_wall_message'] && !empty($post['target_name'])) {
                     $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
                 }
                 
-                // NIEUW: Process content voor klikbare hashtags
                 $post['content_formatted'] = $this->processPostContent($post['content']);
             }
             
+            $filteredPosts = $this->getCommentsForPosts($filteredPosts);
             return $filteredPosts;
             
         } catch (\Exception $e) {
@@ -146,36 +146,24 @@ class FeedController extends Controller
      */
     private function formatPostForHyves($post)
     {
-        // Basis formatting
         $post['likes'] = $post['likes_count'];
         $post['comments'] = $post['comments_count'];
-        
-        // Hyves-stijl tijdweergave
         $post['created_at'] = $this->formatHyvesTime($post['created_at']);
         $post['time_ago'] = $post['created_at'];
-        
-        // Avatar URL met fallbacks
         $post['avatar'] = $this->getHyvesAvatar($post['user_id'], $post['avatar']);
-        
-        // Like status voor huidige gebruiker
         $post['is_liked'] = $this->hasUserLikedPost($post['id']);
         
-        // Krabbel logica (wall messages)
         $post['is_wall_message'] = ($post['post_type'] === 'wall_message');
         if ($post['is_wall_message'] && !empty($post['target_name'])) {
             $post['wall_message_header'] = $post['user_name'] . ' → ' . $post['target_name'];
         }
         
-        // Hyves-specifieke eigenschappen
         $post['is_featured'] = (bool)($post['is_featured'] ?? false);
         $post['privacy_level'] = $post['privacy_level'] ?? 'public';
         $post['mood'] = $post['mood'] ?? null;
         $post['location'] = $post['location'] ?? null;
-        
-        // Post type iconen (Hyves-stijl)
         $post['type_icon'] = $this->getPostTypeIcon($post['type']);
         
-        // Media URL voor afbeeldingen
         if (!empty($post['media_path'])) {
             $post['media_url'] = base_url('uploads/' . $post['media_path']);
         }
@@ -197,7 +185,6 @@ class FeedController extends Controller
             $now = new \DateTime();
             $diff = $now->diff($date);
             
-            // Hyves-stijl tijdformaten
             if ($diff->days == 0) {
                 if ($diff->h > 0) {
                     return $diff->h . ' uur geleden';
@@ -223,34 +210,25 @@ class FeedController extends Controller
      */
     private function getHyvesAvatar($userId, $avatarPath = null)
     {
-        // Gebruik ThemeManager om het actieve thema te bepalen
         $themeManager = \App\Core\ThemeManager::getInstance();
         $activeTheme = $themeManager->getActiveTheme();
         
-        // Als gebruiker een avatar heeft
         if (!empty($avatarPath)) {
-            // Als het al een volledige URL is
             if (str_starts_with($avatarPath, 'http')) {
                 return $avatarPath;
             }
             
-            // Als het een theme asset is
             if (str_starts_with($avatarPath, 'theme-assets')) {
                 return base_url($avatarPath);
             }
             
-            // Voor uploads - controleer of het geen default avatar is
             if (!str_contains($avatarPath, 'default-avatar')) {
                 return base_url('uploads/' . $avatarPath);
             }
         }
         
-        // Gender-specifieke default avatars op basis van actief thema
         try {
-            $stmt = $this->db->prepare("
-                SELECT gender FROM user_profiles 
-                WHERE user_id = ?
-            ");
+            $stmt = $this->db->prepare("SELECT gender FROM user_profiles WHERE user_id = ?");
             $stmt->execute([$userId]);
             $profile = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -270,7 +248,6 @@ class FeedController extends Controller
             error_log('Avatar error: ' . $e->getMessage());
         }
         
-        // Algemene fallback voor actief thema
         return base_url("theme-assets/{$activeTheme}/images/default-avatar.png");
     }
 
@@ -293,99 +270,41 @@ class FeedController extends Controller
         return $icons[$type] ?? '📝';
     }
 
-
-
     /**
-     * Controleer of de huidige gebruiker een post heeft geliked
+     * Controleer of de huidige gebruiker een post heeft geliked - GEBRUIKT LIKESERVICE
      */
     private function hasUserLikedPost($postId)
     {
-    if (!isset($_SESSION['user_id'])) {
-        return false;
-    }
-    
-    $userId = $_SESSION['user_id'];
-    $stmt = $this->db->prepare("SELECT COUNT(*) FROM post_likes WHERE post_id = ? AND user_id = ?");
-    $stmt->execute([$postId, $userId]);
-    
-    return $stmt->fetchColumn() > 0;
-    }
-
-        // Helper om de avatar van een gebruiker op te halen
-        private function getUserAvatar($userId)
-        {
-            // Implementeer dit op basis van je gebruikersprofielsysteem
-            // Bijvoorbeeld:
-            try {
-                $stmt = $this->db->prepare("
-                    SELECT avatar FROM user_profiles 
-                    WHERE user_id = ?
-                ");
-                $stmt->execute([$userId]);
-                $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($result && !empty($result['avatar'])) {
-                    return base_url('uploads/' . $result['avatar']);
-                }
-            } catch (Exception $e) {
-                error_log('Fout bij ophalen avatar: ' . $e->getMessage());
-            }
-            
-            // Fallback naar default avatar
-            return base_url('theme-assets/default/images/default-avatar.png');
+        if (!isset($_SESSION['user_id'])) {
+            return false;
         }
-
-    /**
-     * Formatteer een datetime naar een leesbare weergave
-     * 
-     * @param string $datetime Een SQL datetime string (Y-m-d H:i:s)
-     * @return string Geformatteerde datum/tijd
-     */
-    private function formatDate($datetime) 
-    {
-    // Controleer of input geldig is, anders geef een veilige fallback
-    if (empty($datetime) || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $datetime)) {
-        return 'onbekende tijd';
-    }
-    
-    try {
-        $date = new \DateTime($datetime);
-        $now = new \DateTime();
-        $diff = $now->diff($date);
         
-        if ($diff->days == 0) {
-            if ($diff->h > 0) {
-                return $diff->h . ' uur geleden';
-            } elseif ($diff->i > 0) {
-                return $diff->i . ' minuten geleden';
-            } else {
-                return 'Net nu';
-            }
-        } elseif ($diff->days == 1) {
-            return 'Gisteren om ' . $date->format('H:i');
-        } else {
-            return $date->format('d-m-Y H:i');
-        }
-    } catch (\Exception $e) {
-        // Bij fouten, geef een veilige fallback
-        return 'onbekende tijd';
+        $likeService = new LikeService();
+        return $likeService->hasUserLikedPost($postId, $_SESSION['user_id']);
     }
-}
 
     /**
-     * Verbeterde online vrienden met real-time data
-     * Verplaatst naar Controller.php
+     * Helper om de avatar van een gebruiker op te halen
      */
-    
+    private function getUserAvatar($userId)
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT avatar FROM user_profiles WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result && !empty($result['avatar'])) {
+                return get_avatar_url($result['avatar']);
+            }
+        } catch (Exception $e) {
+            error_log('FeedController getUserAvatar error: ' . $e->getMessage());
+        }
+        
+        return get_avatar_url(null);
+    }
 
     /**
-     * Echte trending hashtags van afgelopen week
-     * Verplaatst naar Controller.php
-     */
-
-        /**
-     * Verbeterde gebruikersgegevens met Hyves-specifieke data
-     * Verplaatst naar Controller.php
+     * Haal gebruikersgegevens op met Hyves-specifieke data
      */
     public function getCurrentUser($userId = null)
     {
@@ -406,7 +325,6 @@ class FeedController extends Controller
                     up.date_of_birth,
                     up.gender,
                     up.display_name,
-                    -- Hyves-stijl statistieken
                     (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_deleted = 0) as post_count,
                     (SELECT COUNT(*) FROM friendships WHERE (user_id = u.id OR friend_id = u.id) AND status = 'accepted') as friend_count,
                     (SELECT COUNT(*) FROM post_likes pl JOIN posts p ON pl.post_id = p.id WHERE p.user_id = u.id) as total_likes_received
@@ -421,11 +339,10 @@ class FeedController extends Controller
                 return $this->getDefaultUser();
             }
             
-            // Format user data voor Hyves
-            $user['avatar_url'] = $this->getHyvesAvatar($user['id'], $user['avatar']);
+            $user['avatar_url'] = get_avatar_url($user['avatar']);
             $user['name'] = $user['display_name'] ?? $user['username'] ?? 'Gebruiker';
-            $user['followers'] = $user['friend_count'] ?? 0;  // In Hyves context
-            $user['following'] = $user['friend_count'] ?? 0;   // Vriendschappen zijn wederzijds
+            $user['followers'] = $user['friend_count'] ?? 0;
+            $user['following'] = $user['friend_count'] ?? 0;
             $user['respect_received'] = $user['total_likes_received'] ?? 0;
             
             return $user;
@@ -450,42 +367,48 @@ class FeedController extends Controller
             'followers' => 0,
             'following' => 0,
             'respect_received' => 0,
-            'avatar_url' => base_url('theme-assets/default/images/default-avatar.png')
+            'avatar_url' => get_avatar_url(null)
         ];
     }
 
-        /**
-         * Hulpfunctie om het aantal posts van een gebruiker te tellen
-         */
-        private function getUserPostCount($userId)
-        {
-            try {
-                $stmt = $this->db->prepare("SELECT COUNT(*) FROM posts WHERE user_id = ?");
-                $stmt->execute([$userId]);
-                return (int)$stmt->fetchColumn();
-            } catch (PDOException $e) {
-                error_log('Fout bij tellen posts: ' . $e->getMessage());
-                return 0;
-            }
-        }
-
     /**
-     * Verbeterde post creation met Hyves-specifieke features
+     * Post creation - GEBRUIKT POSTSERVICE
      */
     public function create()
     {
-        // Debug logging
-        file_put_contents('/var/www/socialcore.local/debug/feed_debug_' . date('Y-m-d') . '.log', 
-            "[" . date('Y-m-d H:i:s') . "] === CREATE POST DEBUG ===\n" . 
-            "POST data: " . print_r($_POST, true) . "\n" . 
-            "FILES data: " . print_r($_FILES, true) . "\n", 
-            FILE_APPEND | LOCK_EX);
-
         if (!isset($_SESSION['user_id'])) {
             $this->jsonResponse(['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.']);
         }
 
-        $result = $this->createPost();
+        $userId = $_SESSION['user_id'];
+        $userIP = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $content = trim($_POST['content'] ?? '');
+
+        // Security: Media upload rate limiting
+        if (!empty($_FILES['image']['name'])) {
+            $mediaLimit = SecuritySettings::get('max_media_uploads_per_hour', 5);
+            if (!$this->checkRateLimit($userId, 'media_upload', $mediaLimit)) {
+                $this->logSecurityEvent($userId, 'media_rate_limit_exceeded', $userIP);
+                $this->handleSecurityBlock($userId, $userIP, 'media_rate_limit_exceeded', "Je kunt maximaal {$mediaLimit} afbeeldingen per uur uploaden. Probeer het later opnieuw.");
+            }
+        }
+
+        // Gebruik PostService
+        $postService = new PostService();
+        $result = $postService->createPost(
+            $content,
+            $userId,   
+            [
+                'content_type' => 'text',      
+                'post_type' => 'timeline',     
+                'privacy' => $_POST['privacy'] ?? 'public'
+            ],
+            $_FILES
+        );
+
+        if ($result['success']) {
+            $this->logActivity($userId, 'post_create', $userIP, ['post_id' => $result['post_id'] ?? null]);
+        }
 
         if ($this->isJsonRequest()) {
             if ($result['success'] && isset($result['post_id'])) {
@@ -502,389 +425,151 @@ class FeedController extends Controller
         }
     }
 
-
-        // Helper om te controleren of het een JSON request is
-        private function isJsonRequest()
-        {
-            return (isset($_SERVER['HTTP_ACCEPT']) && 
-                    strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) || 
-                (isset($_SERVER['CONTENT_TYPE']) && 
-                    strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false);
-        }
-
-        // Helper om JSON response te sturen
-        private function jsonResponse($data)
-        {
-            header('Content-Type: application/json');
-            echo json_encode($data);
-            exit;
-        }
-
-        // Functie om een post op te halen op basis van ID
-        private function getPostById($postId)
-        {
-            try {
-                // Haal de post inclusief gebruikersdata op
-                $stmt = $this->db->prepare("
-                    SELECT p.*, u.username, u.display_name 
-                    FROM posts p 
-                    JOIN users u ON p.user_id = u.id 
-                    WHERE p.id = ?
-                ");
-                $stmt->execute([$postId]);
-                $post = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if (!$post) {
-                    return null;
-                }
-                
-                // Voeg avatar en formatted date toe voor de frontend
-                $post['avatar'] = $this->getUserAvatar($post['user_id']);
-                $post['formatted_date'] = 'Zojuist geplaatst';
-                
-                // Als het een foto post is, haal de bijbehorende media op
-                if ($post['type'] === 'photo') {
-                    $stmt = $this->db->prepare("
-                        SELECT * FROM post_media 
-                        WHERE post_id = ? 
-                        ORDER BY display_order ASC
-                    ");
-                    $stmt->execute([$postId]);
-                    $media = $stmt->fetch(PDO::FETCH_ASSOC);
-                    
-                    if ($media) {
-                        $post['image_url'] = base_url('uploads/' . $media['file_path']);
-                    }
-                }
-                
-                return $post;
-            } catch (Exception $e) {
-                error_log('Fout bij ophalen post: ' . $e->getMessage());
-                return null;
-            }
-        }
-    
     /**
-     * Enhanced createPost met Hyves features en link preview support
+     * Post deletion
      */
-    public function createPost($userId = null, $content = null, $type = 'text') 
+    public function delete()
     {
-        $userId = $userId ?? ($_SESSION['user_id'] ?? 0);
-        $content = $content ?? trim($_POST['content'] ?? '');
-        
-        // Hyves-specifieke velden
-        $privacy = $_POST['privacy'] ?? 'public';
-        $mood = $_POST['mood'] ?? null;
-        $location = $_POST['location'] ?? null;
-        
-        // Validatie
-        if (empty($content) && empty($_FILES['image']['name'])) {
-            return ['success' => false, 'message' => 'Voeg tekst of een afbeelding toe aan je bericht.'];
-        }
-        
-        if (strlen($content) > 1000) {
-            return ['success' => false, 'message' => 'Je bericht mag maximaal 1000 tekens bevatten.'];
-        }
-        
-        if (!$userId) {
-            return ['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.'];
-        }
-
-        // **HASHTAG PROCESSING: Gebruik parent method**
-        $hashtags = [];
-        if (!empty($content)) {
-            $hashtags = $this->processHashtags($content); // ← Parent method
-        }
-
-        // Bepaal post type en verwerk link preview
-        $post_type = $type;
-        $image_path = null;
-        $link_preview_id = null;
-
-        // Afbeelding upload (bestaande logica behouden)
-        if (!empty($_FILES['image']['name'])) {
-            $uploadResult = $this->handleImageUpload();
-            if (!$uploadResult['success']) {
-                return $uploadResult;
+        if (!isset($_SESSION['user_id'])) {
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te verwijderen']);
+                exit;
             }
-            $image_path = $uploadResult['path'];
-            $post_type = 'photo';
+            
+            set_flash_message('error', 'Je moet ingelogd zijn om een bericht te verwijderen');
+            redirect('login');
+            return;
         }
-        
-        // Link preview verwerking
-        if (!empty($content)) {
-            $link_preview_id = $this->processLinkPreview($content);
-            if ($link_preview_id && $post_type === 'text') {
-                $post_type = 'link';
+
+        $userId = $_SESSION['user_id'];
+        $userRole = $_SESSION['role'] ?? 'user';
+        $userIP = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $postId = isset($_POST['post_id']) ? (int)$_POST['post_id'] : 0;
+
+        // Security: Rate limiting
+        $deleteLimit = SecuritySettings::get('max_post_deletes_per_hour', 5);
+        if (!$this->checkRateLimit($userId, 'post_delete', $deleteLimit)) {
+            $this->logSecurityEvent($userId, 'post_delete_rate_limit_exceeded', $userIP);
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                echo json_encode(['success' => false, 'message' => "Je kunt maximaal {$deleteLimit} berichten per uur verwijderen. Probeer het later opnieuw."]);
+                exit;
+            } else {
+                $_SESSION['error'] = "Je kunt maximaal {$deleteLimit} berichten per uur verwijderen. Probeer het later opnieuw.";
+                header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+                exit;
             }
         }
-
+        
+        if (!$postId) {
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                echo json_encode(['success' => false, 'message' => 'Ongeldig bericht ID']);
+                exit;
+            }
+            
+            set_flash_message('error', 'Ongeldig bericht ID');
+            redirect('feed');
+            return;
+        }
+        
         try {
+            $isAdmin = ($userRole === 'admin');
+            
+            $stmt = $this->db->prepare("SELECT user_id FROM posts WHERE id = ?");
+            $stmt->execute([$postId]);
+            $post = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$post) {
+                throw new \Exception('Bericht niet gevonden');
+            }
+            
+            $isOwner = ($post['user_id'] == $userId);
+            
+            if (!$isOwner && !$isAdmin) {
+                throw new \Exception('Je hebt geen toestemming om dit bericht te verwijderen');
+            }
+
+            $this->logActivity($userId, 'post_delete_attempt', $userIP, [
+                'post_id' => $postId,
+                'post_owner' => $post['user_id'],
+                'is_admin_action' => $isAdmin,
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+
+            if ($this->detectBulkPostDeleteActivity($userId, $userIP)) {
+                $this->logSecurityEvent($userId, 'suspicious_bulk_post_delete_pattern', $userIP, [
+                    'post_id' => $postId,
+                    'recent_post_deletes' => $this->getRecentPostDeleteCount($userId)
+                ]);
+                
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    echo json_encode(['success' => false, 'message' => 'Verdachte activiteit gedetecteerd. Neem contact op met support.']);
+                    exit;
+                } else {
+                    $_SESSION['error'] = 'Verdachte activiteit gedetecteerd. Neem contact op met support.';
+                    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+                    exit;
+                }
+            }
+
             $this->db->beginTransaction();
             
-            // Post insert met Hyves velden EN link preview
-            $stmt = $this->db->prepare("
-                INSERT INTO posts (
-                    user_id, content, type, privacy_level, mood, location, link_preview_id, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
-            ");
-            $stmt->execute([$userId, $content, $post_type, $privacy, $mood, $location, $link_preview_id]);
-            $post_id = $this->db->lastInsertId();
+            $stmt = $this->db->prepare("UPDATE posts SET is_deleted = 1 WHERE id = ?");
+            $success = $stmt->execute([$postId]);
             
-            // Media opslaan indien aanwezig
-            if ($post_type === 'photo' && $image_path) {
-                $this->savePostMedia($post_id, $image_path, $_FILES['image']);
-            }
-            
-            // **HASHTAG LINKING: Link hashtags aan post (eigen method)**
-            if (!empty($hashtags)) {
-                $this->linkHashtagsToPost($post_id, $hashtags);
+            if (!$success) {
+                throw new \Exception('Fout bij het verwijderen van het bericht');
             }
             
             $this->db->commit();
-            
-            // **DEBUG: Log success**
-            if (!empty($hashtags)) {
-                file_put_contents('/var/www/socialcore.local/debug/hashtag_success_' . date('Y-m-d') . '.log', 
-                    "[" . date('Y-m-d H:i:s') . "] Successfully linked hashtags to post {$post_id}: " . implode(', ', $hashtags) . "\n", 
-                    FILE_APPEND | LOCK_EX);
+
+            $this->logActivity($userId, 'post_delete_success', $userIP, [
+                'post_id' => $postId,
+                'was_admin_action' => $isAdmin,
+                'deletion_timestamp' => date('Y-m-d H:i:s')
+            ]);
+
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                echo json_encode(['success' => true, 'message' => 'Bericht succesvol verwijderd']);
+                exit;
             }
             
-            return [
-                'success' => true,
-                'message' => 'Je bericht is geplaatst!',
-                'post_id' => $post_id,
-                'hashtags' => $hashtags  // Return hashtag names voor debugging
-            ];
+            set_flash_message('success', 'Bericht succesvol verwijderd');
             
-        } catch (PDOException $e) {
+            $referer = $_SERVER['HTTP_REFERER'] ?? '';
+            if ($referer && strpos($referer, $_SERVER['HTTP_HOST']) !== false) {
+                redirect($referer);
+            } else {
+                redirect('feed');
+            }
+            
+        } catch (\Exception $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
             
-            // **DEBUG: Log error**
-            file_put_contents('/var/www/socialcore.local/debug/hashtag_error_' . date('Y-m-d') . '.log', 
-                "[" . date('Y-m-d H:i:s') . "] Create post error: " . $e->getMessage() . "\n", 
-                FILE_APPEND | LOCK_EX);
-                
-            error_log('Create post error: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Er is een fout opgetreden bij het plaatsen van je bericht.'];
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                exit;
+            }
+            
+            set_flash_message('error', $e->getMessage());
+            redirect('feed');
         }
     }
 
     /**
-     * Verbeterde image upload handling
+     * Toggle like op een post - GEBRUIKT LIKESERVICE
      */
-    private function handleImageUpload()
+    public function toggleLike()
     {
-        $year = date('Y');
-        $month = date('m');
-        $upload_dir = BASE_PATH . '/public/uploads/posts/' . $year . '/' . $month;
-        
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
-        
-        $file_ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $file_name = 'post_' . uniqid() . '.' . $file_ext;
-        $upload_path = $upload_dir . '/' . $file_name;
-        
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
-            return [
-                'success' => true,
-                'path' => 'posts/' . $year . '/' . $month . '/' . $file_name
-            ];
-        }
-        
-        return ['success' => false, 'message' => 'Fout bij het uploaden van de afbeelding.'];
-    }
+        header('Content-Type: application/json');
 
-    /**
-     * Save post media met extra metadata
-     */
-    private function savePostMedia($post_id, $image_path, $file_data)
-    {
-        $stmt = $this->db->prepare("
-            INSERT INTO post_media (
-                post_id, file_path, media_type, file_name, file_size, alt_text, display_order
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $post_id,
-            $image_path,
-            'image',
-            $file_data['name'],
-            $file_data['size'],
-            '',
-            0
-        ]);
-    }
-
-        /**
-         * Zorg ervoor dat de post_media tabel bestaat
-         */
-        private function ensurePostMediaTable() 
-        {
-            try {
-                // Controleer of post_media tabel bestaat
-                $stmt = $this->db->query("SHOW TABLES LIKE 'post_media'");
-                if ($stmt->rowCount() == 0) {
-                    // Maak post_media tabel aan
-                    $createMediaTable = "CREATE TABLE `post_media` (
-                        `id` INT AUTO_INCREMENT PRIMARY KEY,
-                        `post_id` INT NOT NULL,
-                        `file_path` VARCHAR(255) NOT NULL,
-                        `file_type` VARCHAR(50) NOT NULL,
-                        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (`post_id`) REFERENCES `posts`(`id`) ON DELETE CASCADE
-                    )";
-                    $this->db->query($createMediaTable);
-                }
-                
-                // Controleer of 'type' kolom bestaat in posts tabel
-                $stmt = $this->db->query("SHOW COLUMNS FROM `posts` LIKE 'type'");
-                if ($stmt->rowCount() == 0) {
-                    // Voeg type kolom toe als deze niet bestaat
-                    $this->db->query("ALTER TABLE `posts` ADD COLUMN `type` VARCHAR(20) DEFAULT 'text' AFTER `content`");
-                }
-            } catch (Exception $e) {
-                // Log de fout maar gooi hem niet opnieuw, zodat we verder kunnen
-                error_log('Fout bij het controleren/aanmaken van post_media tabel: ' . $e->getMessage());
-            }
-        }
-
-            /**
-         * Verwijder een bericht
-         * Deze methode kan via AJAX of via een normale request worden aangeroepen
-         */
-        public function delete()
-        {
-            // Controleer of gebruiker is ingelogd
-            if (!isset($_SESSION['user_id'])) {
-                // Bij AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => 'Je moet ingelogd zijn om een bericht te verwijderen'
-                    ]);
-                    exit;
-                }
-                
-                // Bij normale request
-                set_flash_message('error', 'Je moet ingelogd zijn om een bericht te verwijderen');
-                redirect('login');
-                return;
-            }
-            
-            // Haal post ID op
-            $postId = isset($_POST['post_id']) ? (int)$_POST['post_id'] : 0;
-            
-            if (!$postId) {
-                // Bij AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => 'Ongeldig bericht ID'
-                    ]);
-                    exit;
-                }
-                
-                // Bij normale request
-                set_flash_message('error', 'Ongeldig bericht ID');
-                redirect('feed');
-                return;
-            }
-            
-            try {
-                // Controleer of de gebruiker eigenaar is van het bericht of een admin
-                $userId = $_SESSION['user_id'];
-                $userRole = $_SESSION['role'] ?? 'user';
-                $isAdmin = ($userRole === 'admin');
-                
-                $stmt = $this->db->prepare("SELECT user_id FROM posts WHERE id = ?");
-                $stmt->execute([$postId]);
-                $post = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if (!$post) {
-                    throw new \Exception('Bericht niet gevonden');
-                }
-                
-                $isOwner = ($post['user_id'] == $userId);
-                
-                // Alleen eigenaar of admin mag verwijderen
-                if (!$isOwner && !$isAdmin) {
-                    throw new \Exception('Je hebt geen toestemming om dit bericht te verwijderen');
-                }
-                
-                // Start een transactie om gerelateerde records ook te verwijderen
-                $this->db->beginTransaction();
-                
-                // We gebruiken soft delete (is_deleted vlag)
-                $stmt = $this->db->prepare("UPDATE posts SET is_deleted = 1 WHERE id = ?");
-                $success = $stmt->execute([$postId]);
-                
-                if (!$success) {
-                    throw new \Exception('Fout bij het verwijderen van het bericht');
-                }
-                
-                // Commit de transactie
-                $this->db->commit();
-                
-                // Bij AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    echo json_encode([
-                        'success' => true,
-                        'message' => 'Bericht succesvol verwijderd'
-                    ]);
-                    exit;
-                }
-                
-                // Bij normale request
-                set_flash_message('success', 'Bericht succesvol verwijderd');
-                
-                // Redirect naar de juiste pagina (referer of fallback naar feed)
-                $referer = $_SERVER['HTTP_REFERER'] ?? '';
-                if ($referer && strpos($referer, $_SERVER['HTTP_HOST']) !== false) {
-                    redirect($referer);
-                } else {
-                    redirect('feed');
-                }
-                
-            } catch (\Exception $e) {
-                // Bij een fout, rollback de transactie
-                if ($this->db->inTransaction()) {
-                    $this->db->rollBack();
-                }
-                
-                // Bij AJAX request
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => $e->getMessage()
-                    ]);
-                    exit;
-                }
-                
-                // Bij normale request
-                set_flash_message('error', $e->getMessage());
-                redirect('feed');
-            }
-        }
-
-        /**
-         * Toggle like op een post (like/unlike)
-         */
-        public function toggleLike()
-        {
-            header('Content-Type: application/json');
-
-        // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
             exit;
         }
         
-        // Controleer of het een POST request is
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
             exit;
@@ -898,280 +583,76 @@ class FeedController extends Controller
             exit;
         }
         
-        try {
-            // Controleer of post bestaat
-            $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
-            $stmt->execute([$postId]);
-            $post = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$post) {
-                echo json_encode(['success' => false, 'message' => 'Post niet gevonden']);
-                exit;
-            }
-            
-            // Controleer of gebruiker deze post al heeft geliked
-            $stmt = $this->db->prepare("SELECT id FROM post_likes WHERE post_id = ? AND user_id = ?");
-            $stmt->execute([$postId, $userId]);
-            $existingLike = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($existingLike) {
-                // Unlike: verwijder de like
-                $this->removeLike($postId, $userId);
-                $action = 'unliked';
-            } else {
-                // Like: voeg like toe
-                $this->addLike($postId, $userId);
-                $action = 'liked';
-            }
-            
-            // Haal nieuwe like count op
-            $newLikeCount = $this->getLikeCount($postId);
-            
-            echo json_encode([
-                'success' => true,
-                'action' => $action,
-                'like_count' => $newLikeCount
-            ]);
-            
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Er ging iets mis: ' . $e->getMessage()]);
-        }
+        $likeService = new LikeService();
+        $result = $likeService->togglePostLike($postId, $userId);
         
+        echo json_encode($result);
         exit;
     }
 
-        /**
-         * Voeg een like toe
-         */
-        private function addLike($postId, $userId)
-    {
-        // Begin transaction
-        $this->db->beginTransaction();
-        
-        try {
-            // Voeg like toe aan post_likes tabel
-            $stmt = $this->db->prepare("INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)");
-            $stmt->execute([$postId, $userId]);
-            
-            // Update likes_count in posts tabel
-            $stmt = $this->db->prepare("UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?");
-            $stmt->execute([$postId]);
-            
-            $this->db->commit();
-            
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
-
     /**
-     * Verwijder een like
+     * Voeg een comment toe - GEBRUIKT COMMENTSERVICE
      */
-    private function removeLike($postId, $userId)
-    {
-    // Begin transaction
-    $this->db->beginTransaction();
-    
-    try {
-        // Verwijder like uit post_likes tabel
-        $stmt = $this->db->prepare("DELETE FROM post_likes WHERE post_id = ? AND user_id = ?");
-        $stmt->execute([$postId, $userId]);
-        
-        // Update likes_count in posts tabel (maar niet onder 0)
-        $stmt = $this->db->prepare("UPDATE posts SET likes_count = GREATEST(0, likes_count - 1) WHERE id = ?");
-        $stmt->execute([$postId]);
-        
-        $this->db->commit();
-        
-    } catch (Exception $e) {
-        $this->db->rollBack();
-        throw $e;
-    }
-    }
-
-    /**
-     * Haal het aantal likes op voor een post
-     */
-    private function getLikeCount($postId)
-    {
-    $stmt = $this->db->prepare("SELECT likes_count FROM posts WHERE id = ?");
-    $stmt->execute([$postId]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    return $result ? (int)$result['likes_count'] : 0;
-    }
-    
-    /**
-     * Een methode voor het ophalen van meer posts (bijv. voor oneindige scroll)
-     */
-    public function loadMore()
-    {
-        // Functionaliteit voor het laden van meer posts
-        // Komt in een latere fase
-    }
-
     public function addComment()
     {
-        // Controleer of gebruiker is ingelogd
+        ob_clean();
+        header('Content-Type: application/json');
+
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn om te reageren']);
             exit;
         }
         
-        // Controleer of het een POST request is
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
             exit;
         }
         
-        // Haal de gegevens op uit het formulier
         $postId = $_POST['post_id'] ?? null;
         $content = trim($_POST['comment_content'] ?? '');
         $userId = $_SESSION['user_id'];
         
-        // Validatie
-        if (!$postId) {
-            echo json_encode(['success' => false, 'message' => 'Post ID is verplicht']);
-            exit;
-        }
+        $commentService = new CommentService();
+        $result = $commentService->addComment($postId, $userId, $content);
         
-        if (empty($content)) {
-            echo json_encode(['success' => false, 'message' => 'Reactie mag niet leeg zijn']);
-            exit;
-        }
-        
-        if (strlen($content) > 500) {
-            echo json_encode(['success' => false, 'message' => 'Reactie mag maximaal 500 karakters bevatten']);
-            exit;
-        }
-        
-        try {
-            // Controleer of de post bestaat
-            $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
-            $stmt->execute([$postId]);
-            $post = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$post) {
-                echo json_encode(['success' => false, 'message' => 'Post niet gevonden']);
-                exit;
-            }
-            
-            // Voeg de comment toe aan de database
-            $result = $this->saveComment($postId, $userId, $content);
-            
-            if ($result['success']) {
-                // Haal de nieuwe comment op om terug te sturen
-                $comment = $this->getCommentById($result['comment_id']);
-                
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Reactie toegevoegd!',
-                    'comment' => $comment
-                ]);
-            } else {
-                echo json_encode(['success' => false, 'message' => $result['message']]);
-            }
-            
-        } catch (Exception $e) {
-            error_log('Fout bij toevoegen comment: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'Er ging iets mis bij het toevoegen van je reactie']);
-        }
-        
+        echo json_encode($result);
         exit;
     }
 
     /**
-     * Sla een comment op in de database
+     * Toggle like op een comment - GEBRUIKT LIKESERVICE
      */
-    private function saveComment($postId, $userId, $content)
+    public function toggleCommentLike()
     {
-        try {
-            // Begin een transactie
-            $this->db->beginTransaction();
-            
-            // Voeg comment toe
-            $stmt = $this->db->prepare("
-                INSERT INTO post_comments (post_id, user_id, content, created_at) 
-                VALUES (?, ?, ?, NOW())
-            ");
-            $stmt->execute([$postId, $userId, $content]);
-            $commentId = $this->db->lastInsertId();
-            
-            // Update de comments_count in de posts tabel
-            $stmt = $this->db->prepare("
-                UPDATE posts 
-                SET comments_count = comments_count + 1 
-                WHERE id = ?
-            ");
-            $stmt->execute([$postId]);
-            
-            // Commit de transactie
-            $this->db->commit();
-            
-            return [
-                'success' => true,
-                'comment_id' => $commentId
-            ];
-            
-        } catch (Exception $e) {
-            // Rollback bij fouten
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            
-            error_log('Database fout bij opslaan comment: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Database fout: ' . $e->getMessage()
-            ];
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
+            exit;
         }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
+            exit;
+        }
+        
+        $commentId = $_POST['comment_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        
+        if (!$commentId) {
+            echo json_encode(['success' => false, 'message' => 'Comment ID is verplicht']);
+            exit;
+        }
+        
+        $commentService = new CommentService();
+        $result = $commentService->toggleCommentLike($commentId, $userId);
+        
+        echo json_encode($result);
+        exit;
     }
 
     /**
-     * Haal een comment op uit de database met gebruikersgegevens
-     */
-    private function getCommentById($commentId)
-    {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT 
-                    c.id,
-                    c.content,
-                    c.created_at,
-                    u.id as user_id,
-                    u.username,
-                    COALESCE(up.display_name, u.username) as user_name
-                FROM post_comments c
-                JOIN users u ON c.user_id = u.id
-                LEFT JOIN user_profiles up ON u.id = up.user_id
-                WHERE c.id = ? AND c.is_deleted = 0
-            ");
-            $stmt->execute([$commentId]);
-            $comment = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($comment) {
-                // Voeg avatar toe
-                $comment['avatar'] = $this->getUserAvatar($comment['user_id']);
-                
-                // Formatteer de datum
-                $comment['time_ago'] = $this->formatDate($comment['created_at']);
-            }
-            
-            return $comment;
-            
-        } catch (Exception $e) {
-            error_log('Fout bij ophalen comment: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Voeg deze methode toe aan je FeedController.php
-     * Deze haalt alle comments op voor posts
-     */
-    /**
-     * UPDATE: Verbeterde getCommentsForPosts met like status
+     * Haal comments op voor posts
      */
     private function getCommentsForPosts($posts)
     {
@@ -1179,13 +660,11 @@ class FeedController extends Controller
             return $posts;
         }
         
-        // Haal alle post IDs op
         $postIds = array_column($posts, 'id');
         $placeholders = str_repeat('?,', count($postIds) - 1) . '?';
         $currentUserId = $_SESSION['user_id'] ?? 0;
         
         try {
-            // Haal alle comments op voor deze posts MET like informatie
             $stmt = $this->db->prepare("
                 SELECT 
                     c.id,
@@ -1206,23 +685,17 @@ class FeedController extends Controller
                 ORDER BY c.created_at ASC
             ");
             
-            // Voeg current user ID toe aan het begin van de parameters
             $params = array_merge([$currentUserId], $postIds);
             $stmt->execute($params);
             $allComments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            
-            // Groepeer comments per post
             $commentsByPost = [];
             foreach ($allComments as $comment) {
-                // Voeg avatar en geformatteerde datum toe
                 $comment['avatar'] = $this->getUserAvatar($comment['user_id']);
                 $comment['time_ago'] = $this->formatDate($comment['created_at']);
-                
                 $commentsByPost[$comment['post_id']][] = $comment;
             }
             
-            // Voeg comments toe aan elke post
             foreach ($posts as &$post) {
                 $post['comments_list'] = $commentsByPost[$post['id']] ?? [];
             }
@@ -1232,7 +705,6 @@ class FeedController extends Controller
         } catch (Exception $e) {
             error_log('Fout bij ophalen comments: ' . $e->getMessage());
             
-            // Bij fout, voeg lege comments array toe
             foreach ($posts as &$post) {
                 $post['comments_list'] = [];
             }
@@ -1242,388 +714,39 @@ class FeedController extends Controller
     }
 
     /**
-     * Toggle like op een comment (like/unlike)
-     */
-    public function toggleCommentLike()
-    {
-        // Controleer of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
-            exit;
-        }
-        
-        // Controleer of het een POST request is
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
-            exit;
-        }
-        
-        $commentId = $_POST['comment_id'] ?? null;
-        $userId = $_SESSION['user_id'];
-        
-        if (!$commentId) {
-            echo json_encode(['success' => false, 'message' => 'Comment ID is verplicht']);
-            exit;
-        }
-        
-        try {
-            // Controleer of comment bestaat
-            $stmt = $this->db->prepare("SELECT id FROM post_comments WHERE id = ? AND is_deleted = 0");
-            $stmt->execute([$commentId]);
-            $comment = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$comment) {
-                echo json_encode(['success' => false, 'message' => 'Reactie niet gevonden']);
-                exit;
-            }
-            
-            // Controleer of gebruiker deze comment al heeft geliked
-            $stmt = $this->db->prepare("SELECT id FROM comment_likes WHERE comment_id = ? AND user_id = ?");
-            $stmt->execute([$commentId, $userId]);
-            $existingLike = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($existingLike) {
-                // Unlike: verwijder de like
-                $this->removeCommentLike($commentId, $userId);
-                $action = 'unliked';
-            } else {
-                // Like: voeg like toe
-                $this->addCommentLike($commentId, $userId);
-                $action = 'liked';
-            }
-            
-            // Haal nieuwe like count op
-            $newLikeCount = $this->getCommentLikeCount($commentId);
-
-            echo json_encode([
-                'success' => true,
-                'action' => $action,
-                'like_count' => $newLikeCount
-            ]);
-            
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Er ging iets mis: ' . $e->getMessage()]);
-        }
-        
-        exit;
-    }
-
-    /**
-     * Voeg een comment like toe
-     */
-    private function addCommentLike($commentId, $userId)
-    {
-        // Begin transaction
-        $this->db->beginTransaction();
-        
-        try {
-            // Voeg like toe aan comment_likes tabel
-            $stmt = $this->db->prepare("INSERT INTO comment_likes (comment_id, user_id) VALUES (?, ?)");
-            $stmt->execute([$commentId, $userId]);
-            
-            $this->db->commit();
-            
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
-
-    /**
-     * Verwijder een comment like
-     */
-    private function removeCommentLike($commentId, $userId)
-    {
-        // Begin transaction
-        $this->db->beginTransaction();
-        
-        try {
-            // Verwijder like uit comment_likes tabel
-            $stmt = $this->db->prepare("DELETE FROM comment_likes WHERE comment_id = ? AND user_id = ?");
-            $stmt->execute([$commentId, $userId]);
-            
-            // Update likes_count in post_comments tabel (maar niet onder 0)
-            $stmt = $this->db->prepare("UPDATE post_comments SET likes_count = GREATEST(0, likes_count - 1) WHERE id = ?");
-            $stmt->execute([$commentId]);
-            
-            $this->db->commit();
-            
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
-
-    /**
-     * Haal het aantal likes op voor een comment
-     */
-    private function getCommentLikeCount($commentId)
-    {
-        $stmt = $this->db->prepare("SELECT likes_count FROM post_comments WHERE id = ?");
-        $stmt->execute([$commentId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        return $result ? (int)$result['likes_count'] : 0;
-    }
-
-    /**
-     * Verwijder een comment
-     */
-    public function deleteComment()
-    {
-        // Controleer of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
-            exit;
-        }
-        
-        // Controleer of het een POST request is
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
-            exit;
-        }
-        
-        $commentId = $_POST['comment_id'] ?? null;
-        $userId = $_SESSION['user_id'];
-        $userRole = $_SESSION['role'] ?? 'user';
-        
-        if (!$commentId) {
-            echo json_encode(['success' => false, 'message' => 'Comment ID is verplicht']);
-            exit;
-        }
-        
-        try {
-            // Haal comment op met eigenaar info
-            $stmt = $this->db->prepare("SELECT user_id, post_id FROM post_comments WHERE id = ? AND is_deleted = 0");
-            $stmt->execute([$commentId]);
-            $comment = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$comment) {
-                echo json_encode(['success' => false, 'message' => 'Reactie niet gevonden']);
-                exit;
-            }
-            
-            // Controleer toestemming (eigenaar of admin)
-            $isOwner = ($comment['user_id'] == $userId);
-            $isAdmin = ($userRole === 'admin');
-            
-            if (!$isOwner && !$isAdmin) {
-                echo json_encode(['success' => false, 'message' => 'Je hebt geen toestemming om deze reactie te verwijderen']);
-                exit;
-            }
-            
-            // Begin transaction
-            $this->db->beginTransaction();
-            
-            // Soft delete de comment
-            $stmt = $this->db->prepare("UPDATE post_comments SET is_deleted = 1 WHERE id = ?");
-            $stmt->execute([$commentId]);
-            
-            // Update comment count in post
-            $stmt = $this->db->prepare("UPDATE posts SET comments_count = GREATEST(0, comments_count - 1) WHERE id = ?");
-            $stmt->execute([$comment['post_id']]);
-            
-            $this->db->commit();
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Reactie succesvol verwijderd'
-            ]);
-            
-        } catch (Exception $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            
-            echo json_encode(['success' => false, 'message' => 'Er ging iets mis: ' . $e->getMessage()]);
-        }
-        
-        exit;
-    }
-
-    /**
-     * Detecteert URLs in post content en genereert link previews
-     */
-    private function processLinkPreview($content)
-    {
-        // Regex voor URL detectie
-        $urlPattern = '/https?:\/\/[^\s]+/i';
-        preg_match($urlPattern, $content, $matches);
-        
-        if (!empty($matches)) {
-            $url = $matches[0];
-            
-            // Controleer of we al een preview hebben (cache)
-            $linkPreview = $this->getLinkPreviewFromCache($url);
-            
-            if (!$linkPreview) {
-                // Genereer nieuwe preview
-                $linkPreview = $this->generateLinkPreview($url);
-            }
-            
-            return $linkPreview ? $linkPreview['id'] : null;
-        }
-        
-        return null;
-    }
-
-    /**
-     * Zoekt bestaande link preview in cache
-     */
-    private function getLinkPreviewFromCache($url)
-    {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT * FROM link_previews 
-                WHERE url = ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
-            ");
-            $stmt->execute([$url]);
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            error_log("Cache lookup error: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Genereert nieuwe link preview (GEFIXTE VERSIE)
-     */
-    private function generateLinkPreview($url)
-    {
-        try {
-            // Valideer URL
-            if (!filter_var($url, FILTER_VALIDATE_URL)) {
-                return false;
-            }
-            
-            // Haal metadata op MET NIEUWE METHODE
-            $metadata = $this->fetchAndParseMetadata($url);
-            
-            if ($metadata) {
-                // Sla op in database
-                $stmt = $this->db->prepare("
-                    INSERT INTO link_previews (url, title, description, image_url, domain, created_at) 
-                    VALUES (?, ?, ?, ?, ?, NOW())
-                ");
-                
-                $domain = parse_url($url, PHP_URL_HOST);
-                $stmt->execute([
-                    $url,
-                    $metadata['title'],
-                    $metadata['description'],
-                    $metadata['image'],
-                    $domain
-                ]);
-                
-                return [
-                    'id' => $this->db->lastInsertId(),
-                    'url' => $url,
-                    'title' => $metadata['title'],
-                    'description' => $metadata['description'],
-                    'image_url' => $metadata['image'],
-                    'domain' => $domain
-                ];
-            }
-            
-        } catch (Exception $e) {
-            error_log("Link preview generation error: " . $e->getMessage());
-        }
-        
-        return false;
-    }
-
-    /**
-     * Nieuwe metadata parser (simpeler versie)
-     */
-    private function fetchAndParseMetadata($url)
-    {
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 10,
-                'user_agent' => 'Mozilla/5.0 (compatible; SocialCore/1.0)'
-            ]
-        ]);
-        
-        $html = @file_get_contents($url, false, $context);
-        
-        if (!$html) {
-            return false;
-        }
-        
-        // Simpele regex parsing (geen DOMDocument)
-        $title = '';
-        $description = '';
-        $image = '';
-        
-        // Extract title
-        if (preg_match('/<meta property="og:title" content="([^"]*)"[^>]*>/i', $html, $matches)) {
-            $title = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
-        } elseif (preg_match('/<title[^>]*>([^<]*)<\/title>/i', $html, $matches)) {
-            $title = html_entity_decode(trim($matches[1]), ENT_QUOTES, 'UTF-8');
-        }
-        
-        // Extract description  
-        if (preg_match('/<meta property="og:description" content="([^"]*)"[^>]*>/i', $html, $matches)) {
-            $description = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
-        } elseif (preg_match('/<meta name="description" content="([^"]*)"[^>]*>/i', $html, $matches)) {
-            $description = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
-        }
-        
-        // Extract image
-        if (preg_match('/<meta property="og:image" content="([^"]*)"[^>]*>/i', $html, $matches)) {
-            $image = $matches[1];
-        }
-        
-        return [
-            'title' => trim($title) ?: 'Geen titel',
-            'description' => trim($description) ?: 'Geen beschrijving', 
-            'image' => $image
-        ];
-    }
-
-    /**
-     * 🔒 PRIVACY: Check of viewer de posts van een gebruiker mag zien
+     * Privacy: Check of viewer de posts van een gebruiker mag zien
      */
     private function canViewUserPosts($postAuthorId, $viewerId)
     {
-        // Eigenaar kan altijd eigen posts zien
         if ($postAuthorId == $viewerId) {
             return true;
         }
 
-        // Haal privacy instellingen van post auteur op
         $privacySettings = $this->getPrivacySettings($postAuthorId);
         
         if (!$privacySettings) {
-            // Geen privacy instellingen = openbaar (backwards compatibility)
             return true;
         }
 
         switch ($privacySettings['posts_visibility']) {
             case 'public':
                 return true;
-                
             case 'private':
                 return false;
-                
             case 'friends':
                 return $this->areFriends($postAuthorId, $viewerId);
-                
             default:
-                return true; // Fallback
+                return true;
         }
     }
 
     /**
-     * 🔒 PRIVACY: Haal privacy instellingen op voor een gebruiker
+     * Privacy: Haal privacy instellingen op voor een gebruiker
      */
     private function getPrivacySettings($userId)
     {
         try {
-            $stmt = $this->db->prepare("
-                SELECT * FROM user_privacy_settings 
-                WHERE user_id = ?
-            ");
+            $stmt = $this->db->prepare("SELECT * FROM user_privacy_settings WHERE user_id = ?");
             $stmt->execute([$userId]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
@@ -1633,7 +756,7 @@ class FeedController extends Controller
     }
 
     /**
-     * 🔒 PRIVACY: Check of twee gebruikers vrienden zijn
+     * Privacy: Check of twee gebruikers vrienden zijn
      */
     private function areFriends($userId1, $userId2)
     {
@@ -1653,14 +776,13 @@ class FeedController extends Controller
     }
 
     /**
-     * 🔒 PRIVACY: Filter posts op basis van privacy instellingen
+     * Privacy: Filter posts op basis van privacy instellingen
      */
     private function filterPostsByPrivacy($posts, $viewerId)
     {
         $filteredPosts = [];
         
         foreach ($posts as $post) {
-            // Check of viewer deze post mag zien
             if ($this->canViewUserPosts($post['user_id'], $viewerId)) {
                 $filteredPosts[] = $post;
             }
@@ -1668,66 +790,294 @@ class FeedController extends Controller
         
         return $filteredPosts;
     }
-    
+
     /**
-     * Haal bestaande hashtag op of creëer nieuwe
+     * Formatteer een datetime naar een leesbare weergave
      */
-    private function getOrCreateHashtag($tag)
+    private function formatDate($datetime) 
     {
-        try {
-            // Check of hashtag al bestaat
-            $stmt = $this->db->prepare("SELECT id, usage_count FROM hashtags WHERE tag = ?");
-            $stmt->execute([$tag]);
-            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($existing) {
-                // Update usage count
-                $stmt = $this->db->prepare("UPDATE hashtags SET usage_count = usage_count + 1 WHERE id = ?");
-                $stmt->execute([$existing['id']]);
-                
-                return $existing['id'];
-            } else {
-                // Creëer nieuwe hashtag
-                $stmt = $this->db->prepare("INSERT INTO hashtags (tag, usage_count, created_at) VALUES (?, 1, NOW())");
-                $stmt->execute([$tag]);
-                
-                return $this->db->lastInsertId();
-            }
-            
-        } catch (\Exception $e) {
-            error_log("Error getting/creating hashtag: " . $e->getMessage());
-            return null;
-        }
-    }
-    
-    /**
-     * Link hashtags aan een post
-     */
-    private function linkHashtagsToPost($postId, $hashtags)
-    {
-        if (empty($hashtags)) {
-            return;
+        if (empty($datetime) || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $datetime)) {
+            return 'onbekende tijd';
         }
         
         try {
-            $db = Database::getInstance()->getPdo();
+            $date = new \DateTime($datetime);
+            $now = new \DateTime();
+            $diff = $now->diff($date);
             
-            foreach ($hashtags as $tag) {
-                // Haal hashtag ID op
-                $stmt = $db->prepare("SELECT id FROM hashtags WHERE tag = ?");
-                $stmt->execute([strtolower($tag)]);
-                $hashtagData = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($hashtagData) {
-                    // Link hashtag aan post
-                    $stmt = $db->prepare("INSERT IGNORE INTO post_hashtags (post_id, hashtag_id) VALUES (?, ?)");
-                    $stmt->execute([$postId, $hashtagData['id']]);
+            if ($diff->days == 0) {
+                if ($diff->h > 0) {
+                    return $diff->h . ' uur geleden';
+                } elseif ($diff->i > 0) {
+                    return $diff->i . ' minuten geleden';
+                } else {
+                    return 'Net nu';
                 }
+            } elseif ($diff->days == 1) {
+                return 'Gisteren om ' . $date->format('H:i');
+            } else {
+                return $date->format('d-m-Y H:i');
             }
-            
         } catch (\Exception $e) {
-            error_log("Error linking hashtags to post: " . $e->getMessage());
+            return 'onbekende tijd';
         }
     }
 
+    /**
+     * Helper methods
+     */
+    private function isJsonRequest()
+    {
+        return (isset($_SERVER['HTTP_ACCEPT']) && 
+                strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) || 
+            (isset($_SERVER['CONTENT_TYPE']) && 
+                strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false);
+    }
+
+    private function jsonResponse($data)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+
+    private function getPostById($postId)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT p.*, u.username, u.display_name 
+                FROM posts p 
+                JOIN users u ON p.user_id = u.id 
+                WHERE p.id = ?
+            ");
+            $stmt->execute([$postId]);
+            $post = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$post) {
+                return null;
+            }
+            
+            $post['avatar'] = $this->getUserAvatar($post['user_id']);
+            $post['formatted_date'] = 'Zojuist geplaatst';
+            
+            if ($post['type'] === 'photo') {
+                $stmt = $this->db->prepare("
+                    SELECT * FROM post_media 
+                    WHERE post_id = ? 
+                    ORDER BY display_order ASC
+                ");
+                $stmt->execute([$postId]);
+                $media = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($media) {
+                    $post['image_url'] = base_url('uploads/' . $media['file_path']);
+                }
+            }
+            
+            return $post;
+        } catch (Exception $e) {
+            error_log('Fout bij ophalen post: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Security: Rate limiting check
+     */
+    private function checkRateLimit($userId, $action, $limit, $timeWindow = 3600)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) as count 
+                FROM user_activity_log 
+                WHERE user_id = ? 
+                AND action = ? 
+                AND created_at > DATE_SUB(NOW(), INTERVAL ? SECOND)
+            ");
+            $stmt->execute([$userId, $action, $timeWindow]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $currentCount = $result['count'] ?? 0;
+            
+            if ($currentCount < $limit) {
+                return ['allowed' => true];
+            }
+            
+            $oldestStmt = $this->db->prepare("
+                SELECT created_at 
+                FROM user_activity_log 
+                WHERE user_id = ? AND action = ? 
+                ORDER BY created_at ASC 
+                LIMIT 1
+            ");
+            $oldestStmt->execute([$userId, $action]);
+            $oldest = $oldestStmt->fetch(PDO::FETCH_ASSOC);
+            
+            $retryAfter = 0;
+            if ($oldest) {
+                $oldestTime = strtotime($oldest['created_at']);
+                $retryAfter = max(0, ceil(($oldestTime + $timeWindow - time()) / 60));
+            }
+            
+            return [
+                'allowed' => false,
+                'retry_after' => max(1, $retryAfter),
+                'current_count' => $currentCount,
+                'limit' => $limit
+            ];
+            
+        } catch (\Exception $e) {
+            error_log("Rate limit check error: " . $e->getMessage());
+            return ['allowed' => true];
+        }
+    }
+
+    /**
+     * Security: Log security events
+     */
+    private function logSecurityEvent($userId, $event, $userIP, $details = null)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO user_activity_log (user_id, action, ip_address, user_agent, details, created_at) 
+                VALUES (?, ?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([
+                $userId,
+                'security_' . $event,
+                $userIP,
+                $_SERVER['HTTP_USER_AGENT'] ?? '',
+                $details ? json_encode($details) : null
+            ]);
+        } catch (\Exception $e) {
+            error_log("Security log error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Security: Log user activity
+     */
+    private function logActivity($userId, $action, $userIP, $details = null)
+    {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO user_activity_log (user_id, action, ip_address, user_agent, details, created_at) 
+                VALUES (?, ?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([
+                $userId,
+                $action,
+                $userIP,
+                $_SERVER['HTTP_USER_AGENT'] ?? '',
+                $details ? json_encode($details) : null
+            ]);
+        } catch (\Exception $e) {
+            error_log("Activity log error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Security: Sanitize post content
+     */
+    private function sanitizePostContent($content)
+    {
+        $content = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
+        
+        if (SecuritySettings::get('enable_profanity_filter', false)) {
+            $content = $this->filterProfanity($content);
+        }
+        
+        return trim($content);
+    }
+
+    /**
+     * Security: Check for spam patterns
+     */
+    private function isSpamContent($content)
+    {
+        if (preg_match('/(.)\1{9,}/', $content)) {
+            return true;
+        }
+        
+        $urlCount = preg_match_all('/https?:\/\/[^\s]+/', $content);
+        if ($urlCount > SecuritySettings::get('max_urls_per_post', 3)) {
+            return true;
+        }
+        
+        $capsRatio = strlen(preg_replace('/[^A-Z]/', '', $content)) / max(1, strlen($content));
+        if ($capsRatio > 0.7 && strlen($content) > 10) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Security: Basic profanity filter
+     */
+    private function filterProfanity($content)
+    {
+        $profanityWords = SecuritySettings::get('profanity_words', []);
+        
+        if (empty($profanityWords)) {
+            return $content;
+        }
+        
+        foreach ($profanityWords as $word) {
+            $replacement = str_repeat('*', strlen($word));
+            $content = preg_replace('/\b' . preg_quote($word, '/') . '\b/i', $replacement, $content);
+        }
+        
+        return $content;
+    }
+
+    /**
+     * Security: Unified security block handler
+     */
+    private function handleSecurityBlock($userId, $userIP, $eventType, $message)
+    {
+        $this->logSecurityEvent($userId, $eventType, $userIP);
+        
+        if ($this->isJsonRequest()) {
+            $this->jsonResponse(['success' => false, 'message' => $message]);
+        } else {
+            $_SESSION['error'] = $message;
+            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+            exit;
+        }
+    }
+
+    /**
+     * Security: Detect suspicious bulk post delete patterns
+     */
+    private function detectBulkPostDeleteActivity($userId, $userIP)
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as rapid_deletes 
+            FROM user_activity_log 
+            WHERE user_id = ? 
+            AND action = 'post_delete_attempt' 
+            AND created_at > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+        ");
+        $stmt->execute([$userId]);
+        $rapidCount = $stmt->fetchColumn();
+        
+        return $rapidCount > 3;
+    }
+
+    /**
+     * Security: Get recent post delete count for logging
+     */
+    private function getRecentPostDeleteCount($userId)
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM user_activity_log 
+            WHERE user_id = ? 
+            AND action = 'post_delete_attempt' 
+            AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)
+        ");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn();
+    }
 }

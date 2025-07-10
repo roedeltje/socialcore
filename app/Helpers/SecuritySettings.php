@@ -55,8 +55,8 @@ class SecuritySettings
             // 🔧 FIX: Gebruik correcte kolomnamen
             $stmt = $db->prepare("
                 UPDATE site_settings 
-                SET `value` = ?, updated_at = CURRENT_TIMESTAMP 
-                WHERE `key` = ?
+                SET setting_value = ?, updated_at = CURRENT_TIMESTAMP 
+                WHERE setting_name = ?
             ");
             
             $result = $stmt->execute([$value, $key]);
@@ -124,32 +124,40 @@ class SecuritySettings
      * Load all settings into cache
      */
     private static function loadCache()
-{
-    if (self::$cacheLoaded) {
-        return;
-    }
-    
-    try {
-        $db = Database::getInstance()->getPdo();
-        
-        // 🔧 FIX: Gebruik correcte kolomnamen van site_settings tabel
-        $stmt = $db->query("SELECT `key`, `value`, `type`, `category`, `description` FROM site_settings");
-        
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            self::$cache[$row['key']] = [
-                'value' => $row['value'],
-                'type' => $row['type'],
-                'category' => $row['category'],
-                'description' => $row['description']
-            ];
+    {
+        if (self::$cacheLoaded) {
+            return;
         }
         
-        self::$cacheLoaded = true;
-        
-    } catch (Exception $e) {
-        error_log("SecuritySettings::loadCache error: " . $e->getMessage());
+        try {
+            $db = Database::getInstance()->getPdo();
+            
+            // 🔧 FIX: Gebruik correcte kolomnamen van site_settings tabel
+            $stmt = $db->query("
+                SELECT 
+                    setting_name as `key`, 
+                    setting_value as `value`, 
+                    setting_type as `type`, 
+                    category, 
+                    description 
+                FROM site_settings
+            ");
+            
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                self::$cache[$row['key']] = [
+                    'value' => $row['value'],
+                    'type' => $row['type'] ?? 'string',
+                    'category' => $row['category'] ?? 'general',
+                    'description' => $row['description'] ?? ''
+                ];
+            }
+            
+            self::$cacheLoaded = true;
+            
+        } catch (Exception $e) {
+            error_log("SecuritySettings::loadCache error: " . $e->getMessage());
+        }
     }
-}
 
     /**
      * Clear cache (useful after updates)

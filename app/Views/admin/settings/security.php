@@ -273,6 +273,17 @@
                     <br><small>Filter grove taal uit posts en comments</small>
                 </label>
             </div>
+
+            <div class="form-group profanity-words-section" style="margin-top: 20px;">
+                <label for="content_profanity_words">Geblokkeerde Woorden</label>
+                <textarea id="content_profanity_words" 
+                        name="content_profanity_words" 
+                        class="form-control" 
+                        rows="4"
+                        placeholder="Voer woorden in, gescheiden door komma's"><?= htmlspecialchars($settings['content_profanity_words'] ?? 'klootzak,kut,kanker,hoer,tyfus,fuck,shit,bitch,damn') ?></textarea>
+                <small class="form-hint">Komma-gescheiden lijst van woorden die automatisch worden geblokkeerd. Let op: dit is hoofdlettergevoelig.</small>
+            </div>
+
         </div>
 
         <div class="settings-section">

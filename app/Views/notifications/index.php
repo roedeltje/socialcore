@@ -1,519 +1,845 @@
 <?php
-// /app/Views/notifications/index.php - Verbeterde versie
+/**
+ * Notifications Pagina
+ * /app/Views/notifications/index.php
+ */
+
+$pageTitle = $data['title'] ?? 'Meldingen';
+$notifications = $data['notifications'] ?? [];
+$unreadCount = $data['unread_count'] ?? 0;
+$success = $data['success'] ?? null;
+$error = $data['error'] ?? null;
 ?>
 
-<div class="notifications-container">
-    <div class="notifications-header bg-blue-100 border-b-4 border-blue-400 rounded-t-lg p-4">
-        <div class="flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-blue-800">📢 Meldingen</h1>
-                <p class="text-blue-600">
-                    <?php if ($unread_count > 0): ?>
-                        Je hebt <?= $unread_count ?> nieuwe <?= $unread_count == 1 ? 'melding' : 'meldingen' ?>
-                    <?php else: ?>
-                        Alle meldingen zijn gelezen
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?> - SocialCore</title>
+    <link rel="stylesheet" href="/public/theme-assets/default/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Include navigation -->
+    <?php include __DIR__ . '/../../themes/default/partials/navigation.php'; ?>
+
+    <div class="notifications-settings-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="page-title">
+                        <i class="fas fa-bell"></i>
+                        Meldingen
+                    </h1>
+                    <p class="page-description">
+                        <?php if ($unreadCount > 0): ?>
+                            Je hebt <?= $unreadCount ?> nieuwe <?= $unreadCount == 1 ? 'melding' : 'meldingen' ?>
+                        <?php else: ?>
+                            Alle meldingen zijn gelezen
+                        <?php endif; ?>
+                    </p>
+                </div>
+                <div class="header-right">
+                    <?php if (!empty($notifications) && $unreadCount > 0): ?>
+                        <button id="markAllReadBtn" class="btn btn-secondary">
+                            <i class="fas fa-check-double"></i>
+                            Alles markeren
+                        </button>
                     <?php endif; ?>
-                </p>
+                    <a href="/?route=profile" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Terug naar Profiel
+                    </a>
+                </div>
             </div>
-            
-            <?php if (!empty($notifications) && $unread_count > 0): ?>
-                <button id="markAllReadBtn" class="hyves-button bg-green-500 hover:bg-green-600 text-sm px-4 py-2">
-                    ✓ Alles als gelezen markeren
-                </button>
-            <?php endif; ?>
         </div>
-    </div>
 
-    <div class="notifications-content bg-white rounded-b-lg shadow-md">
-        <?php if (!empty($notifications)): ?>
-            <div class="notifications-list">
-                <?php foreach ($notifications as $notification): ?>
-                    <div class="notification-item <?= $notification['is_read'] ? 'read' : 'unread' ?>" 
-                         data-id="<?= $notification['id'] ?>">
-                        <div class="notification-content">
-                            <!-- Avatar -->
-                            <div class="notification-avatar">
-                                <?php if ($notification['related_user_id']): ?>
-                                    <img src="<?= $notification['from_avatar'] ?>" 
-                                         alt="<?= htmlspecialchars($notification['from_name']) ?>" 
-                                         class="w-12 h-12 rounded-full border-2 border-blue-200">
-                                <?php else: ?>
-                                    <!-- Systeem notificatie icoon -->
-                                    <div class="w-12 h-12 rounded-full border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
-                                        <i class="fas fa-cog text-gray-600"></i>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
+        <!-- Success/Error Messages -->
+        <?php if ($success): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <?= htmlspecialchars($success) ?>
+            </div>
+        <?php endif; ?>
 
-                            <!-- Content -->
-                            <div class="notification-body">
-                                <div class="notification-header">
-                                    <!-- Type-specifiek icoon -->
-                                    <span class="notification-icon">
-                                        <span class="<?= $notification['icon_class'] ?> rounded-full p-1">
-                                            <?= $notification['icon'] ?>
-                                        </span>
-                                    </span>
+        <?php if ($error): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
 
-                                    <!-- Hoofdbericht -->
-                                    <div class="notification-message">
-                                        <div class="notification-title">
-                                            <h4 class="font-semibold text-gray-900"><?= htmlspecialchars($notification['title']) ?></h4>
+        <!-- Notifications Content -->
+        <div class="notifications-content">
+            <?php if (!empty($notifications)): ?>
+                <div class="notifications-list">
+                    <?php foreach ($notifications as $notification): ?>
+                        <div class="notification-item <?= $notification['is_read'] ? 'read' : 'unread' ?>" 
+                             data-id="<?= $notification['id'] ?>">
+                            <div class="notification-content">
+                                <!-- Avatar -->
+                                <div class="notification-avatar">
+                                    <?php if ($notification['related_user_id']): ?>
+                                        <img src="<?= $notification['from_avatar'] ?>" 
+                                             alt="<?= htmlspecialchars($notification['from_name']) ?>" 
+                                             class="avatar-image">
+                                    <?php else: ?>
+                                        <!-- Systeem notificatie icoon -->
+                                        <div class="system-avatar">
+                                            <i class="fas fa-cog"></i>
                                         </div>
-                                        
-                                        <p class="text-gray-800 mt-1">
-                                            <?php if ($notification['related_user_id']): ?>
-                                                <a href="<?= base_url('profile/' . $notification['from_username']) ?>" 
-                                                   class="font-semibold text-blue-600 hover:underline">
-                                                    <?= htmlspecialchars($notification['from_name']) ?>
-                                                </a>
-                                                <?= str_replace($notification['from_name'], '', $notification['message']) ?>
-                                            <?php else: ?>
-                                                <?= htmlspecialchars($notification['message']) ?>
-                                            <?php endif; ?>
-                                        </p>
-
-                                        <!-- Preview van post/comment als beschikbaar -->
-                                        <?php if (!empty($notification['post_preview'])): ?>
-                                            <div class="notification-preview bg-gray-50 rounded p-2 mt-2 text-sm text-gray-600">
-                                                <strong>Bericht:</strong> "<?= htmlspecialchars($notification['post_preview']) ?>"
-                                                
-                                                <?php if (!empty($notification['comment_preview'])): ?>
-                                                    <br><strong>Reactie:</strong> "<?= htmlspecialchars($notification['comment_preview']) ?>"
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+                                    <?php endif; ?>
                                 </div>
 
-                                <!-- Timestamp en acties -->
-                                <div class="notification-footer">
-                                    <span class="notification-time text-sm text-gray-500">
-                                        <?= $notification['formatted_date'] ?>
-                                    </span>
-                                    
-                                    <div class="notification-actions">
-                                        <?php if (!empty($notification['action_url'])): ?>
-                                            <a href="<?= $notification['action_url'] ?>" 
-                                               class="notification-action text-sm text-blue-600 hover:underline">
-                                                Bekijken →
-                                            </a>
-                                        <?php endif; ?>
+                                <!-- Content -->
+                                <div class="notification-body">
+                                    <div class="notification-header">
+                                        <!-- Type-specifiek icoon -->
+                                        <span class="notification-icon">
+                                            <span class="icon-badge <?= $notification['icon_class'] ?>">
+                                                <?= $notification['icon'] ?>
+                                            </span>
+                                        </span>
+
+                                        <!-- Hoofdbericht -->
+                                        <div class="notification-message">
+                                            <div class="notification-title">
+                                                <h4><?= htmlspecialchars($notification['title']) ?></h4>
+                                            </div>
+                                            
+                                            <p class="message-text">
+                                                <?php if ($notification['related_user_id']): ?>
+                                                    <a href="/?route=profile&user=<?= $notification['from_username'] ?>" 
+                                                       class="user-link">
+                                                        <?= htmlspecialchars($notification['from_name']) ?>
+                                                    </a>
+                                                    <?= str_replace($notification['from_name'], '', $notification['message']) ?>
+                                                <?php else: ?>
+                                                    <?= htmlspecialchars($notification['message']) ?>
+                                                <?php endif; ?>
+                                            </p>
+
+                                            <!-- Preview van post/comment als beschikbaar -->
+                                            <?php if (!empty($notification['post_preview'])): ?>
+                                                <div class="notification-preview">
+                                                    <strong>Bericht:</strong> "<?= htmlspecialchars($notification['post_preview']) ?>"
+                                                    
+                                                    <?php if (!empty($notification['comment_preview'])): ?>
+                                                        <br><strong>Reactie:</strong> "<?= htmlspecialchars($notification['comment_preview']) ?>"
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
+                                    <!-- Timestamp en acties -->
+                                    <div class="notification-footer">
+                                        <span class="notification-time">
+                                            <?= $notification['formatted_date'] ?>
+                                        </span>
                                         
-                                        <?php if (!$notification['is_read']): ?>
-                                            <button class="mark-read-btn text-sm text-green-600 hover:underline ml-3" 
+                                        <div class="notification-actions">
+                                            <?php if (!empty($notification['action_url'])): ?>
+                                                <a href="<?= $notification['action_url'] ?>" 
+                                                   class="action-btn primary">
+                                                    <i class="fas fa-eye"></i>
+                                                    Bekijken
+                                                </a>
+                                            <?php endif; ?>
+                                            
+                                            <?php if (!$notification['is_read']): ?>
+                                                <button class="action-btn success mark-read-btn" 
+                                                        data-id="<?= $notification['id'] ?>">
+                                                    <i class="fas fa-check"></i>
+                                                    Gelezen
+                                                </button>
+                                            <?php endif; ?>
+                                            
+                                            <button class="action-btn danger delete-notification-btn" 
                                                     data-id="<?= $notification['id'] ?>">
-                                                Als gelezen markeren
+                                                <i class="fas fa-trash"></i>
+                                                Verwijderen
                                             </button>
-                                        <?php endif; ?>
-                                        
-                                        <button class="delete-notification-btn text-sm text-red-600 hover:underline ml-3" 
-                                                data-id="<?= $notification['id'] ?>">
-                                            Verwijderen
-                                        </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- Statistieken -->
-            <div class="notifications-pagination p-4 border-t bg-gray-50">
-                <div class="flex justify-between items-center text-sm text-gray-600">
-                    <span><?= count($notifications) ?> recente meldingen getoond</span>
-                    <span>
-                        <?= $unread_count ?> ongelezen • 
-                        <?= count($notifications) - $unread_count ?> gelezen
-                    </span>
+                    <?php endforeach; ?>
                 </div>
-            </div>
 
-        <?php else: ?>
-            <!-- Lege staat -->
-            <div class="empty-notifications text-center py-12">
-                <div class="text-6xl mb-4">🔔</div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Nog geen meldingen</h3>
-                <p class="text-gray-600 mb-6">
-                    Je hebt nog geen nieuwe activiteiten. Wanneer iemand je een vriendschapsverzoek stuurt, 
-                    je berichten liked of reageert, zie je dat hier.
-                </p>
-                <a href="<?= base_url('feed') ?>" class="hyves-button bg-blue-500 hover:bg-blue-600">
-                    Naar nieuwsfeed
-                </a>
-            </div>
-        <?php endif; ?>
+                <!-- Statistieken -->
+                <div class="notifications-stats">
+                    <div class="stats-content">
+                        <span><?= count($notifications) ?> recente meldingen getoond</span>
+                        <span>
+                            <?= $unreadCount ?> ongelezen • 
+                            <?= count($notifications) - $unreadCount ?> gelezen
+                        </span>
+                    </div>
+                </div>
+
+            <?php else: ?>
+                <!-- Lege staat -->
+                <div class="empty-notifications">
+                    <div class="empty-icon">🔔</div>
+                    <h3>Nog geen meldingen</h3>
+                    <p>
+                        Je hebt nog geen nieuwe activiteiten. Wanneer iemand je een vriendschapsverzoek stuurt, 
+                        je berichten liked of reageert, zie je dat hier.
+                    </p>
+                    <a href="/?route=feed" class="btn btn-primary">
+                        <i class="fas fa-home"></i>
+                        Naar nieuwsfeed
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
-</div>
 
-<style>
-/* Verbeterde notificaties styling */
-.notifications-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 1rem;
-}
+    <!-- Include footer -->
+    <?php include __DIR__ . '/../../themes/default/layouts/footer.php'; ?>
 
-.notification-item {
-    border-bottom: 1px solid #e5e7eb;
-    padding: 1rem;
-    transition: all 0.2s ease;
-}
-
-.notification-item:hover {
-    background-color: #f9fafb;
-}
-
-.notification-item.unread {
-    background-color: #eff6ff;
-    border-left: 4px solid #3b82f6;
-}
-
-.notification-item.read {
-    opacity: 0.8;
-}
-
-.notification-content {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.notification-avatar {
-    flex-shrink: 0;
-}
-
-.notification-body {
-    flex-grow: 1;
-}
-
-.notification-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-}
-
-.notification-icon {
-    flex-shrink: 0;
-    margin-top: 0.125rem;
-}
-
-.notification-message {
-    flex-grow: 1;
-}
-
-.notification-title h4 {
-    margin: 0;
-    font-size: 1rem;
-}
-
-.notification-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.75rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.notification-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.notification-preview {
-    font-style: italic;
-    border-left: 3px solid #d1d5db;
-}
-
-/* Loading states */
-.notification-item.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-/* Success states */
-.notification-item.marked-read {
-    animation: fadeToRead 0.5s ease-in-out;
-}
-
-@keyframes fadeToRead {
-    0% { background-color: #eff6ff; }
-    100% { background-color: transparent; }
-}
-
-.notification-item.deleted {
-    animation: slideOut 0.3s ease-in-out forwards;
-}
-
-@keyframes slideOut {
-    0% { 
-        opacity: 1;
-        max-height: 200px;
-        padding: 1rem;
+    <style>
+    /* Notifications Styling - Consistent met Security/Privacy */
+    .notifications-settings-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
     }
-    100% { 
-        opacity: 0;
-        max-height: 0;
-        padding: 0;
+
+    .page-header {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .header-left {
+        flex: 1;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+    }
+
+    .page-description {
         margin: 0;
-        border: none;
+        opacity: 0.9;
+        font-size: 1.1rem;
+        font-weight: 400;
     }
-}
 
-/* Responsive aanpassingen */
-@media (max-width: 768px) {
-    .notification-footer {
-        flex-direction: column;
+    .notifications-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    /* Notification Items */
+    .notification-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 20px;
+        transition: all 0.2s ease;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item:hover {
+        background-color: #f9fafb;
+    }
+
+    .notification-item.unread {
+        background-color: #fef3c7;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .notification-item.read {
+        opacity: 0.8;
+    }
+
+    .notification-content {
+        display: flex;
+        gap: 16px;
+    }
+
+    .notification-avatar {
+        flex-shrink: 0;
+    }
+
+    .avatar-image {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #f59e0b;
+        object-fit: cover;
+    }
+
+    .system-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #d1d5db;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+    }
+
+    .notification-body {
+        flex: 1;
+    }
+
+    .notification-header {
+        display: flex;
         align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
     }
-    
-    .notification-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    
-    .notifications-pagination {
-        text-align: center;
-    }
-    
-    .notifications-pagination .flex {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-}
-</style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Markeer alle notificaties als gelezen
-    const markAllReadBtn = document.getElementById('markAllReadBtn');
-    if (markAllReadBtn) {
-        markAllReadBtn.addEventListener('click', function() {
-            if (confirm('Wil je alle meldingen als gelezen markeren?')) {
-                markAllAsRead();
-            }
-        });
+    .notification-icon {
+        flex-shrink: 0;
+        margin-top: 4px;
     }
-    
-    // Markeer individuele notificatie als gelezen
-    document.querySelectorAll('.mark-read-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const notificationId = this.dataset.id;
-            markAsRead(notificationId);
-        });
-    });
-    
-    // Verwijder notificatie
-    document.querySelectorAll('.delete-notification-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm('Wil je deze melding verwijderen?')) {
-                const notificationId = this.dataset.id;
-                deleteNotification(notificationId);
-            }
-        });
-    });
-    
-    // Markeer alle als gelezen functie
-    function markAllAsRead() {
-        const button = document.getElementById('markAllReadBtn');
-        if (button) {
-            button.textContent = 'Bezig...';
-            button.disabled = true;
+
+    .icon-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .notification-message {
+        flex: 1;
+    }
+
+    .notification-title h4 {
+        margin: 0 0 6px 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .message-text {
+        color: #4b5563;
+        margin: 0 0 8px 0;
+        line-height: 1.5;
+    }
+
+    .user-link {
+        color: #f59e0b;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .user-link:hover {
+        text-decoration: underline;
+    }
+
+    .notification-preview {
+        background: #f9fafb;
+        border-left: 3px solid #d1d5db;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-top: 8px;
+    }
+
+    .notification-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .notification-time {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn.primary {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .action-btn.primary:hover {
+        background: #2563eb;
+    }
+
+    .action-btn.success {
+        background: #10b981;
+        color: white;
+    }
+
+    .action-btn.success:hover {
+        background: #059669;
+    }
+
+    .action-btn.danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .action-btn.danger:hover {
+        background: #dc2626;
+    }
+
+    /* Stats */
+    .notifications-stats {
+        background: #f9fafb;
+        padding: 16px 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .stats-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    /* Empty State */
+    .empty-notifications {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .empty-notifications h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 0 0 12px 0;
+    }
+
+    .empty-notifications p {
+        color: #6b7280;
+        margin: 0 0 24px 0;
+        line-height: 1.6;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+
+    .btn-primary {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #d97706;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Alert Messages */
+    .alert {
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+
+    .alert-error {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+
+    /* Loading states */
+    .notification-item.loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    /* Animation states */
+    .notification-item.marked-read {
+        animation: fadeToRead 0.5s ease-in-out;
+    }
+
+    @keyframes fadeToRead {
+        0% { background-color: #fef3c7; }
+        100% { background-color: transparent; }
+    }
+
+    .notification-item.deleted {
+        animation: slideOut 0.3s ease-in-out forwards;
+    }
+
+    @keyframes slideOut {
+        0% { 
+            opacity: 1;
+            max-height: 200px;
+            padding: 20px;
+        }
+        100% { 
+            opacity: 0;
+            max-height: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .notifications-settings-container {
+            padding: 15px;
         }
         
-        fetch('<?= base_url("notifications/mark-all-read") ?>', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .header-right {
+            order: -1;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+        }
+        
+        .notification-item {
+            padding: 16px;
+        }
+        
+        .notification-footer {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .notification-actions {
+            width: 100%;
+        }
+        
+        .stats-content {
+            flex-direction: column;
+            gap: 8px;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header {
+            padding: 20px;
+        }
+        
+        .notification-content {
+            gap: 12px;
+        }
+        
+        .avatar-image, .system-avatar {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .action-btn {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+    }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Markeer alle notificaties als gelezen
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function() {
+                if (confirm('Wil je alle meldingen als gelezen markeren?')) {
+                    markAllAsRead();
+                }
+            });
+        }
+        
+        // Markeer individuele notificatie als gelezen
+        document.querySelectorAll('.mark-read-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const notificationId = this.dataset.id;
+                markAsRead(notificationId);
+            });
+        });
+        
+        // Verwijder notificatie
+        document.querySelectorAll('.delete-notification-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (confirm('Wil je deze melding verwijderen?')) {
+                    const notificationId = this.dataset.id;
+                    deleteNotification(notificationId);
+                }
+            });
+        });
+        
+        // Markeer alle als gelezen functie
+        function markAllAsRead() {
+            const button = document.getElementById('markAllReadBtn');
+            if (button) {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bezig...';
+                button.disabled = true;
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update alle unread items naar read
-                document.querySelectorAll('.notification-item.unread').forEach(item => {
-                    item.classList.remove('unread');
+            
+            fetch('/?route=notifications/mark-all-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update alle unread items naar read
+                    document.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                        item.classList.add('read', 'marked-read');
+                        
+                        // Verberg "markeer als gelezen" knop
+                        const markBtn = item.querySelector('.mark-read-btn');
+                        if (markBtn) {
+                            markBtn.remove();
+                        }
+                    });
+                    
+                    // Verberg de "markeer alle" knop
+                    if (button) {
+                        button.style.display = 'none';
+                    }
+                    
+                    // Update header tekst
+                    const headerText = document.querySelector('.page-description');
+                    if (headerText) {
+                        headerText.textContent = 'Alle meldingen zijn gelezen';
+                    }
+                    
+                    showNotification('Alle meldingen zijn als gelezen gemarkeerd!', 'success');
+                } else {
+                    if (button) {
+                        button.innerHTML = '<i class="fas fa-check-double"></i> Alles markeren';
+                        button.disabled = false;
+                    }
+                    showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-check-double"></i> Alles markeren';
+                    button.disabled = false;
+                }
+                showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
+            });
+        }
+        
+        // Markeer individuele notificatie als gelezen
+        function markAsRead(notificationId) {
+            const item = document.querySelector(`[data-id="${notificationId}"]`);
+            if (item) {
+                item.classList.add('loading');
+            }
+            
+            fetch('/?route=notifications/mark-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `notification_id=${notificationId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && item) {
+                    item.classList.remove('unread', 'loading');
                     item.classList.add('read', 'marked-read');
                     
-                    // Verberg "markeer als gelezen" knop
+                    // Verwijder de "markeer als gelezen" knop
                     const markBtn = item.querySelector('.mark-read-btn');
                     if (markBtn) {
                         markBtn.remove();
                     }
-                });
-                
-                // Verberg de "markeer alle" knop
-                if (button) {
-                    button.style.display = 'none';
-                }
-                
-                // Update navigatie badge
-                if (window.hideNotificationBadge) {
-                    window.hideNotificationBadge();
-                }
-                
-                // Update header tekst
-                const headerText = document.querySelector('.notifications-header p');
-                if (headerText) {
-                    headerText.textContent = 'Alle meldingen zijn gelezen';
-                }
-                
-                showNotification('Alle meldingen zijn als gelezen gemarkeerd!', 'success');
-            } else {
-                if (button) {
-                    button.textContent = '✓ Alles als gelezen markeren';
-                    button.disabled = false;
-                }
-                showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (button) {
-                button.textContent = '✓ Alles als gelezen markeren';
-                button.disabled = false;
-            }
-            showNotification('Er ging iets mis. Probeer het opnieuw.', 'error');
-        });
-    }
-    
-    // Markeer individuele notificatie als gelezen
-    function markAsRead(notificationId) {
-        const item = document.querySelector(`[data-id="${notificationId}"]`);
-        if (item) {
-            item.classList.add('loading');
-        }
-        
-        fetch('<?= base_url("notifications/mark-read") ?>', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `notification_id=${notificationId}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && item) {
-                item.classList.remove('unread', 'loading');
-                item.classList.add('read', 'marked-read');
-                
-                // Verwijder de "markeer als gelezen" knop
-                const markBtn = item.querySelector('.mark-read-btn');
-                if (markBtn) {
-                    markBtn.remove();
-                }
-                
-                // Update notification count in navigatie
-                updateNotificationCountInNav();
-                
-                showNotification('Melding gemarkeerd als gelezen', 'success');
-            } else {
-                if (item) {
-                    item.classList.remove('loading');
-                }
-                showNotification('Er ging iets mis', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (item) {
-                item.classList.remove('loading');
-            }
-            showNotification('Er ging iets mis', 'error');
-        });
-    }
-    
-    // Verwijder notificatie
-    function deleteNotification(notificationId) {
-        const item = document.querySelector(`[data-id="${notificationId}"]`);
-        if (item) {
-            item.classList.add('loading');
-        }
-        
-        fetch('<?= base_url("notifications/delete") ?>', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `notification_id=${notificationId}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && item) {
-                item.classList.add('deleted');
-                
-                // Verwijder element na animatie
-                setTimeout(() => {
-                    item.remove();
                     
-                    // Check of er nog notificaties zijn
-                    const remainingNotifications = document.querySelectorAll('.notification-item');
-                    if (remainingNotifications.length === 0) {
-                        location.reload(); // Toon empty state
+                    showNotification('Melding gemarkeerd als gelezen', 'success');
+                } else {
+                    if (item) {
+                        item.classList.remove('loading');
                     }
-                }, 300);
-                
-                // Update notification count
-                updateNotificationCountInNav();
-                
-                showNotification('Melding verwijderd', 'success');
-            } else {
-                if (item) {
-                    item.classList.remove('loading');
-                }
-                showNotification('Er ging iets mis', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (item) {
-                item.classList.remove('loading');
-            }
-            showNotification('Er ging iets mis', 'error');
-        });
-    }
-    
-    // Update notification count in navigatie
-    function updateNotificationCountInNav() {
-        fetch('<?= base_url("notifications/count") ?>')
-            .then(response => response.json())
-            .then(data => {
-                if (window.updateNotificationBadge) {
-                    window.updateNotificationBadge(data.count);
+                    showNotification('Er ging iets mis', 'error');
                 }
             })
             .catch(error => {
-                console.error('Error updating nav count:', error);
+                console.error('Error:', error);
+                if (item) {
+                    item.classList.remove('loading');
+                }
+                showNotification('Er ging iets mis', 'error');
             });
-    }
-    
-    // Helper functie voor feedback berichten
-    function showNotification(message, type) {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
-            type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`;
-        notification.textContent = message;
+        }
         
-        document.body.appendChild(notification);
+        // Verwijder notificatie
+        function deleteNotification(notificationId) {
+            const item = document.querySelector(`[data-id="${notificationId}"]`);
+            if (item) {
+                item.classList.add('loading');
+            }
+            
+            fetch('/?route=notifications/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `notification_id=${notificationId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && item) {
+                    item.classList.add('deleted');
+                    
+                    // Verwijder element na animatie
+                    setTimeout(() => {
+                        item.remove();
+                        
+                        // Check of er nog notificaties zijn
+                        const remainingNotifications = document.querySelectorAll('.notification-item');
+                        if (remainingNotifications.length === 0) {
+                            location.reload(); // Toon empty state
+                        }
+                    }, 300);
+                    
+                    showNotification('Melding verwijderd', 'success');
+                } else {
+                    if (item) {
+                        item.classList.remove('loading');
+                    }
+                    showNotification('Er ging iets mis', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (item) {
+                    item.classList.remove('loading');
+                }
+                showNotification('Er ging iets mis', 'error');
+            });
+        }
         
-        // Fade in
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            notification.style.transition = 'all 0.3s ease';
-            notification.style.opacity = '1';
-            notification.style.transform = 'translateX(0)';
-        }, 10);
-        
-        // Fade out en verwijderen
-        setTimeout(() => {
+        // Helper functie voor feedback berichten
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Fade in
             notification.style.opacity = '0';
             notification.style.transform = 'translateX(100%)';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-});
-</script>
+            setTimeout(() => {
+                notification.style.transition = 'all 0.3s ease';
+                notification.style.opacity = '1';
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Fade out en verwijderen
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    });
+    </script>
+</body>
+</html>

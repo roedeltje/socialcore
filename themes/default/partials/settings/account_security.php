@@ -3,11 +3,11 @@
 // Eenvoudige versie voor debug
 ?>
 <?php
-//error_reporting(E_ALL);
-//ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 
-// Eenvoudige test
-//echo "Account Security pagina wordt geladen!";
+// // Eenvoudige test
+// echo "Account Security pagina wordt geladen!";
 ?>
 <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
     <!-- Beveiligingsniveau indicator -->

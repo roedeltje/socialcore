@@ -1,14 +1,51 @@
-<!--<div style="background: #f0f0f0; padding: 10px; margin-bottom: 20px;">
-    Debug info:<br>
-    activeTab: <?= $activeTab ?? 'niet ingesteld' ?><br>
-    Bestaat account_security.php: <?= file_exists(__DIR__ . '/../partials/settings/account_security.php') ? 'Ja' : 'Nee' ?><br>
-    Huidig pad: <?= __DIR__ ?><br>
-    Pad naar bestand: <?= __DIR__ . '/../partials/settings/account_security.php' ?><br>
-</div> -->
+<?php
+// Bepaal welke sectie te tonen op basis van de route
+$currentRoute = $_GET['route'] ?? 'profile/edit';
+$currentSection = 'general'; // default
 
+// Parse de route om de sectie te bepalen
+if (strpos($currentRoute, 'profile/security') !== false) {
+    $currentSection = 'security';
+} elseif (strpos($currentRoute, 'profile/privacy') !== false) {
+    $currentSection = 'privacy';
+} elseif (strpos($currentRoute, 'profile/notifications') !== false) {
+    $currentSection = 'notifications';
+}
+
+echo "<!-- DEBUG: currentRoute = '$currentRoute', currentSection = '$currentSection' -->";
+?>
+
+<?php
+echo "<!-- PROFILESERVICE TEST START -->";
+
+// Test 1: Kan we de klasse laden?
+try {
+    require_once __DIR__ . '/../../../app/Services/ProfileService.php';
+    echo "<!-- ProfileService file loaded -->";
+} catch (Exception $e) {
+    echo "<!-- Error loading ProfileService: " . $e->getMessage() . " -->";
+}
+
+// Test 2: Bestaat de klasse?
+if (class_exists('App\\Services\\ProfileService')) {
+    echo "<!-- ProfileService class exists -->";
+} else {
+    echo "<!-- ProfileService class NOT exists -->";
+}
+
+// Test 3: Kunnen we een instantie maken?
+try {
+    $testService = new \App\Services\ProfileService();
+    echo "<!-- ProfileService instance created -->";
+} catch (Exception $e) {
+    echo "<!-- Error creating ProfileService: " . $e->getMessage() . " -->";
+}
+
+echo "<!-- PROFILESERVICE TEST END -->";
+?>
 <!--
 Bestand: /themes/default/pages/edit-profile.php
-Vervang je huidige edit-profile.php met deze versie
+Clean versie - theme.js handelt avatar upload af
 -->
 
 <div class="container mx-auto px-4 py-8">
@@ -54,45 +91,31 @@ Vervang je huidige edit-profile.php met deze versie
                     <nav class="p-2">
                         <ul class="space-y-1">
                             <li>
-                                <a href="<?= base_url('profile/edit') ?>" 
-                                   class="block px-3 py-2 rounded-md bg-blue-50 text-blue-700 font-medium">
-                                    <i class="fas fa-user mr-2 text-blue-600"></i> 
+                                <a href="<?= base_url('?route=profile/edit') ?>" 
+                                class="block px-3 py-2 rounded-md <?= ($currentSection === 'general') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-user mr-2 <?= ($currentSection === 'general') ? 'text-blue-600' : 'text-gray-400' ?>"></i> 
                                     Algemeen
                                 </a>
                             </li>
                             <li>
-                                <a href="#avatar-section" 
-                                   class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 smooth-scroll">
-                                    <i class="fas fa-camera mr-2 text-gray-400"></i> 
-                                    Profielfoto
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#basic-info" 
-                                   class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 smooth-scroll">
-                                    <i class="fas fa-info-circle mr-2 text-gray-400"></i> 
-                                    Basisgegevens
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#account-security" 
-                                   class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50">
-                                    <i class="fas fa-lock mr-2 text-gray-400"></i> 
-                                    Account & Beveiliging
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#notifications" 
-                                   class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50">
-                                    <i class="fas fa-bell mr-2 text-gray-400"></i> 
-                                    Notificaties
+                                <a href="<?= base_url('?route=security') ?>" 
+                                class="block px-3 py-2 rounded-md <?= ($currentSection === 'security') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-shield-alt mr-2 <?= ($currentSection === 'security') ? 'text-blue-600' : 'text-gray-400' ?>"></i> 
+                                    Veiligheid
                                 </a>
                             </li>
                             <li>
                                 <a href="<?= base_url('?route=privacy') ?>" 
-                                class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50">
-                                    <i class="fas fa-shield-alt mr-2 text-gray-400"></i> 
+                                class="block px-3 py-2 rounded-md <?= ($currentSection === 'privacy') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-user-secret mr-2 <?= ($currentSection === 'privacy') ? 'text-blue-600' : 'text-gray-400' ?>"></i> 
                                     Privacy
+                                </a>
+                            </li>
+                            <li>
+                                <a href="<?= base_url('?route=notifications') ?>" 
+                                class="block px-3 py-2 rounded-md <?= ($currentSection === 'notifications') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50' ?>">
+                                    <i class="fas fa-bell mr-2 <?= ($currentSection === 'notifications') ? 'text-blue-600' : 'text-gray-400' ?>"></i> 
+                                    Notificaties
                                 </a>
                             </li>
                         </ul>
@@ -103,7 +126,7 @@ Vervang je huidige edit-profile.php met deze versie
             <!-- Main content area -->
             <div class="w-full lg:w-3/4 space-y-6">
                 
-                <!-- Avatar Upload Section -->
+                <!-- Avatar Upload Section - THEME.JS VERSIE -->
                 <section id="avatar-section">
                     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">
@@ -111,97 +134,97 @@ Vervang je huidige edit-profile.php met deze versie
                             Profielfoto
                         </h3>
                         
-                        <div class="flex flex-col md:flex-row items-start gap-6">
-                            <!-- Huidige Avatar Weergave -->
-                            <div class="flex flex-col items-center">
-                                <div class="relative group">
-                                    <img id="currentAvatar" 
-                                         src="<?= $user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
-                                         alt="<?= htmlspecialchars($user['display_name']) ?>" 
-                                         class="w-32 h-32 rounded-full object-cover border-4 border-blue-200 shadow-lg">
-                                    
-                                    <!-- Overlay bij hover -->
-                                    <div class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                        <i class="fas fa-camera text-white text-2xl"></i>
-                                    </div>
-                                </div>
-                                
-                                <p class="text-sm text-gray-600 mt-2 text-center max-w-32">
-                                    <?= htmlspecialchars($user['display_name']) ?>
-                                </p>
+                        <!-- Messages container voor avatar feedback -->
+                        <div id="avatarMessages" class="mb-4"></div>
+                        
+                        <!-- Huidige avatar weergave -->
+                        <div class="flex items-center space-x-6 mb-6">
+                            <div class="relative">
+                                <img id="currentAvatar" 
+                                     src="<?= htmlspecialchars($user['avatar_url'] ?? '/public/assets/images/default-avatar.png') ?>" 
+                                     alt="Huidige profielfoto" 
+                                     class="w-24 h-24 rounded-full border-4 border-blue-200 object-cover">
                             </div>
-                            
-                            <!-- Upload Formulier -->
                             <div class="flex-1">
-                                <form id="avatarUploadForm" enctype="multipart/form-data" class="space-y-4">
-                                    <!-- File Input (verborgen) -->
-                                    <input type="file" 
-                                           id="avatarFileInput" 
-                                           name="avatar" 
-                                           accept="image/*"
-                                           class="hidden">
-                                    
-                                    <!-- Upload Preview -->
-                                    <div id="avatarPreview" class="hidden">
-                                        <div class="relative inline-block">
-                                            <img id="previewImage" 
-                                                 src="" 
-                                                 alt="Preview" 
-                                                 class="w-24 h-24 rounded-full object-cover border-2 border-gray-300">
-                                            <button type="button" 
-                                                    id="removePreview"
-                                                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs hover:bg-red-600 transition-colors">
-                                                ×
-                                            </button>
-                                        </div>
-                                        <p class="text-sm text-gray-600 mt-2">Preview van je nieuwe foto</p>
-                                    </div>
-                                    
-                                    <!-- Upload Buttons -->
-                                    <div class="flex flex-wrap gap-3">
-                                        <button type="button" 
-                                                id="selectAvatarBtn"
-                                                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                            <i class="fas fa-upload mr-2"></i>
-                                            Nieuwe foto kiezen
-                                        </button>
-                                        
-                                        <button type="submit" 
-                                                id="uploadAvatarBtn"
-                                                disabled
-                                                class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                                            <i class="fas fa-check mr-2"></i>
-                                            <span id="uploadBtnText">Uploaden</span>
-                                        </button>
-                                        
-                                        <button type="button" 
-                                                id="removeAvatarBtn"
-                                                class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                                            <i class="fas fa-trash mr-2"></i>
-                                            Verwijderen
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Upload Progress -->
-                                    <div id="uploadProgress" class="hidden">
-                                        <div class="bg-gray-200 rounded-full h-2">
-                                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                                        </div>
-                                        <p class="text-sm text-gray-600 mt-1">Uploaden...</p>
-                                    </div>
-                                    
-                                    <!-- File Info -->
-                                    <div class="text-sm text-gray-500">
-                                        <p><strong>Toegestane formaten:</strong> JPG, PNG, GIF, WebP</p>
-                                        <p><strong>Maximale grootte:</strong> 2MB</p>
-                                        <p><strong>Aanbevolen afmetingen:</strong> 400x400 pixels (vierkant)</p>
-                                    </div>
-                                </form>
+                                <p class="text-gray-600 mb-2">
+                                    JPG, PNG, GIF of WebP. Maximaal 2MB.
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    Voor de beste kwaliteit gebruik je een vierkante afbeelding van 400x400 pixels.
+                                </p>
                             </div>
                         </div>
                         
-                        <!-- Success/Error Messages -->
-                        <div id="avatarMessages" class="mt-4"></div>
+                        <!-- Upload Form - EXACT ZOALS THEME.JS VERWACHT -->
+                        <form id="avatarUploadForm" enctype="multipart/form-data" class="space-y-4">
+                            <!-- Hidden file input -->
+                            <input type="file" 
+                                   id="avatarFileInput" 
+                                   name="avatar" 
+                                   accept="image/*" 
+                                   class="hidden">
+                            
+                            <!-- Preview container -->
+                            <div id="avatarPreview" class="hidden">
+                                <div class="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4 mb-4">
+                                    <div class="flex items-center space-x-4">
+                                        <img id="previewImage" 
+                                             src="" 
+                                             alt="Preview" 
+                                             class="w-16 h-16 rounded-full object-cover border-2 border-blue-400">
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-600 mb-2">Preview van je nieuwe profielfoto</p>
+                                            <button type="button" 
+                                                    id="removePreview" 
+                                                    class="text-red-600 hover:text-red-800 text-sm">
+                                                <i class="fas fa-times mr-1"></i>
+                                                Verwijderen
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action buttons -->
+                            <div class="flex flex-wrap gap-3">
+                                <!-- Select file button -->
+                                <button type="button" 
+                                        id="selectAvatarBtn"
+                                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                    <i class="fas fa-image mr-2"></i>
+                                    Foto selecteren
+                                </button>
+                                
+                                <!-- Upload button -->
+                                <button type="submit" 
+                                        id="uploadAvatarBtn"
+                                        disabled
+                                        class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    <span id="uploadBtnText">Uploaden</span>
+                                </button>
+                                
+                                <!-- Remove avatar button -->
+                                <?php if (!empty($user['avatar']) && $user['avatar'] !== '/public/assets/images/default-avatar.png'): ?>
+                                <button type="button" 
+                                        id="removeAvatarBtn"
+                                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                    <i class="fas fa-trash mr-2"></i>
+                                    Verwijderen
+                                </button>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Progress indicator -->
+                            <div id="uploadProgress" class="hidden">
+                                <div class="bg-blue-100 border border-blue-200 rounded-lg p-3">
+                                    <div class="flex items-center">
+                                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
+                                        <span class="text-blue-800 text-sm">Bezig met uploaden...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </section>
                 
@@ -287,7 +310,7 @@ Vervang je huidige edit-profile.php met deze versie
                                           rows="4"
                                           placeholder="Vertel iets over jezelf..."
                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"><?= htmlspecialchars($user['bio'] ?? '') ?></textarea>
-                                <p class="text-sm text-gray-500 mt-1">Max. 500 karakters</p>
+                                <div id="bioCounter" class="text-sm text-gray-500 mt-1">0/500 karakters</div>
                             </div>
                             
                             <!-- Submit Button -->
@@ -301,134 +324,74 @@ Vervang je huidige edit-profile.php met deze versie
                         </form>
                     </div>
                 </section>
-                
-                <!-- Account & Security Section -->
-                <section id="account-security">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                            <i class="fas fa-lock mr-2 text-blue-500"></i>
-                            Account & Beveiliging
-                        </h3>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <p class="text-blue-800">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                Wachtwoord wijzigen en andere beveiligingsinstellingen komen binnenkort beschikbaar.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-                
-                <!-- Notifications Section -->
-                <section id="notifications">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                            <i class="fas fa-bell mr-2 text-blue-500"></i>
-                            Notificatie-instellingen
-                        </h3>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <p class="text-blue-800">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                Notificatie-instellingen komen binnenkort beschikbaar. Je kunt dan instellen welke meldingen je wilt ontvangen.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-                
-                <!-- Privacy Settings Section -->
-                <section id="privacy-settings">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                            <i class="fas fa-shield-alt mr-2 text-blue-500"></i>
-                            Privacy-instellingen
-                        </h3>
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-                            <div class="flex items-start space-x-4">
-                                <div class="flex-shrink-0">
-                                    <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
-                                        <i class="fas fa-shield-alt text-blue-600 text-xl"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-1">
-                                    <h4 class="text-lg font-medium text-blue-900 mb-2">
-                                        Beheer je privacy-instellingen
-                                    </h4>
-                                    <p class="text-blue-800 mb-4">
-                                        Bepaal wie jouw profiel, foto's en berichten kan zien. Jouw privacy staat bij ons voorop.
-                                    </p>
-                                    <a href="<?= base_url('?route=privacy') ?>" 
-                                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                        <i class="fas fa-cog mr-2"></i>
-                                        Privacy-instellingen beheren
-                                        <i class="fas fa-arrow-right ml-2"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+
+                <!-- Security Section -->
+                <?php if ($currentSection === 'security'): ?>
+                    <section id="security-info">
+                        <?php include __DIR__ . '/../partials/settings/account_security.php'; ?>
+                    </section>
+                <?php endif; ?>
+
             </div>
         </div>
     </div>
 </div>
+
+<!-- MINIMALE JAVASCRIPT - ALLEEN VOOR BIO CHARACTER COUNTER -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Bio character counter
+    const bioTextarea = document.getElementById('bio');
+    const bioCounter = document.getElementById('bioCounter');
+    
+    if (bioTextarea && bioCounter) {
+        function updateBioCounter() {
+            const length = bioTextarea.value.length;
+            const maxLength = 500;
+            bioCounter.textContent = `${length}/${maxLength} karakters`;
+            
+            if (length > maxLength) {
+                bioCounter.classList.add('text-red-500');
+                bioCounter.classList.remove('text-gray-500');
+                bioTextarea.classList.add('border-red-500');
+            } else {
+                bioCounter.classList.remove('text-red-500');
+                bioCounter.classList.add('text-gray-500');
+                bioTextarea.classList.remove('border-red-500');
+            }
+        }
+        
+        bioTextarea.addEventListener('input', updateBioCounter);
+        updateBioCounter(); // Initiële waarde
+    }
+    
+    // Smooth scroll voor anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+</script>
 
 <style>
 .smooth-scroll {
     scroll-behavior: smooth;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
 .sticky {
     position: sticky;
 }
-</style>
 
-<script>
-// Smooth scroll voor anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    });
-});
-
-// Character counter voor bio
-const bioTextarea = document.getElementById('bio');
-if (bioTextarea) {
-    const maxLength = 500;
-    
-    // Maak counter element
-    const counter = document.createElement('div');
-    counter.className = 'text-sm text-gray-500 mt-1';
-    counter.textContent = `${bioTextarea.value.length}/${maxLength} karakters`;
-    
-    // Vervang de bestaande help text
-    const helpText = bioTextarea.parentNode.querySelector('.text-sm.text-gray-500');
-    if (helpText) {
-        helpText.replaceWith(counter);
-    }
-    
-    bioTextarea.addEventListener('input', function() {
-        const length = this.value.length;
-        counter.textContent = `${length}/${maxLength} karakters`;
-        
-        if (length > maxLength) {
-            counter.className = 'text-sm text-red-500 mt-1';
-            this.classList.add('border-red-500');
-        } else {
-            counter.className = 'text-sm text-gray-500 mt-1';
-            this.classList.remove('border-red-500');
-        }
-    });
+.form-group input:focus,
+.form-group textarea:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
-</script>
+</style>

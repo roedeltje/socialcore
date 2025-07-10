@@ -381,24 +381,26 @@ class Controller
             // Eenvoudige mapping van controller/view naar themanamen
             $themeMappings = [
                 'default' => [
-                    'home/index' => 'pages/home.php',
-                            'profile/index' => 'pages/profile.php', 
-                            'profile/edit' => 'pages/edit-profile.php',
-                            'profile/avatar' => 'pages/edit-profile.php',
-                            'profile/privacy' => 'pages/edit-profile.php',
-                            'profile/notifications' => 'pages/edit-profile.php',
-                            'feed/index' => 'pages/timeline.php',
-                            'auth/login' => 'pages/login.php',
-                            'auth/register' => 'pages/register.php',
-                            'about/index' => 'pages/about.php',
-                            'friends/index' => 'templates/friends.php',
-                            'friends/requests' => 'templates/friend-requests.php',
-                            'notifications/index' => 'templates/notifications.php',
-                            'messages/index' => 'pages/messages/index.php',
-                            'messages/compose' => 'pages/messages/compose.php',
-                            'messages/conversation' => 'pages/messages/conversation.php',
-                            // ... rest van default mappings
-                        ],
+                                'home/index' => 'pages/home.php',
+                                'profile/index' => 'pages/profile.php', 
+                                'profile/edit' => 'pages/edit-profile.php',
+                                'profile/avatar' => 'pages/edit-profile.php',
+                                'feed/index' => 'pages/timeline.php',
+                                'auth/login' => 'pages/login.php',
+                                'auth/register' => 'pages/register.php',
+                                'about/index' => 'pages/about.php',
+                                'friends/index' => 'templates/friends.php',
+                                'friends/requests' => 'templates/friend-requests.php',
+                                'notifications/index' => 'pages/notifications.php',
+                                'messages/index' => 'pages/messages/index.php',
+                                'messages/compose' => 'pages/messages/compose.php',
+                                'messages/conversation' => 'pages/messages/conversation.php',
+                                
+                                // NIEUWE HANDLER MAPPINGS:
+                                'privacy-settings/index' => 'pages/privacy-settings.php',
+                                'security-settings' => 'pages/security-settings.php',
+                                'notifications' => 'pages/notifications.php',
+                            ],
                 'twitter' => [
                     'home/index' => 'pages/home.php',
                             'profile/index' => 'pages/profile.php',
@@ -427,6 +429,10 @@ class Controller
             if (isset($themePageMap[$viewKey])) {
                 $themeFile = $themePageMap[$viewKey];
             }
+            // VOEG DEZE DEBUG TOE:
+            echo "<!-- DEBUG: viewKey = '$viewKey' -->";
+            echo "<!-- DEBUG: themeFile = '$themeFile' -->";
+            echo "<!-- DEBUG: controller = '$controller', action = '$action' -->";
         }
         
         // Bepaal de mogelijke bestandslocaties in volgorde van prioriteit

@@ -272,7 +272,7 @@
                         <div class="krabbels-container mt-4">
                             <!-- Krabbel formulier (voor andere gebruikers) -->
                             <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] != $user['id']): ?>
-                                <form action="<?= base_url('?route=profile/post-krabbel') ?>" method="post" class="bg-blue-50 p-4 rounded-lg mb-4">
+                                <form action="<?= base_url('?route=profile/post-profile') ?>" method="post" class="bg-blue-50 p-4 rounded-lg mb-4">
                                     <h4 class="font-bold text-blue-700 mb-3">Schrijf een krabbel</h4>
                                     <input type="hidden" name="receiver_id" value="<?= $user['id'] ?>">
                                     <input type="hidden" name="receiver_username" value="<?= $user['username'] ?>">

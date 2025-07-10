@@ -205,23 +205,42 @@ function setupPostForm(elements, type) {
  * ===== LIKE BUTTONS =====
  */
 function initLikeButtons() {
+    console.log('🔧 Setting up like buttons...');
+    console.log('🔍 Found like buttons:', document.querySelectorAll('.like-button').length);
+    
     document.addEventListener('click', function(e) {
+        console.log('🎯 ANY CLICK DETECTED:', e.target);
+        
         const likeButton = e.target.closest('.like-button');
         if (likeButton) {
+            console.log('✅ LIKE BUTTON FOUND!', likeButton);
             e.preventDefault();
             handlePostLike(likeButton);
+        } else {
+            console.log('❌ No like button found for click on:', e.target);
         }
     });
 }
 
 function handlePostLike(button) {
+    console.log('🎯 handlePostLike called with button:', button);
+    console.log('🔍 Button disabled?', button.disabled);
+    
     const postId = button.getAttribute('data-post-id');
     const likeCountElement = button.querySelector('.like-count');
-    const likeIcon = button.querySelector('.like-icon');
+    const likeIcon = button.querySelector('.like-icon'); // Kan null zijn
     
-    if (button.disabled || !postId) return;
+    console.log('🔍 Post ID:', postId);
+    console.log('🔍 Like count element:', likeCountElement);
+    console.log('🔍 Like icon element:', likeIcon);
+    
+    if (button.disabled || !postId) {
+        console.log('❌ Button disabled or no post ID - exiting');
+        return;
+    }
     
     button.disabled = true;
+    console.log('🔄 Starting fetch request...');
     
     fetch('/feed/like', {
         method: 'POST',
@@ -230,26 +249,52 @@ function handlePostLike(button) {
         },
         body: 'post_id=' + encodeURIComponent(postId)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('📡 Response received:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('📦 Response data:', data);
         if (data.success) {
+            // Update like count in button (altijd)
             likeCountElement.textContent = data.like_count;
             
+            // 🎯 GEFIXTE versie - zoek specifiek in hyves-post-card
+            const postContainer = button.closest('.hyves-post-card');
+            console.log('🔍 Post container found:', !!postContainer);
+            
+            if (postContainer) {
+                const statsLikes = postContainer.querySelector('.stats-likes');
+                if (statsLikes) {
+                    statsLikes.textContent = data.like_count + ' respect';
+                    console.log('📊 Updated stats-likes counter:', data.like_count + ' respect');
+                } else {
+                    console.log('ℹ️ No .stats-likes found in this post');
+                }
+            } else {
+                console.log('ℹ️ No .hyves-post-card container found');
+            }
+            
+            // Button state (altijd)
             if (data.action === 'liked') {
                 button.classList.add('liked');
             } else {
                 button.classList.remove('liked');
             }
+            
+            console.log('✅ Like updated successfully');
         } else {
+            console.log('❌ Server error:', data.message);
             alert('Fout: ' + data.message);
         }
     })
     .catch(error => {
-        console.error('Like error:', error);
+        console.error('❌ Network error:', error);
         alert('Er ging iets mis bij het liken van dit bericht');
     })
     .finally(() => {
         button.disabled = false;
+        console.log('🔓 Button re-enabled');
     });
 }
 
@@ -338,6 +383,10 @@ function setupImageUpload(uploadId, previewId, removeId) {
 function initPostMenus() {
     console.log('🔧 Setting up post menus...');
     document.addEventListener('click', function(e) {
+        const likeButton = e.target.closest('.like-button');
+        if (likeButton) {
+            return; // Laat de like button handler dit afhandelen
+        }
         console.log('🔍 Click detected on:', e.target);
         
         // Post menu toggle
@@ -1087,7 +1136,10 @@ function initAvatarUpload() {
     const currentAvatar = document.getElementById('currentAvatar');
     const uploadProgress = document.getElementById('uploadProgress');
     
-    if (preview) preview.style.display = 'none';
+    if (preview) {
+        preview.classList.add('hidden');
+        preview.style.display = '';  // Reset inline style
+    }
     
     // File selection
     if (selectBtn && fileInput) {
@@ -1096,33 +1148,39 @@ function initAvatarUpload() {
     
     // File selected
     if (fileInput) {
-        fileInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file && isValidAvatarFile(file)) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    if (previewImage && preview && uploadBtn) {
-                        previewImage.src = e.target.result;
-                        preview.style.display = 'block';
-                        uploadBtn.disabled = false;
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file && isValidAvatarFile(file)) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (previewImage && preview && uploadBtn) {
+                    previewImage.src = e.target.result;
+                    preview.classList.remove('hidden');  // ✅ Correct
+                    uploadBtn.disabled = false;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
     
     // Remove preview
     if (removePreview) {
-        removePreview.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (fileInput) fileInput.value = '';
-            if (preview) preview.style.display = 'none';
-            if (previewImage) previewImage.src = '';
-            if (uploadBtn) uploadBtn.disabled = true;
-        });
+    removePreview.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (fileInput) fileInput.value = '';
+        if (preview) preview.classList.add('hidden');      // ✅ Fix: geen style.display
+        if (previewImage) previewImage.src = '';
+        if (uploadBtn) uploadBtn.disabled = true;
+    });
+}
+
+    // Initialisatie
+    if (preview) {
+        preview.classList.add('hidden');
+        preview.style.display = '';  // Reset inline style  
     }
     
     // Upload avatar
@@ -1147,7 +1205,7 @@ function initAvatarUpload() {
                 uploadProgress.classList.remove('hidden');
             }
             
-            fetch('/profile/upload-avatar', {
+            fetch('/?route=profile/upload-avatar', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -1156,17 +1214,26 @@ function initAvatarUpload() {
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    if (currentAvatar) currentAvatar.src = data.avatar_url;
-                    if (fileInput && preview) {
-                        fileInput.value = '';
-                        preview.classList.add('hidden');
+                    if (data.success) {
+                        // Update huidige avatar
+                        if (data.avatar_url && currentAvatar) {
+                            currentAvatar.src = data.avatar_url;
+                        }
+                        
+                        // 🔧 FIX: Reset form MAAR behoud preview
+                        if (fileInput) fileInput.value = '';
+                        
+                        // 🔧 FIX: Verberg preview NA een korte delay
+                        setTimeout(() => {
+                            if (preview) preview.classList.add('hidden');  // ← Juiste variabele naam!
+                        }, 1500);
+                        
+                        showAvatarMessage(data.message || 'Avatar succesvol geüpload!', 'success');
+                        updateNavigationAvatar(data.avatar_url);
+                        
+                    } else {
+                        showAvatarMessage(data.message || 'Upload mislukt', 'error');
                     }
-                    showAvatarMessage(data.message, 'success');
-                    updateNavigationAvatar(data.avatar_url);
-                } else {
-                    showAvatarMessage(data.message, 'error');
-                }
             })
             .catch(error => {
                 console.error('Upload error:', error);
@@ -1189,7 +1256,7 @@ function initAvatarUpload() {
     if (removeBtn) {
         removeBtn.addEventListener('click', function() {
             if (confirm('Weet je zeker dat je je profielfoto wilt verwijderen?')) {
-                fetch('/profile/remove-avatar', {
+                fetch('/?route=profile/remove-avatar', {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'

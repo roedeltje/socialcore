@@ -7,6 +7,8 @@ use App\Auth\Auth;
 use App\Helpers\SecuritySettings;
 use PDO;
 use Exception;
+use App\Services\PostService;
+use App\Services\ProfileService;
 
 class ProfileController extends Controller
 {
@@ -50,7 +52,8 @@ class ProfileController extends Controller
         }
         
         // Haal gebruikersgegevens op
-        $user = $this->getTargetUser($targetUserId, $targetUsername);
+        $profileService = new ProfileService();
+        $user = $profileService->getTargetUser($targetUserId, $targetUsername);
         
         if (!$user) {
             $_SESSION['error_message'] = 'Gebruiker niet gevonden.';
@@ -132,39 +135,39 @@ class ProfileController extends Controller
     /**
      * Haal de doelgebruiker op (door ID of username)
      */
-    private function getTargetUser($userId = null, $username = null)
-    {
-        try {
-            if ($userId !== null) {
-                // Zoek op user ID
-                $stmt = $this->db->prepare("SELECT id, username FROM users WHERE id = ?");
-                $stmt->execute([$userId]);
-                $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
+    // private function getTargetUser($userId = null, $username = null)
+    // {
+    //     try {
+    //         if ($userId !== null) {
+    //             // Zoek op user ID
+    //             $stmt = $this->db->prepare("SELECT id, username FROM users WHERE id = ?");
+    //             $stmt->execute([$userId]);
+    //             $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($userBasic) {
-                    return $this->getUserData($userBasic['id'], $userBasic['username']);
-                }
-            } elseif ($username !== null) {
-                // Zoek op username
-                $stmt = $this->db->prepare("SELECT id, username FROM users WHERE username = ?");
-                $stmt->execute([$username]);
-                $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
+    //             if ($userBasic) {
+    //                 return $this->getUserData($userBasic['id'], $userBasic['username']);
+    //             }
+    //         } elseif ($username !== null) {
+    //             // Zoek op username
+    //             $stmt = $this->db->prepare("SELECT id, username FROM users WHERE username = ?");
+    //             $stmt->execute([$username]);
+    //             $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($userBasic) {
-                    return $this->getUserData($userBasic['id'], $userBasic['username']);
-                }
-            } else {
-                // Geen specifieke gebruiker, gebruik ingelogde gebruiker
-                $userId = $_SESSION['user_id'];
-                $username = $_SESSION['username'] ?? 'gebruiker';
-                return $this->getUserData($userId, $username);
-            }
-        } catch (\Exception $e) {
-            error_log("Error fetching target user: " . $e->getMessage());
-        }
+    //             if ($userBasic) {
+    //                 return $this->getUserData($userBasic['id'], $userBasic['username']);
+    //             }
+    //         } else {
+    //             // Geen specifieke gebruiker, gebruik ingelogde gebruiker
+    //             $userId = $_SESSION['user_id'];
+    //             $username = $_SESSION['username'] ?? 'gebruiker';
+    //             return $this->getUserData($userId, $username);
+    //         }
+    //     } catch (\Exception $e) {
+    //         error_log("Error fetching target user: " . $e->getMessage());
+    //     }
         
-        return null;
-    }
+    //     return null;
+    // }
     
     /**
      * Haal gebruikersgegevens op
@@ -513,7 +516,7 @@ class ProfileController extends Controller
 }
 
     /**
-     * Update profielgegevens
+     * Update profielgegevens - GEMIGREERD NAAR PROFILESERVICE ✅
      */
     public function update()
     {
@@ -525,105 +528,40 @@ class ProfileController extends Controller
         
         $userId = $_SESSION['user_id'];
         
-        // 🔒 SECURITY: Check profile update rate limiting
-        if (!$this->checkProfileUpdateRateLimit($userId)) {
-            $_SESSION['error_message'] = 'Je kunt je profiel maar 5 keer per uur bijwerken. Probeer het later opnieuw.';
-            redirect('profile/edit');
-            return;
-        }
+        // 🚀 NIEUWE CODE: Gebruik ProfileService in plaats van directe database operaties
+        $profileService = new ProfileService();
         
-        $form = new \App\Helpers\FormHelper();
+        // Verwerk update via service
+        $result = $profileService->updateProfile($userId, $_POST);
         
-        // 🔒 SECURITY: Sanitize en valideer alle input
-        $sanitizedData = $this->sanitizeProfileInput($_POST);
-        $errors = $this->validateProfileData($sanitizedData);
-        
-        // Als er fouten zijn, ga terug naar het formulier
-        if (!empty($errors)) {
-            $_SESSION['form_errors'] = $errors;
-            $_SESSION['form_data'] = $sanitizedData; // Gebruik gesanitizeerde data
-            $_SESSION['error_message'] = 'Er zijn fouten in het formulier. Controleer je invoer.';
-            redirect('profile/edit');
-            return;
-        }
-        
-        try {
-            // Start een database transactie
-            $this->db->beginTransaction();
-            
-            // Controleer of er al een profiel bestaat
-            $stmt = $this->db->prepare("SELECT id FROM user_profiles WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $profileExists = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($profileExists) {
-                // Update bestaand profiel
-                $stmt = $this->db->prepare("
-                    UPDATE user_profiles SET 
-                        display_name = ?,
-                        bio = ?,
-                        location = ?,
-                        website = ?,
-                        phone = ?,
-                        date_of_birth = ?,
-                        gender = ?,
-                        updated_at = NOW()
-                    WHERE user_id = ?
-                ");
-                
-                $stmt->execute([
-                    $sanitizedData['display_name'],
-                    $sanitizedData['bio'],
-                    $sanitizedData['location'],
-                    $sanitizedData['website'],
-                    $sanitizedData['phone'],
-                    $sanitizedData['date_of_birth'],
-                    $sanitizedData['gender'],
-                    $userId
-                ]);
-            } else {
-                // Maak nieuw profiel aan
-                $stmt = $this->db->prepare("
-                    INSERT INTO user_profiles (
-                        user_id, display_name, bio, location, website, 
-                        phone, date_of_birth, gender, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-                ");
-                
-                $stmt->execute([
-                    $userId,
-                    $sanitizedData['display_name'],
-                    $sanitizedData['bio'],
-                    $sanitizedData['location'],
-                    $sanitizedData['website'],
-                    $sanitizedData['phone'],
-                    $sanitizedData['date_of_birth'],
-                    $sanitizedData['gender']
-                ]);
+        // Verwerk resultaat
+        if ($result['success']) {
+            // Update ook de sessie met de nieuwe display name
+            if (isset($result['updated_data']['display_name'])) {
+                $_SESSION['display_name'] = $result['updated_data']['display_name'];
             }
             
-            // 🔒 SECURITY: Log profile update activiteit
-            $this->logProfileUpdate($userId);
-            
-            // Commit de transactie
-            $this->db->commit();
-            
-            // Update ook de sessie met de nieuwe display name
-            $_SESSION['display_name'] = $sanitizedData['display_name'];
-            
             // Succes bericht
-            $_SESSION['success_message'] = 'Je profiel is succesvol bijgewerkt!';
+            $_SESSION['success_message'] = $result['message'];
             redirect('profile');
+        } else {
+            // Fout afhandeling
+            $_SESSION['error_message'] = $result['message'];
             
-        } catch (\Exception $e) {
-            // Rollback bij fout
-            $this->db->rollback();
-            error_log("Error updating profile: " . $e->getMessage());
+            // Als er validatiefouten zijn, bewaar ze voor het formulier
+            if (isset($result['errors'])) {
+                $_SESSION['form_errors'] = $result['errors'];
+            }
             
-            $_SESSION['error_message'] = 'Er is een fout opgetreden bij het opslaan. Probeer het opnieuw.';
+            // Bewaar gesanitizeerde data voor het formulier
+            if (isset($result['sanitized_data'])) {
+                $_SESSION['form_data'] = $result['sanitized_data'];
+            }
+            
             redirect('profile/edit');
         }
     }
+
 
     /**
      * Update de profielfoto
@@ -663,9 +601,19 @@ class ProfileController extends Controller
         );
         
         if ($uploadResult['success']) {
+            // 🔍 DEBUG: Log dat upload succesvol was
+            file_put_contents('/var/www/socialcore.local/debug/avatar_upload_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Upload SUCCESS in ProfileController - uploadResult success\n", 
+                FILE_APPEND | LOCK_EX);
+            
             // Update de gebruiker in de database met het nieuwe avatar pad
             $userId = $_SESSION['user_id'];
             $avatarPath = $uploadResult['path'];
+            
+            // 🔍 DEBUG: Log avatar path details
+            file_put_contents('/var/www/socialcore.local/debug/avatar_upload_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Avatar path: {$avatarPath} for user: {$userId}\n", 
+                FILE_APPEND | LOCK_EX);
             
             // Hier je database update code
             // $userModel->updateAvatar($userId, $avatarPath);
@@ -673,22 +621,30 @@ class ProfileController extends Controller
             // Update de sessie
             $_SESSION['avatar'] = $avatarPath;
             
+            // 🔍 DEBUG: Log session update
+            file_put_contents('/var/www/socialcore.local/debug/avatar_upload_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Session updated with avatar: {$avatarPath}\n", 
+                FILE_APPEND | LOCK_EX);
+            
             set_flash_message('success', 'Profielfoto succesvol bijgewerkt');
         } else {
-            set_flash_message('error', $uploadResult['message']);
+            // 🔍 DEBUG: Log dat upload mislukte
+            file_put_contents('/var/www/socialcore.local/debug/avatar_upload_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Upload FAILED in ProfileController - uploadResult failed\n", 
+                FILE_APPEND | LOCK_EX);
         }
         
         redirect('profile/edit');
     }
     
     /**
-     * Verwerk een nieuwe krabbel
+     * Verwerk een nieuw bericht op een profiel via PostService
      */
-    public function postKrabbel()
+    public function postProfile()
     {
         // Controleer of gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
-            $_SESSION['error'] = 'Je moet ingelogd zijn om een krabbel te plaatsen.';
+            $_SESSION['error'] = 'Je moet ingelogd zijn om een bericht te plaatsen.';
             redirect('login');
             return;
         }
@@ -704,33 +660,31 @@ class ProfileController extends Controller
         $receiverUsername = $_POST['receiver_username'] ?? null;
         $message = trim($_POST['message'] ?? '');
 
-        // Validatie
+        // Basis validatie (PostService doet uitgebreidere validatie)
         if (empty($receiverId) || empty($message)) {
             $_SESSION['error'] = 'Alle velden zijn verplicht.';
             redirect('?route=profile&username=' . $receiverUsername);
             return;
         }
 
-        if (strlen($message) > 500) {
-            $_SESSION['error'] = 'Krabbel mag maximaal 500 karakters bevatten.';
-            redirect('?route=profile&username=' . $receiverUsername);
-            return;
-        }
+        // 🚀 NIEUWE CODE: Gebruik PostService in plaats van directe database insert
+        $postService = new PostService();
+        
+        $result = $postService->createPost(
+            $message,           // content
+            $senderId,          // userId  
+            [                   // options
+                'post_type' => 'wall_message',
+                'target_user_id' => $receiverId
+            ],
+            []                  // files (leeg voor krabbels/berichten)
+        );
 
-        try {
-            // NIEUWE CODE: Sla krabbel op in posts tabel
-            $stmt = $this->db->prepare("
-                INSERT INTO posts (user_id, content, post_type, target_user_id, created_at)
-                VALUES (?, ?, 'wall_message', ?, NOW())
-            ");
-            
-            $stmt->execute([$senderId, $message, $receiverId]);
-            
-            $_SESSION['success'] = 'Krabbel succesvol geplaatst!';
-            
-        } catch (Exception $e) {
-            error_log("Error posting krabbel: " . $e->getMessage());
-            $_SESSION['error'] = 'Er ging iets mis bij het plaatsen van de krabbel.';
+        // Verwerk resultaat
+        if ($result['success']) {
+            $_SESSION['success'] = 'Bericht succesvol geplaatst!';
+        } else {
+            $_SESSION['error'] = $result['message'] ?? 'Er ging iets mis bij het plaatsen van het bericht.';
         }
 
         // Redirect terug naar profiel
@@ -738,7 +692,7 @@ class ProfileController extends Controller
     }
     
     /**
-     * Verwerk een nieuwe foto-upload
+     * Verwerk een nieuwe foto-upload via PostService
      */
     public function uploadFoto()
     {
@@ -749,8 +703,14 @@ class ProfileController extends Controller
             return;
         }
         
+        // Controleer POST request
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('profile?tab=fotos');
+            return;
+        }
+        
         $userId = $_SESSION['user_id'];
-        $description = $_POST['description'] ?? '';
+        $description = trim($_POST['description'] ?? '');
         
         // Controleer of er een bestand is geüpload
         if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
@@ -759,76 +719,29 @@ class ProfileController extends Controller
             return;
         }
         
-        try {
-            // Gebruik de bestaande upload_file functie met correcte parameter volgorde:
-            // upload_file($file, $type, $allowedTypes, $maxSize, $prefix)
-            $allowedTypes = [
-                'image/jpeg',
-                'image/png', 
-                'image/gif',
-                'image/webp'
-            ];
-            
-            $maxSize = 5 * 1024 * 1024; // 5MB voor foto's
-            
-            $uploadResult = upload_file(
-                $_FILES['photo'],    // $file
-                'posts',            // $type - Upload naar posts directory
-                $allowedTypes,      // $allowedTypes
-                $maxSize,           // $maxSize
-                'post_'             // $prefix voor bestandsnaam
-            );
-            
-            if ($uploadResult['success']) {
-                // Start database transactie
-                $this->db->beginTransaction();
-                
-                // Maak eerst een post aan voor de foto
-                $stmt = $this->db->prepare("
-                    INSERT INTO posts (user_id, content, type, privacy, created_at) 
-                    VALUES (?, ?, 'photo', 'public', NOW())
-                ");
-                $stmt->execute([$userId, $description]);
-                $postId = $this->db->lastInsertId();
-                
-                // Voeg de foto toe aan post_media
-                $stmt = $this->db->prepare("
-                    INSERT INTO post_media (
-                        post_id, media_type, file_path, file_name, 
-                        file_size, alt_text, created_at
-                    ) VALUES (?, 'image', ?, ?, ?, ?, NOW())
-                ");
-                
-                $stmt->execute([
-                    $postId,
-                    $uploadResult['path'],      // Dit is het relatieve pad
-                    $_FILES['photo']['name'],
-                    $_FILES['photo']['size'],
-                    $description
-                ]);
-                
-                // Commit transactie
-                $this->db->commit();
-                
-                $_SESSION['success_message'] = 'Foto is succesvol geüpload!';
-                
-            } else {
-                $_SESSION['error_message'] = $uploadResult['message'];
-            }
-            
-        } catch (\Exception $e) {
-            // Rollback bij fout
-            if ($this->db->inTransaction()) {
-                $this->db->rollback();
-            }
-            
-            // Verwijder geüploade bestand als database update mislukt
-            if (isset($uploadResult['path'])) {
-                delete_uploaded_file($uploadResult['path']);
-            }
-            
-            error_log("Photo upload error: " . $e->getMessage());
-            $_SESSION['error_message'] = 'Er is een fout opgetreden bij het opslaan van de foto. Probeer het opnieuw.';
+        // 🚀 NIEUWE CODE: Gebruik PostService in plaats van eigen upload logica
+        $postService = new PostService();
+        
+        // Reorganiseer $_FILES voor PostService (verwacht 'image' key)
+        $files = [
+            'image' => $_FILES['photo']  // PostService verwacht 'image' key
+        ];
+        
+        $result = $postService->createPost(
+            $description,               // content (beschrijving van foto)
+            $userId,                   // userId
+            [                          // options
+                'content_type' => 'photo',
+                'post_type' => 'timeline'  // Normale timeline post
+            ],
+            $files                     // files array
+        );
+        
+        // Verwerk resultaat
+        if ($result['success']) {
+            $_SESSION['success_message'] = 'Foto is succesvol geüpload!';
+        } else {
+            $_SESSION['error_message'] = $result['message'] ?? 'Er is een fout opgetreden bij het uploaden van de foto.';
         }
         
         // Redirect terug naar het profiel met de foto's-tab
@@ -924,17 +837,35 @@ class ProfileController extends Controller
 
     
     /**
-     * Update de profielfoto via AJAX of form submission
-     * 🔒 SECURITY: Met rate limiting en logging
+     * Update de profielfoto via AJAX of form submission - GEMIGREERD NAAR PROFILESERVICE ✅
      */
     public function uploadAvatar() 
     {
+        // 🔍 ALLEREERSTE DEBUG: Stop alle andere output
+        ob_start(); // Buffer alle output
+        
+        // 🔍 DEBUG: Log dat we zijn aangeroepen
+        file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] uploadAvatar() START\n", 
+            FILE_APPEND | LOCK_EX);
+
+        // 🔍 DEBUG: Check AJAX header
+        $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+        file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] Is AJAX: " . ($isAjax ? 'YES' : 'NO') . "\n", 
+            FILE_APPEND | LOCK_EX);
+
         // Controleer of de gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] User not logged in\n", 
+                FILE_APPEND | LOCK_EX);
+                
+            if ($isAjax) {
+                ob_clean(); // Clear any previous output
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
-                return;
+                exit; // 👈 USE EXIT INSTEAD OF RETURN
             }
             redirect('login');
             return;
@@ -942,169 +873,130 @@ class ProfileController extends Controller
         
         $userId = $_SESSION['user_id'];
         
-        // 🔒 SECURITY: Check upload rate limiting (NU WEL ACTIEF!)
-        if (!$this->checkAvatarUploadRateLimit($userId)) {
-            $message = 'Je kunt maar 1 profielfoto per uur uploaden. Probeer het later opnieuw.';
-            
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => $message]);
-                return;
-            }
-            
-            $_SESSION['error_message'] = $message;
-            redirect('profile/edit');
-            return;
-        }
+        file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] User logged in: {$userId}\n", 
+            FILE_APPEND | LOCK_EX);
         
         // Controleer of er een bestand is geüpload
-        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
-            $message = 'Er is geen geldige avatar geüpload';
+        if (!isset($_FILES['avatar'])) {
+            file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] No avatar file found\n", 
+                FILE_APPEND | LOCK_EX);
+                
+            $message = 'Er is geen avatar bestand gevonden';
             
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            if ($isAjax) {
+                ob_clean(); // Clear any previous output
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => $message]);
-                return;
+                exit; // 👈 USE EXIT INSTEAD OF RETURN
             }
             
             $_SESSION['error_message'] = $message;
             redirect('profile/edit');
-            return;
-        }
-        
-        // 🔒 SECURITY: Gebruik configureerbare upload instellingen
-        if (class_exists('App\Helpers\SecuritySettings')) {
-            try {
-                $allowedTypes = SecuritySettings::getAllowedImageFormats();
-                $maxSize = SecuritySettings::get('max_avatar_size', 2 * 1024 * 1024);
-            } catch (\Exception $e) {
-                // Fallback bij SecuritySettings fout
-                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                $maxSize = 2 * 1024 * 1024;
-            }
-        } else {
-            // Fallback zonder SecuritySettings
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            $maxSize = 2 * 1024 * 1024;
-        }
-        
-        // 🔒 SECURITY: Extra bestandsvalidatie
-        $securityCheck = $this->validateUploadedFile($_FILES['avatar'], $allowedTypes, $maxSize);
-        if (!$securityCheck['valid']) {
-            $message = $securityCheck['message'];
+    
+        // 🔥 NIEUWE TOEVOEGING: Stop executie na redirect voor AJAX
+        // Als het AJAX is, dan mogen we hier NOOIT komen!
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] ERROR: AJAX request reached end of method! This should not happen!\n", 
+                FILE_APPEND | LOCK_EX);
             
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => $message]);
-                return;
-            }
-            
-            $_SESSION['error_message'] = $message;
-            redirect('profile/edit');
-            return;
+            // Emergency JSON output
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unexpected flow error']);
+            exit;
         }
+    }
         
-        // Upload de avatar
-        $uploadResult = upload_file(
-            $_FILES['avatar'],
-            'avatars',
-            $allowedTypes,
-            $maxSize,
-            'avatar_' . $userId . '_'
-        );
+        file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] Avatar file found, calling ProfileService\n", 
+            FILE_APPEND | LOCK_EX);
         
-        if ($uploadResult['success']) {
-            try {
-                // Update de database met het nieuwe avatar pad
-                $avatarPath = $uploadResult['path'];
-                
-                // Start database transactie
-                $this->db->beginTransaction();
-                
-                // Controleer of er al een profiel bestaat
-                $stmt = $this->db->prepare("SELECT id, avatar FROM user_profiles WHERE user_id = ?");
-                $stmt->execute([$userId]);
-                $existingProfile = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($existingProfile) {
-                    // Verwijder oude avatar als deze anders is dan de default
-                    if (!empty($existingProfile['avatar']) && 
-                        !str_contains($existingProfile['avatar'], 'default-avatar') &&
-                        !str_contains($existingProfile['avatar'], 'theme-assets')) {
-                        delete_uploaded_file($existingProfile['avatar']);
-                    }
-                    
-                    // Update bestaand profiel
-                    $stmt = $this->db->prepare("
-                        UPDATE user_profiles 
-                        SET avatar = ?, updated_at = NOW()
-                        WHERE user_id = ?
-                    ");
-                    $stmt->execute([$avatarPath, $userId]);
-                } else {
-                    // Maak nieuw profiel aan
-                    $stmt = $this->db->prepare("
-                        INSERT INTO user_profiles (user_id, avatar, created_at, updated_at) 
-                        VALUES (?, ?, NOW(), NOW())
-                    ");
-                    $stmt->execute([$userId, $avatarPath]);
+        // 🚀 Gebruik ProfileService
+        try {
+            $profileService = new ProfileService();
+            
+            // Upload avatar via service
+            $result = $profileService->uploadAvatar($userId, $_FILES['avatar']);
+            
+            file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] ProfileService result: " . ($result['success'] ? 'SUCCESS' : 'FAILED') . "\n", 
+                FILE_APPEND | LOCK_EX);
+            
+            // Verwerk resultaat
+            if ($result['success']) {
+                // Update sessie met nieuwe avatar
+                if (isset($result['avatar_path'])) {
+                    $_SESSION['avatar'] = $result['avatar_path'];
                 }
                 
-                // 🔒 SECURITY: Log avatar upload activiteit (NU WEL ACTIEF!)
-                $this->logAvatarUpload($userId);
+                $message = $result['message'];
+                $avatarUrl = $result['avatar_url'] ?? '';
                 
-                // Commit transactie
-                $this->db->commit();
+                file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] About to return JSON success\n", 
+                    FILE_APPEND | LOCK_EX);
                 
-                // Update sessie
-                $_SESSION['avatar'] = $avatarPath;
-                
-                $message = 'Profielfoto succesvol bijgewerkt!';
-                $avatarUrl = base_url('uploads/' . $avatarPath);
-                
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                // 👈 VOOR AJAX: ALTIJD JSON TERUGSTUREN
+                if ($isAjax) {
+                    ob_clean(); // Clear any previous output
                     header('Content-Type: application/json');
                     echo json_encode([
                         'success' => true, 
                         'message' => $message,
                         'avatar_url' => $avatarUrl,
-                        'avatar_path' => $avatarPath
+                        'avatar_path' => $result['avatar_path'] ?? ''
                     ]);
-                    return;
+                    
+                    file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] JSON success sent, exiting\n", 
+                        FILE_APPEND | LOCK_EX);
+                    
+                    exit; // 👈 USE EXIT INSTEAD OF RETURN
                 }
                 
                 $_SESSION['success_message'] = $message;
+            } else {
+                $message = $result['message'];
                 
-            } catch (\Exception $e) {
-                // Rollback bij database fout
-                $this->db->rollback();
+                file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] About to return JSON error: {$message}\n", 
+                    FILE_APPEND | LOCK_EX);
                 
-                // Verwijder het geüploade bestand als database update mislukt
-                delete_uploaded_file($uploadResult['path']);
-                
-                error_log("Avatar upload database error: " . $e->getMessage());
-                $message = 'Er ging iets mis bij het opslaan van je profielfoto. Probeer het opnieuw.';
-                
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                // 👈 VOOR AJAX: ALTIJD JSON TERUGSTUREN (FOUT)
+                if ($isAjax) {
+                    ob_clean(); // Clear any previous output
                     header('Content-Type: application/json');
                     echo json_encode(['success' => false, 'message' => $message]);
-                    return;
+                    exit; // 👈 USE EXIT INSTEAD OF RETURN
                 }
                 
                 $_SESSION['error_message'] = $message;
             }
-        } else {
-            $message = $uploadResult['message'];
+        } catch (Exception $e) {
+            $message = 'Er ging iets mis: ' . $e->getMessage();
             
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Exception caught: {$message}\n", 
+                FILE_APPEND | LOCK_EX);
+            
+            // 👈 VOOR AJAX: ALTIJD JSON TERUGSTUREN (EXCEPTION)
+            if ($isAjax) {
+                ob_clean(); // Clear any previous output
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => $message]);
-                return;
+                exit; // 👈 USE EXIT INSTEAD OF RETURN
             }
             
             $_SESSION['error_message'] = $message;
         }
         
+        file_put_contents('/var/www/socialcore.local/debug/upload_flow_' . date('Y-m-d') . '.log', 
+            "[" . date('Y-m-d H:i:s') . "] End of method - doing redirect\n", 
+            FILE_APPEND | LOCK_EX);
+        
+        // 👈 ALLEEN VOOR NON-AJAX: REDIRECT
         redirect('profile/edit');
     }
 
@@ -1164,96 +1056,105 @@ class ProfileController extends Controller
     /**
      * Verwijder huidige avatar en zet terug naar default
      */
-    public function removeAvatar()
-    {
-        // Controleer of de gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
-                return;
-            }
-            redirect('login');
-            return;
-        }
+    // public function removeAvatar()
+    // {
+    //     // Controleer of de gebruiker is ingelogd
+    //     if (!isset($_SESSION['user_id'])) {
+    //         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+    //             header('Content-Type: application/json');
+    //             echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn']);
+    //             return;
+    //         }
+    //         redirect('login');
+    //         return;
+    //     }
         
-        try {
-            $userId = $_SESSION['user_id'];
+    //     try {
+    //         $userId = $_SESSION['user_id'];
             
-            // Haal huidige avatar op
-            $stmt = $this->db->prepare("SELECT avatar FROM user_profiles WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    //         // Haal huidige avatar op
+    //         $stmt = $this->db->prepare("SELECT avatar FROM user_profiles WHERE user_id = ?");
+    //         $stmt->execute([$userId]);
+    //         $profile = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($profile && !empty($profile['avatar'])) {
-                // Verwijder alleen als het geen default avatar is
-                if (!str_contains($profile['avatar'], 'default-avatar') &&
-                    !str_contains($profile['avatar'], 'theme-assets')) {
-                    delete_uploaded_file($profile['avatar']);
-                }
+    //         if ($profile && !empty($profile['avatar'])) {
+    //             // Verwijder alleen als het geen default avatar is
+    //             if (!str_contains($profile['avatar'], 'default-avatar') &&
+    //                 !str_contains($profile['avatar'], 'theme-assets')) {
+    //                 delete_uploaded_file($profile['avatar']);
+    //             }
                 
-                // Update database naar default avatar
-                $defaultAvatar = 'theme-assets/default/images/default-avatar.png';
-                $stmt = $this->db->prepare("
-                    UPDATE user_profiles 
-                    SET avatar = ?, updated_at = NOW()
-                    WHERE user_id = ?
-                ");
-                $stmt->execute([$defaultAvatar, $userId]);
+    //             // Update database naar default avatar
+    //             $defaultAvatar = 'theme-assets/default/images/default-avatar.png';
+    //             $stmt = $this->db->prepare("
+    //                 UPDATE user_profiles 
+    //                 SET avatar = ?, updated_at = NOW()
+    //                 WHERE user_id = ?
+    //             ");
+    //             $stmt->execute([$defaultAvatar, $userId]);
                 
-                // Update sessie
-                $_SESSION['avatar'] = $defaultAvatar;
-            }
+    //             // Update sessie
+    //             $_SESSION['avatar'] = $defaultAvatar;
+    //         }
             
-            $message = 'Profielfoto verwijderd en teruggezet naar standaard';
-            $defaultAvatar = 'theme-assets/default/images/default-avatar.png';
-            $avatarUrl = base_url($defaultAvatar);
+    //         $message = 'Profielfoto verwijderd en teruggezet naar standaard';
+    //         $defaultAvatar = 'theme-assets/default/images/default-avatar.png';
+    //         $avatarUrl = base_url($defaultAvatar);
             
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'success' => true, 
-                    'message' => $message,
-                    'avatar_url' => $avatarUrl
-                ]);
-                return;
-            }
+    //         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+    //             header('Content-Type: application/json');
+    //             echo json_encode([
+    //                 'success' => true, 
+    //                 'message' => $message,
+    //                 'avatar_url' => $avatarUrl
+    //             ]);
+    //             return;
+    //         }
             
-            $_SESSION['success_message'] = $message;
+    //         $_SESSION['success_message'] = $message;
             
-        } catch (\Exception $e) {
-            error_log("Remove avatar error: " . $e->getMessage());
-            $message = 'Er ging iets mis bij het verwijderen van je profielfoto';
+    //     } catch (\Exception $e) {
+    //         error_log("Remove avatar error: " . $e->getMessage());
+    //         $message = 'Er ging iets mis bij het verwijderen van je profielfoto';
             
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => $message]);
-                return;
-            }
+    //         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+    //             header('Content-Type: application/json');
+    //             echo json_encode(['success' => false, 'message' => $message]);
+    //             return;
+    //         }
             
-            $_SESSION['error_message'] = $message;
-        }
+    //         $_SESSION['error_message'] = $message;
+    //     }
         
-        redirect('profile/edit');
-    }
+    //     redirect('profile/edit');
+    // }
 
     /**
      * Toon beveiligingsinstellingen pagina
      */
     public function security()
     {
-        // Controleer of de gebruiker is ingelogd
         if (!isset($_SESSION['user_id'])) {
             redirect('login');
             return;
         }
 
+        $profileService = new ProfileService();
+        $user = $profileService->getCurrentUserProfile();
+        
         $data = [
             'title' => 'Beveiligingsinstellingen',
-            'user' => $this->getCurrentUserProfile()
+            'user' => $user
         ];
-
+        
+        // Debug code ALTIJD NA $data definitie:
+        echo "<pre>DEBUG - User data from ProfileService:</pre>";
+        var_dump($user);
+        echo "<hr>";
+        echo "<pre>DEBUG - About to call view...</pre>";
+        
         $this->view('profile/security', $data);
+        echo "<pre>DEBUG - View call completed</pre>";
     }
 
     /**
@@ -1277,9 +1178,10 @@ class ProfileController extends Controller
             return;
         }
 
+        $profileService = new ProfileService();
         $data = [
             'title' => 'Notificatie voorkeuren',
-            'user' => $this->getCurrentUserProfile()
+            'user' => $profileService->getCurrentUserProfile()
         ];
 
         $this->view('profile/notifications', $data);
@@ -1288,14 +1190,14 @@ class ProfileController extends Controller
     /**
      * Helper: Haal huidige gebruiker profiel data op
      */
-    private function getCurrentUserProfile()
-    {
-        if (!isset($_SESSION['user_id'])) {
-            return null;
-        }
+    // private function getCurrentUserProfile()
+    // {
+    //     if (!isset($_SESSION['user_id'])) {
+    //         return null;
+    //     }
 
-        return $this->getUserData($_SESSION['user_id'], $_SESSION['username'] ?? '');
-    }
+    //     return $this->getUserData($_SESSION['user_id'], $_SESSION['username'] ?? '');
+    // }
 
     /**
      * 🔒 PRIVACY: Check of viewer het profiel mag bekijken
@@ -1679,7 +1581,7 @@ class ProfileController extends Controller
             $filtered = SecuritySettings::filterProfanity($content);
             
             // Maak hashtags klikbaar (bestaande functionaliteit)
-            $filtered = preg_replace('/#([a-zA-Z0-9_]+)/', '<a href="/?route=search&q=%23$1" class="hashtag">#$1</a>', $filtered);
+            $filtered = preg_replace('/#([a-zA-Z0-9_]+)/', '<a href="/?route=search/hashtag&tag=$1" class="hashtag">#$1</a>', $filtered);
             
             // Maak @mentions klikbaar
             $filtered = preg_replace('/@([a-zA-Z0-9_]+)/', '<a href="/?route=profile&username=$1" class="mention">@$1</a>', $filtered);
@@ -1924,6 +1826,14 @@ class ProfileController extends Controller
         ];
 
         $this->view('profile/avatar', $data);
+    }
+
+    /**
+     * Helper: Maak ProfileService instance
+     */
+    private function getProfileService()
+    {
+        return new ProfileService();
     }
 
 

@@ -98,38 +98,38 @@ function view(string $path, array $data = []): void
  * @param string|null $avatar Avatar filename or null
  * @return string Full avatar URL
  */
-function get_avatar_url($avatar = null) 
-{
-    if (!empty($avatar)) {
-        // Als het al een volledige URL is, return direct
-        if (strpos($avatar, 'http://') === 0 || strpos($avatar, 'https://') === 0) {
-            // Fix verkeerde URLs die naar theme-assets wijzen
-            if (strpos($avatar, 'theme-assets/default/images/avatars/') !== false) {
-                // Haal het bestandspad eruit en maak correcte uploads URL
-                $parts = explode('theme-assets/default/images/', $avatar);
-                if (count($parts) > 1) {
-                    return base_url('uploads/' . $parts[1]);
-                }
+    function get_avatar_url($avatar = null) 
+    {
+        if (!empty($avatar)) {
+            // Als het al een volledige URL is, return direct
+            if (strpos($avatar, 'http://') === 0 || strpos($avatar, 'https://') === 0) {
+                return $avatar;
             }
-            return $avatar;
-        }
-        
-        // Check if it's an uploaded avatar (contains 'avatar' or starts with 'avatars/')
-        if (strpos($avatar, 'avatar') !== false || strpos($avatar, 'avatars/') === 0) {
-            // If path already contains 'avatars/', use it directly
+            
+            // Case 1: Avatar begint met 'avatars/' (geüploade avatar)
             if (strpos($avatar, 'avatars/') === 0) {
                 return base_url('uploads/' . $avatar);
             }
-            // Otherwise, add avatars/ prefix
-            return base_url('uploads/avatars/' . $avatar);
+            
+            // Case 2: Avatar begint met 'avatar_' (directe filename)
+            if (strpos($avatar, 'avatar_') === 0) {
+                return base_url('uploads/avatars/' . $avatar);
+            }
+            
+            // Case 3: Avatar begint met 'theme-assets/' (theme asset)
+            if (strpos($avatar, 'theme-assets/') === 0) {
+                return base_url($avatar);
+            }
+            
+            // Case 4: Default avatar filename
+            if (strpos($avatar, 'default-avatar') === 0) {
+                return base_url('theme-assets/default/images/' . $avatar);
+            }
         }
-        // Theme asset
-        return base_url('theme-assets/default/images/' . $avatar);
+        
+        // Default avatar
+        return base_url('theme-assets/default/images/default-avatar.png');
     }
-    
-    // Default avatar
-    return base_url('theme-assets/default/images/default-avatar.png');
-}
 
 /**
  * Get avatar URL with fallback to session data
@@ -539,4 +539,75 @@ function theme_image_url($file = null) {
  */
 function avatar_url($avatarPath = null) {
     return get_avatar_url($avatarPath);
+}
+
+/**
+ * Create a Handler route with authentication
+ * 
+ * @param string $handlerClass - Name of the Handler class (without namespace)
+ * @param string $method - Method to call on the handler (default: 'index')
+ * @param bool $requireAuth - Whether authentication is required (default: true)
+ * @return callable
+ */
+function createHandlerRoute($handlerClass, $method = 'index', $requireAuth = true) {
+    return function() use ($handlerClass, $method, $requireAuth) {
+        // Auth check
+        if ($requireAuth && !isset($_SESSION['user_id'])) {
+            header('Location: /?route=auth/login');
+            exit;
+        }
+        
+        // Load handler
+        $handlerPath = __DIR__ . "/../app/Handlers/{$handlerClass}.php";
+        
+        if (!file_exists($handlerPath)) {
+            die("Handler niet gevonden: {$handlerClass}");
+        }
+        
+        require_once $handlerPath;
+        
+        $handlerClassName = "\\App\\Handlers\\{$handlerClass}";
+        
+        if (!class_exists($handlerClassName)) {
+            die("Handler class niet gevonden: {$handlerClassName}");
+        }
+        
+        $handler = new $handlerClassName();
+        
+        if (!method_exists($handler, $method)) {
+            die("Handler methode niet gevonden: {$handlerClassName}::{$method}");
+        }
+        
+        $handler->$method();
+    };
+}
+
+/**
+ * Create a public Handler route (no authentication required)
+ * 
+ * @param string $handlerClass
+ * @param string $method
+ * @return callable
+ */
+function createPublicHandlerRoute($handlerClass, $method = 'index') {
+    return createHandlerRoute($handlerClass, $method, false);
+}
+
+/**
+ * Create multiple CRUD Handler routes at once
+ * 
+ * @param string $handlerClass
+ * @param string $basePath
+ * @param bool $requireAuth
+ * @return array
+ */
+function createCrudHandlerRoutes($handlerClass, $basePath, $requireAuth = true) {
+    return [
+        $basePath => createHandlerRoute($handlerClass, 'index', $requireAuth),
+        "{$basePath}/create" => createHandlerRoute($handlerClass, 'create', $requireAuth),
+        "{$basePath}/store" => createHandlerRoute($handlerClass, 'store', $requireAuth),
+        "{$basePath}/edit" => createHandlerRoute($handlerClass, 'edit', $requireAuth),
+        "{$basePath}/update" => createHandlerRoute($handlerClass, 'update', $requireAuth),
+        "{$basePath}/delete" => createHandlerRoute($handlerClass, 'delete', $requireAuth),
+    ];
 }

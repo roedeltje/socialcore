@@ -35,13 +35,13 @@
                 <div class="form-group">
                     <label for="max_upload_size">Maximale Upload Grootte (MB)</label>
                     <input type="number" 
-                           id="max_upload_size" 
-                           name="max_upload_size" 
-                           class="form-control" 
-                           value="<?= round($settings['max_upload_size'] / (1024 * 1024)) ?>"
-                           min="1" 
-                           max="100"
-                           step="1">
+                        id="max_upload_size" 
+                        name="max_upload_size" 
+                        class="form-control" 
+                        value="<?= $settings['max_upload_size'] ?>"
+                        min="1" 
+                        max="100"
+                        step="1">
                     <small class="form-hint">
                         Server limiet: <?= ini_get('upload_max_filesize') ?> 
                         (<?= ini_get('post_max_size') ?> POST limiet)

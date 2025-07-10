@@ -106,17 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Comment delete buttons
-    const deleteButtons = commentsSection.querySelectorAll('.delete-comment-button');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            if (confirm('Weet je zeker dat je deze reactie wilt verwijderen?')) {
-                const commentId = this.getAttribute('data-comment-id');
-                deleteComment(commentId);
-            }
-        });
-    });
-    
     // Comment like buttons
     const likeButtons = commentsSection.querySelectorAll('.comment-like-button');
     likeButtons.forEach(button => {

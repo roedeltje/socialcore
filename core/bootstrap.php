@@ -7,7 +7,7 @@
 session_start();
 date_default_timezone_set('Europe/Amsterdam');
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
 // Autoloader registreren EERST (verplaatst naar boven)
 spl_autoload_register(function ($className) {
@@ -101,6 +101,7 @@ require_once __DIR__ . '/helpers/language.php';
 require_once __DIR__ . '/helpers/upload.php';
 require_once __DIR__ . '/../app/Helpers/FormHelper.php';
 require_once __DIR__ . '/theme-loader.php';
+require_once __DIR__ . '/../app/Helpers/AvatarHelper.php';
 
 // === NIEUWE THEMA SYSTEEM INITIALISATIE ===
 // Initialize theme system using existing ThemeManager

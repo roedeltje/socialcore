@@ -119,11 +119,23 @@ class AdminSettingsController extends Controller
     public function media()
     {
         try {
-            $settings = $this->getSettings([
-                'max_upload_size', 'allowed_image_types', 'allowed_document_types',
-                'image_quality', 'thumbnail_width', 'thumbnail_height',
-                'auto_generate_thumbnails', 'media_storage_driver'
-            ]);
+            // 🔧 FIX: Gebruik SecuritySettings in plaats van getSettings()
+            $settings = [
+                'max_upload_size' => SecuritySettings::get('max_upload_size', 5),
+                'allowed_image_types' => SecuritySettings::get('allowed_image_types', 'jpg,jpeg,png,gif,webp'),
+                'allowed_document_types' => SecuritySettings::get('allowed_document_types', 'pdf,doc,docx,txt'),
+                'image_quality' => SecuritySettings::get('image_quality', 80),
+                'thumbnail_width' => SecuritySettings::get('thumbnail_width', 400),
+                'thumbnail_height' => SecuritySettings::get('thumbnail_height', 400),
+                'auto_generate_thumbnails' => SecuritySettings::get('auto_generate_thumbnails', 0),
+                'media_storage_driver' => SecuritySettings::get('media_storage_driver', 'local')
+            ];
+            
+            // Debug: log wat we laden
+            file_put_contents('/var/www/socialcore.local/debug/admin_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Admin Media Load:\n" . 
+                "Loaded settings: " . print_r($settings, true) . "\n", 
+                FILE_APPEND | LOCK_EX);
             
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $this->updateMediaSettings();
@@ -423,8 +435,12 @@ class AdminSettingsController extends Controller
     private function updateMediaSettings()
     {
         try {
-            $settings = [
-                'max_upload_size' => (int)($_POST['max_upload_size'] ?? 5) * 1024 * 1024,
+            $updated = 0;
+            $errors = [];
+            
+            // 🔧 FIX: Gebruik SecuritySettings voor consistentie
+            $mediaSettings = [
+                'max_upload_size' => (int)($_POST['max_upload_size'] ?? 5), // MB
                 'allowed_image_types' => $_POST['allowed_image_types'] ?? 'jpg,jpeg,png,gif,webp',
                 'allowed_document_types' => $_POST['allowed_document_types'] ?? 'pdf,doc,docx,txt',
                 'image_quality' => (int)($_POST['image_quality'] ?? 80),
@@ -434,11 +450,50 @@ class AdminSettingsController extends Controller
                 'media_storage_driver' => $_POST['media_storage_driver'] ?? 'local'
             ];
             
-            $this->saveSettings($settings);
-            $_SESSION['success_message'] = "Media instellingen succesvol bijgewerkt.";
+            // Debug: log wat we gaan opslaan
+            file_put_contents('/var/www/socialcore.local/debug/admin_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] Admin Media Update:\n" . 
+                "POST data: " . print_r($_POST, true) . "\n" . 
+                "Settings to save: " . print_r($mediaSettings, true) . "\n", 
+                FILE_APPEND | LOCK_EX);
+            
+            // Gebruik SecuritySettings voor elk setting
+            foreach ($mediaSettings as $key => $value) {
+                if (SecuritySettings::set($key, $value)) {
+                    $updated++;
+                    
+                    // Extra debug
+                    file_put_contents('/var/www/socialcore.local/debug/admin_debug_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] Successfully saved {$key} = {$value}\n", 
+                        FILE_APPEND | LOCK_EX);
+                } else {
+                    $errors[] = "Failed to save {$key}";
+                    
+                    // Extra debug
+                    file_put_contents('/var/www/socialcore.local/debug/admin_debug_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] FAILED to save {$key} = {$value}\n", 
+                        FILE_APPEND | LOCK_EX);
+                }
+            }
+            
+            // Clear cache om nieuwe waarden direct beschikbaar te maken
+            SecuritySettings::clearCache();
+            
+            if (!empty($errors)) {
+                $_SESSION['error_message'] = 'Some settings could not be updated: ' . implode(', ', $errors);
+            } elseif ($updated > 0) {
+                $_SESSION['success_message'] = "{$updated} media settings updated successfully.";
+            } else {
+                $_SESSION['error_message'] = 'No settings were updated.';
+            }
             
         } catch (\Exception $e) {
             $_SESSION['error_message'] = "Fout bij opslaan media instellingen: " . $e->getMessage();
+            
+            // Debug error
+            file_put_contents('/var/www/socialcore.local/debug/admin_debug_' . date('Y-m-d') . '.log', 
+                "[" . date('Y-m-d H:i:s') . "] ERROR: " . $e->getMessage() . "\n", 
+                FILE_APPEND | LOCK_EX);
         }
         
         header('Location: ' . base_url('?route=admin/settings/media'));

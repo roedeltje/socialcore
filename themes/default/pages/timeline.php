@@ -153,7 +153,7 @@ echo "</div>";
                                 <!-- Post Header -->
                                 <div class="post-header">
                                     <div class="post-author">
-                                        <img src="<?= $post['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                                        <img src="<?= get_avatar_url($post['avatar']) ?>" 
                                              alt="<?= htmlspecialchars($post['user_name']) ?>" 
                                              class="author-avatar">
                                         <div class="author-info">
@@ -280,7 +280,7 @@ echo "</div>";
                 </div>
                 <div class="widget-body">
                     <div class="user-mini-profile">
-                        <img src="<?= $current_user['avatar_url'] ?? base_url('theme-assets/default/images/default-avatar.png') ?>" 
+                        <img src="<?= get_avatar_url($_SESSION['avatar'] ?? null) ?>" 
                              alt="<?= htmlspecialchars($current_user['name']) ?>" 
                              class="user-avatar">
                         <div class="user-info">

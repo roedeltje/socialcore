@@ -12,15 +12,17 @@ use App\Controllers\SetupController;
 use App\Controllers\FeedController;
 use App\Controllers\AboutController;
 use App\Controllers\FriendsController;
-use App\Controllers\NotificationsController;
+//use App\Controllers\NotificationsController;
 use App\Controllers\MessagesController;
 use App\Controllers\TestController;
 use App\Controllers\CommentsController;
 use App\Controllers\LinkPreviewController;
 use App\Controllers\DebugController;
-use App\Controllers\PrivacyController;
+//use App\Controllers\PrivacyController;
 use App\Controllers\PhotosController;
 use App\Controllers\SearchHandler;
+use App\Handlers\PrivacyHandler;
+use App\Handlers\SecurityHandler;
 use App\Controllers\MigrationController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
@@ -99,12 +101,24 @@ return [
     ],
 
     'feed/comment/delete' => [
-        'callback' => function () {
-            $feedController = new FeedController();
-            $feedController->deleteComment();
-        },
-        'middleware' => [FeedMiddleware::class]
-    ],
+    'callback' => function () {
+        $commentService = new \App\Services\CommentService();
+        
+        $commentId = $_POST['comment_id'] ?? $_GET['comment_id'] ?? null;
+        $userId = $_SESSION['user_id'] ?? null;
+        $isAdmin = ($_SESSION['role'] ?? '') === 'admin';
+        
+        if ($commentId && $userId) {
+            $result = $commentService->deleteComment($commentId, $userId, $isAdmin);
+            header('Content-Type: application/json');
+            echo json_encode($result);
+        } else {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Missing parameters']);
+        }
+    },
+    'middleware' => [FeedMiddleware::class]
+],
 
     'about' => [
         'callback' => function () {
@@ -597,12 +611,12 @@ return [
     'middleware' => [AdminMiddleware::class]
 ],
 
-    'profile/post-krabbel' => [
+    'profile/post-profile' => [
     'callback' => function () {
         $profileController = new ProfileController();
-        $profileController->postKrabbel();
+        $profileController->postProfile();
     },
-    'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers krabbels kunnen plaatsen
+    'middleware' => [AuthMiddleware::class]  // Zorgt ervoor dat alleen ingelogde gebruikers berichten kunnen plaatsen
 ],
 
     'profile/upload-foto' => [
@@ -649,14 +663,6 @@ return [
     },
     'middleware' => [AuthMiddleware::class]
 ],
-	
-	'profile/security' => [
-    'callback' => function () {
-        $profileController = new ProfileController();
-        $profileController->security();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
 
     'profile/update' => [
         'callback' => function () {
@@ -675,52 +681,148 @@ return [
     ],
 
     'profile/upload-avatar' => [
-        'callback' => function () {
-            $profileController = new ProfileController();
-            $profileController->uploadAvatar(); // Nieuwe methode in ProfileController
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'profile/remove-avatar' => [
-        'callback' => function () {
-            $profileController = new ProfileController();
-            $profileController->removeAvatar(); // Nieuwe methode in ProfileController
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'profile/privacy' => [
-        'callback' => function () {
-            $profileController = new ProfileController();
-            $profileController->privacy(); // Nieuwe methode in ProfileController
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'profile/notifications' => [
-        'callback' => function () {
-            $profileController = new ProfileController();
-            $profileController->notifications(); // Nieuwe methode in ProfileController
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'privacy' => [
     'callback' => function () {
-        $privacyController = new \App\Controllers\PrivacyController();
-        $privacyController->index();
+        // Basis checks
+        if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Niet geautoriseerd']);
+            exit();
+        }
+        
+        try {
+            // ProfileService aanroepen (met fix voor bestand parameter)
+            require_once __DIR__ . '/../app/Services/ProfileService.php';
+            $profileService = new \App\Services\ProfileService();
+            $result = $profileService->uploadAvatar($_SESSION['user_id'], $_FILES['avatar']); // Correct!
+            
+            // ✅ BELANGRIJK: Zet JSON header
+            header('Content-Type: application/json');
+            
+            if ($result['success']) {
+                // Update sessie avatar
+                if (isset($result['avatar_url'])) {  // Terug naar avatar_url
+                        $_SESSION['avatar'] = $result['avatar_url'];
+                    }
+                
+                // ✅ BELANGRIJK: Echo JSON response
+                echo json_encode([
+                    'success' => true,
+                    'message' => $result['message'],
+                    'avatar_url' => $result['avatar_url']
+                ]);
+            } else {
+                http_response_code(400);
+                // ✅ BELANGRIJK: Echo JSON response ook bij fout
+                echo json_encode([
+                    'success' => false,
+                    'message' => $result['message']
+                ]);
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            // ✅ BELANGRIJK: Echo JSON response bij exception
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Server fout: ' . $e->getMessage()
+            ]);
+        }
+        
+        // ✅ BELANGRIJK: Stop hier - geen view rendering
+        exit();
     },
     'middleware' => [AuthMiddleware::class]
-    ],
+],
 
-    'privacy/update' => [
-        'callback' => function () {
-            $privacyController = new \App\Controllers\PrivacyController();
-            $privacyController->update();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+
+// Voeg ook remove route toe met ProfileService
+'profile/remove-avatar' => [
+    'callback' => function () {
+        // Debug logging
+        error_log("=== REMOVE AVATAR DEBUG START ===");
+        error_log("User ID: " . ($_SESSION['user_id'] ?? 'NOT SET'));
+        error_log("Request method: " . $_SERVER['REQUEST_METHOD']);
+        
+        if (!isset($_SESSION['user_id'])) {
+            error_log("ERROR: No user ID in session");
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Niet geautoriseerd']);
+            exit();
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            error_log("ERROR: Wrong request method");
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Alleen POST toegestaan']);
+            exit();
+        }
+        
+        try {
+            error_log("Loading ProfileService...");
+            require_once __DIR__ . '/../app/Services/ProfileService.php';
+            
+            error_log("Creating ProfileService instance...");
+            $profileService = new \App\Services\ProfileService();
+            
+            error_log("Calling removeAvatar...");
+            $result = $profileService->removeAvatar($_SESSION['user_id']);
+            
+            error_log("ProfileService result: " . json_encode($result));
+            
+            header('Content-Type: application/json');
+            
+            if ($result['success']) {
+                $_SESSION['avatar'] = $result['avatar_url'];
+                echo json_encode([
+                    'success' => true,
+                    'message' => $result['message'],
+                    'avatar_url' => $result['avatar_url']
+                ]);
+            } else {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => $result['message']
+                ]);
+            }
+            
+        } catch (Exception $e) {
+            error_log("EXCEPTION: " . $e->getMessage());
+            error_log("STACK TRACE: " . $e->getTraceAsString());
+            
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Server fout: ' . $e->getMessage()
+            ]);
+        }
+        
+        error_log("=== REMOVE AVATAR DEBUG END ===");
+        exit();
+    },
+    'middleware' => [AuthMiddleware::class]
+],
+
+    // 'profile/notifications' => [
+    //     'callback' => function () {
+    //         $profileController = new ProfileController();
+    //         $profileController->notifications(); // Nieuwe methode in ProfileController
+    //     },
+    //     'middleware' => [AuthMiddleware::class]
+    // ],
+
+    // Privacy Routes (nieuwe Handler)
+    'privacy' => createHandlerRoute('PrivacyHandler', 'index'),
+    'privacy/update' => createHandlerRoute('PrivacyHandler', 'update'),
+
+    // Security Routes (al geïmplementeerd)
+    'security' => createHandlerRoute('SecurityHandler', 'index'),
+    'security/update' => createHandlerRoute('SecurityHandler', 'update'),
 
     'friends/add' => [
         'callback' => function () {
@@ -762,45 +864,12 @@ return [
         'middleware' => [AuthMiddleware::class]
     ],
 
-    'notifications' => [
-        'callback' => function () {
-            $notificationsController = new NotificationsController();
-            $notificationsController->index();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'notifications/count' => [
-        'callback' => function () {
-            $notificationsController = new NotificationsController();
-            $notificationsController->getCountApi();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'notifications/mark-read' => [
-        'callback' => function () {
-            $notificationsController = new NotificationsController();
-            $notificationsController->markAsRead();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'notifications/mark-all-read' => [
-        'callback' => function () {
-            $notificationsController = new NotificationsController();
-            $notificationsController->markAllAsRead();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'notifications/delete' => [
-        'callback' => function () {
-            $notificationsController = new NotificationsController();
-            $notificationsController->delete();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+    // Notifications Handler Routes
+    'notifications' => createHandlerRoute('NotificationsHandler', 'index'),
+    'notifications/mark-read' => createHandlerRoute('NotificationsHandler', 'markAsRead'),
+    'notifications/mark-all-read' => createHandlerRoute('NotificationsHandler', 'markAllAsRead'),
+    'notifications/delete' => createHandlerRoute('NotificationsHandler', 'delete'),
+    'notifications/count' => createHandlerRoute('NotificationsHandler', 'getCountApi'),
 
     'messages' => [
         'callback' => function () {
@@ -991,6 +1060,18 @@ return [
         },
         'middleware' => [AuthMiddleware::class]
 ],
+
+'test' => [
+    'callback' => function() {
+        echo "Routes werken!";
+        exit();
+    }
+],
+
+// 'feed/test-comment' => function() {
+//     $controller = new \App\Controllers\FeedController();
+//     $controller->testComment();
+// },
     
     // Eventuele andere routes...
 ];

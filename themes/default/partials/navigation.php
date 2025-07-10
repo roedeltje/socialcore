@@ -1,17 +1,5 @@
 <?php
-// Vervang de avatar img tag in je navigation.php met deze verbeterde versie:
-
-// Voeg dit toe boven je navigatie HTML:
-$userAvatar = '';
-if (isset($_SESSION['avatar']) && !empty($_SESSION['avatar'])) {
-    if (str_starts_with($_SESSION['avatar'], 'theme-assets')) {
-        $userAvatar = base_url($_SESSION['avatar']);
-    } else {
-        $userAvatar = base_url('uploads/' . $_SESSION['avatar']);
-    }
-} else {
-    $userAvatar = base_url('theme-assets/default/images/default-avatar.png');
-}
+$userAvatar = $_SESSION['avatar'] ?? base_url('theme-assets/default/images/default-avatar.png');
 ?>
 
 <?php
