@@ -218,6 +218,18 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- Optioneel: voeg hier thema-specifieke JavaScript toe -->
-<script src="<?= base_url('theme-assets/default/js/theme.js') ?>"></script>
+<?php
+// Check of we in chat mode zijn
+$isChat = (strpos($_SERVER['REQUEST_URI'], 'route=chat') !== false) || 
+          (isset($_GET['route']) && strpos($_GET['route'], 'chat') === 0);
+?>
+
+<?php if (!$isChat): ?>
+    <!-- Normale theme.js laden -->
+    <script src="<?= base_url('theme-assets/default/js/theme.js') ?>"></script>
+<?php else: ?>
+    <!-- Chat mode - theme.js NIET laden -->
+    <script>console.log("🚫 theme.js blocked - chat mode detected");</script>
+<?php endif; ?>
 </body>
 </html>

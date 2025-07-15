@@ -103,8 +103,13 @@ if (isset($_SESSION['user_id'])) {
                             <a href="<?= base_url('profile') ?>">
                                 <i class="fas fa-user"></i> Profiel bekijken
                             </a>
+                            <div class="dropdown-divider"></div>
                             <a href="<?= base_url('profile/edit') ?>">
                                 <i class="fas fa-cog"></i> Instellingen
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="<?= base_url('?route=messages') ?>">
+                                <i class="fas fa-envelope"></i> Berichten
                             </a>
                             <div class="dropdown-divider"></div>
                             <a href="<?= base_url('logout') ?>">

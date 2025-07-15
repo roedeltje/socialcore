@@ -285,8 +285,8 @@ class NotificationsHandler extends Controller
                 $notification['icon_class'] = 'bg-red-100 text-red-600';
                 if ($notification['related_post_id']) {
                     $notification['post_preview'] = $this->getPostPreview($notification['related_post_id']);
-                    $postOwner = $this->getPostOwnerUsername($notification['related_post_id']);
-                    $notification['action_url'] = "/?route=profile&user={$postOwner}#post-{$notification['related_post_id']}";
+                    // NIEUWE PERMALINK URL in plaats van profiel link
+                    $notification['action_url'] = "/?route=post&id={$notification['related_post_id']}";
                 }
                 break;
             case 'post_comment':
@@ -294,8 +294,8 @@ class NotificationsHandler extends Controller
                 $notification['icon_class'] = 'bg-blue-100 text-blue-600';
                 if ($notification['related_post_id']) {
                     $notification['post_preview'] = $this->getPostPreview($notification['related_post_id']);
-                    $postOwner = $this->getPostOwnerUsername($notification['related_post_id']);
-                    $notification['action_url'] = "/?route=profile&user={$postOwner}#post-{$notification['related_post_id']}";
+                    // NIEUWE PERMALINK URL direct naar comments sectie
+                    $notification['action_url'] = "/?route=post&id={$notification['related_post_id']}#comments";
                 }
                 if ($notification['related_comment_id']) {
                     $notification['comment_preview'] = $this->getCommentPreview($notification['related_comment_id']);

@@ -326,10 +326,16 @@ class AdminSettingsController extends Controller
     {
         try {
             $settings = $this->getSettings([
+                // Bestaande social settings
                 'enable_friend_requests', 'enable_groups', 'enable_events',
                 'enable_messaging', 'enable_notifications', 'enable_likes',
                 'enable_comments', 'enable_sharing', 'max_friends_limit',
-                'content_moderation_enabled', 'auto_approve_posts'
+                'content_moderation_enabled', 'auto_approve_posts',
+                
+                // Nieuwe chat settings
+                'chat_mode', 'chat_features_emoji', 'chat_features_file_upload',
+                'chat_features_real_time', 'chat_max_message_length', 
+                'chat_max_file_size', 'chat_online_timeout'
             ]);
             
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -568,6 +574,7 @@ class AdminSettingsController extends Controller
     {
         try {
             $settings = [
+                // Bestaande social settings
                 'enable_friend_requests' => isset($_POST['enable_friend_requests']) ? '1' : '0',
                 'enable_groups' => isset($_POST['enable_groups']) ? '1' : '0',
                 'enable_events' => isset($_POST['enable_events']) ? '1' : '0',
@@ -578,7 +585,16 @@ class AdminSettingsController extends Controller
                 'enable_sharing' => isset($_POST['enable_sharing']) ? '1' : '0',
                 'max_friends_limit' => (int)($_POST['max_friends_limit'] ?? 1000),
                 'content_moderation_enabled' => isset($_POST['content_moderation_enabled']) ? '1' : '0',
-                'auto_approve_posts' => isset($_POST['auto_approve_posts']) ? '1' : '0'
+                'auto_approve_posts' => isset($_POST['auto_approve_posts']) ? '1' : '0',
+                
+                // Nieuwe chat settings
+                'chat_mode' => $_POST['chat_mode'] ?? 'auto',
+                'chat_features_emoji' => isset($_POST['chat_features_emoji']) ? '1' : '0',
+                'chat_features_file_upload' => isset($_POST['chat_features_file_upload']) ? '1' : '0',
+                'chat_features_real_time' => isset($_POST['chat_features_real_time']) ? '1' : '0',
+                'chat_max_message_length' => (int)($_POST['chat_max_message_length'] ?? 1000),
+                'chat_max_file_size' => (int)($_POST['chat_max_file_size'] ?? 2048),
+                'chat_online_timeout' => (int)($_POST['chat_online_timeout'] ?? 15)
             ];
             
             $this->saveSettings($settings);

@@ -1,7 +1,16 @@
 /**
- * SocialCore theme.js - Verbeterde Versie
- * Bevat alle client-side functionaliteit voor het SocialCore platform
+ * SocialCore theme.js - Chat-vrije Versie
+ * Bevat alleen POSTS, LIKES, COMMENTS, NAVIGATIE - GEEN CHAT functionaliteit
  */
+
+let shouldBlock = (window.SOCIALCORE_CHAT_MODE === 'core') || 
+                 (window.SOCIALCORE_CHAT_MODE === true && 
+                  document.querySelector('script:contains("Core Chat Index")'));
+
+if (shouldBlock) {
+    console.log("🚫 theme.js blocked - core chat mode active");
+} else {
+    // Hier komt alle theme.js code...
 
 // Global state management
 window.socialCoreState = {
@@ -209,38 +218,23 @@ function initLikeButtons() {
     console.log('🔍 Found like buttons:', document.querySelectorAll('.like-button').length);
     
     document.addEventListener('click', function(e) {
-        console.log('🎯 ANY CLICK DETECTED:', e.target);
-        
         const likeButton = e.target.closest('.like-button');
         if (likeButton) {
-            console.log('✅ LIKE BUTTON FOUND!', likeButton);
             e.preventDefault();
             handlePostLike(likeButton);
-        } else {
-            console.log('❌ No like button found for click on:', e.target);
         }
     });
 }
 
 function handlePostLike(button) {
-    console.log('🎯 handlePostLike called with button:', button);
-    console.log('🔍 Button disabled?', button.disabled);
-    
     const postId = button.getAttribute('data-post-id');
     const likeCountElement = button.querySelector('.like-count');
-    const likeIcon = button.querySelector('.like-icon'); // Kan null zijn
-    
-    console.log('🔍 Post ID:', postId);
-    console.log('🔍 Like count element:', likeCountElement);
-    console.log('🔍 Like icon element:', likeIcon);
     
     if (button.disabled || !postId) {
-        console.log('❌ Button disabled or no post ID - exiting');
         return;
     }
     
     button.disabled = true;
-    console.log('🔄 Starting fetch request...');
     
     fetch('/feed/like', {
         method: 'POST',
@@ -249,42 +243,28 @@ function handlePostLike(button) {
         },
         body: 'post_id=' + encodeURIComponent(postId)
     })
-    .then(response => {
-        console.log('📡 Response received:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('📦 Response data:', data);
         if (data.success) {
-            // Update like count in button (altijd)
+            // Update like count in button
             likeCountElement.textContent = data.like_count;
             
-            // 🎯 GEFIXTE versie - zoek specifiek in hyves-post-card
+            // Update stats in post container
             const postContainer = button.closest('.hyves-post-card');
-            console.log('🔍 Post container found:', !!postContainer);
-            
             if (postContainer) {
                 const statsLikes = postContainer.querySelector('.stats-likes');
                 if (statsLikes) {
                     statsLikes.textContent = data.like_count + ' respect';
-                    console.log('📊 Updated stats-likes counter:', data.like_count + ' respect');
-                } else {
-                    console.log('ℹ️ No .stats-likes found in this post');
                 }
-            } else {
-                console.log('ℹ️ No .hyves-post-card container found');
             }
             
-            // Button state (altijd)
+            // Button state
             if (data.action === 'liked') {
                 button.classList.add('liked');
             } else {
                 button.classList.remove('liked');
             }
-            
-            console.log('✅ Like updated successfully');
         } else {
-            console.log('❌ Server error:', data.message);
             alert('Fout: ' + data.message);
         }
     })
@@ -294,12 +274,11 @@ function handlePostLike(button) {
     })
     .finally(() => {
         button.disabled = false;
-        console.log('🔓 Button re-enabled');
     });
 }
 
 /**
- * ===== IMAGE UPLOAD =====
+ * ===== IMAGE UPLOAD (POSTS) =====
  */
 function initImageUpload() {
     // Feed pagina
@@ -316,14 +295,7 @@ function setupImageUpload(uploadId, previewId, removeId) {
     const imagePreview = document.getElementById(previewId);
     const removeImage = document.getElementById(removeId);
     
-    console.log(`🔍 Image upload elements for ${uploadId}:`, {
-        upload: !!imageUpload,
-        preview: !!imagePreview,
-        remove: !!removeImage
-    });
-    
     if (!imageUpload || !imagePreview || !removeImage) {
-        // Check welke context dit is
         if (uploadId.includes('profilePostForm')) {
             console.log(`ℹ️ Profile image upload not found (normal on timeline pages)`);
         } else {
@@ -335,8 +307,6 @@ function setupImageUpload(uploadId, previewId, removeId) {
     const previewImage = imagePreview.querySelector('.preview-image, img');
     
     imageUpload.addEventListener('change', function() {
-        console.log('📷 Image selected:', this.files[0]?.name);
-        
         if (this.files && this.files[0]) {
             const file = this.files[0];
             const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -358,7 +328,6 @@ function setupImageUpload(uploadId, previewId, removeId) {
                 if (previewImage) {
                     previewImage.src = e.target.result;
                     imagePreview.style.display = 'block';
-                    console.log('✅ Image preview loaded');
                 }
             }
             reader.readAsDataURL(file);
@@ -366,42 +335,32 @@ function setupImageUpload(uploadId, previewId, removeId) {
     });
     
     removeImage.addEventListener('click', function() {
-        console.log('🗑️ Removing image preview');
         imageUpload.value = '';
         imagePreview.style.display = 'none';
         if (previewImage) {
             previewImage.src = '';
         }
     });
-    
-    console.log(`✅ Image upload setup complete for ${uploadId}`);
 }
 
 /**
  * ===== POST MENUS =====
  */
 function initPostMenus() {
-    console.log('🔧 Setting up post menus...');
     document.addEventListener('click', function(e) {
         const likeButton = e.target.closest('.like-button');
         if (likeButton) {
             return; // Laat de like button handler dit afhandelen
         }
-        console.log('🔍 Click detected on:', e.target);
         
         // Post menu toggle
         const menuButton = e.target.closest('.post-menu-button');
-        console.log('🔍 Menu button found:', menuButton);
         
         if (menuButton) {
-            console.log('✅ Menu button clicked!', menuButton);
             e.stopPropagation();
             
             const postMenu = menuButton.closest('.post-menu');
-            console.log('🔍 Post menu container:', postMenu);
-            
             const dropdown = postMenu ? postMenu.querySelector('.post-menu-dropdown') : null;
-            console.log('🔍 Dropdown found:', dropdown);
             
             if (dropdown) {
                 // Sluit andere dropdowns
@@ -409,10 +368,7 @@ function initPostMenus() {
                     if (menu !== dropdown) menu.classList.add('hidden');
                 });
                 
-                console.log('🔍 Toggling dropdown visibility');
                 dropdown.classList.toggle('hidden');
-            } else {
-                console.log('❌ No dropdown found!');
             }
             return;
         }
@@ -420,22 +376,20 @@ function initPostMenus() {
         // Delete button
         const deleteButton = e.target.closest('.delete-post-button');
         if (deleteButton) {
-            console.log('🗑️ Delete button clicked!', deleteButton);
             e.preventDefault();
             handlePostDelete(deleteButton);
             return;
         }
 
-        // Comment delete button (voeg toe na de bestaande delete button code)
+        // Comment delete button
         const commentDeleteButton = e.target.closest('.delete-comment-button');
         if (commentDeleteButton) {
-            console.log('🗑️ Comment delete button clicked!', commentDeleteButton);
             e.preventDefault();
             handleCommentDelete(commentDeleteButton);
             return;
         }
 
-        // Comment menu toggle (voeg toe na de post menu toggle)
+        // Comment menu toggle
         const commentMenuButton = e.target.closest('.comment-menu-button');
         if (commentMenuButton) {
             e.stopPropagation();
@@ -689,51 +643,38 @@ function handleCommentDelete(button) {
         return;
     }
     
-    // Bevestigingsdialoog
     if (!confirm('Weet je zeker dat je dit commentaar wilt verwijderen?')) {
         return;
     }
     
-    console.log('🗑️ Deleting comment:', commentId);
-    
-    // AJAX request om comment te verwijderen
     fetch(`?route=comments/delete`, {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `comment_id=${commentId}`
-})
-.then(response => {
-    console.log('📡 Response status:', response.status);
-    console.log('📡 Response headers:', response.headers.get('Content-Type'));
-    return response.text(); // Gebruik eerst text() in plaats van json()
-})
-.then(data => {
-    console.log('📡 Raw response:', data);
-    try {
-        const jsonData = JSON.parse(data);
-        console.log('📡 Parsed response:', jsonData);
-        if (jsonData.success) {
-            // Verwijder het comment element uit de DOM
-            const commentElement = button.closest('.comment-item');
-            if (commentElement) {
-                commentElement.remove();
-                console.log('✅ Comment removed from DOM');
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `comment_id=${commentId}`
+    })
+    .then(response => response.text())
+    .then(data => {
+        try {
+            const jsonData = JSON.parse(data);
+            if (jsonData.success) {
+                const commentElement = button.closest('.comment-item');
+                if (commentElement) {
+                    commentElement.remove();
+                }
+            } else {
+                alert('Fout bij verwijderen: ' + (jsonData.message || 'Onbekende fout'));
             }
-        } else {
-            alert('Fout bij verwijderen: ' + (jsonData.message || 'Onbekende fout'));
+        } catch (e) {
+            console.error('❌ JSON parse error:', e);
+            alert('Er is een fout opgetreden bij het verwijderen');
         }
-    } catch (e) {
-        console.error('❌ JSON parse error:', e);
-        console.log('📡 Response was not JSON:', data);
+    })
+    .catch(error => {
+        console.error('❌ Delete error:', error);
         alert('Er is een fout opgetreden bij het verwijderen');
-    }
-})
-.catch(error => {
-    console.error('❌ Delete error:', error);
-    alert('Er is een fout opgetreden bij het verwijderen');
-});
+    });
 }
 
 /**
@@ -802,7 +743,7 @@ function handleCommentLike(button) {
 }
 
 /**
- * ===== EMOJI PICKER =====
+ * ===== EMOJI PICKER (ALLEEN VOOR COMMENTS) =====
  */
 function initEmojiPicker() {
     console.log('🔧 Initializing emoji picker...');
@@ -837,30 +778,33 @@ function cleanupEmojiPicker() {
 }
 
 function handleEmojiPickerClick(e) {
-    // BELANGRIJK: Stop alle mouse events die flikkeren kunnen veroorzaken
+    // Stop alle mouse events die flikkeren kunnen veroorzaken
     if (e.target.closest('.hyves-emoji-picker')) {
-        // Als we binnen de emoji picker zijn, voorkom dat de click bubbelt
         e.stopPropagation();
     }
     
-    // Emoji trigger button
+    // Emoji trigger button (ALLEEN COMMENTS)
     const trigger = e.target.closest('.emoji-picker-trigger');
     if (trigger) {
+        // ⚠️ BELANGRIJK: Alleen comment emoji pickers, GEEN chat
+        const form = trigger.closest('.add-comment-form');
+        if (!form) {
+            console.log('🚫 Emoji trigger niet in comment form - genegeerd');
+            return;
+        }
+        
         e.preventDefault();
         e.stopPropagation();
         
         const formId = trigger.getAttribute('data-form-id');
         if (!formId) return;
         
-        // Check of deze picker al open is
         const existingPanel = document.getElementById(formId + 'EmojiPanel');
         const isAlreadyOpen = existingPanel && existingPanel.style.display === 'block';
         
         closeAllEmojiPickers();
         
-        // Als hij niet al open was, open hem dan
         if (!isAlreadyOpen) {
-            // Kleine delay om flikkeren te voorkomen
             setTimeout(() => {
                 openEmojiPickerStable(formId);
             }, 50);
@@ -879,22 +823,15 @@ function handleEmojiPickerClick(e) {
         return;
     }
     
-    // 🎯 FIXED: Emoji selection with better delegation
+    // Emoji selection
     const emojiItem = e.target.closest('.emoji-item');
     if (emojiItem) {
         e.preventDefault();
         e.stopPropagation();
         
         const emoji = emojiItem.getAttribute('data-emoji');
-        
-        console.log('👆 Emoji clicked:', emoji);
-        console.log('🎯 Target element:', e.target);
-        console.log('🔘 Emoji item:', emojiItem);
-        
-        // 🎯 FIXED: Better panel detection - zoek in alle emoji panels
         let panel = emojiItem.closest('.hyves-emoji-picker, .emoji-picker-panel');
         
-        // Als we geen panel vinden, zoek dan in alle panels die in body staan
         if (!panel) {
             const allPanels = document.querySelectorAll('.hyves-emoji-picker, .emoji-picker-panel');
             for (const p of allPanels) {
@@ -905,23 +842,15 @@ function handleEmojiPickerClick(e) {
             }
         }
         
-        console.log('📱 Panel found:', !!panel);
-        console.log('🆔 Panel ID:', panel?.id);
-        
         if (panel && panel.id && emoji) {
             const formId = panel.id.replace('EmojiPanel', '');
-            console.log('📝 Calculated form ID:', formId);
-            
             insertEmoji(formId, emoji);
             closeEmojiPicker(formId);
-        } else {
-            console.error('❌ Missing panel or emoji data');
-            console.log('🔍 Available panels:', Array.from(document.querySelectorAll('.hyves-emoji-picker')).map(p => p.id));
         }
         return;
     }
     
-    // Click outside - close all pickers (maar NIET als we in een picker zijn)
+    // Click outside - close all pickers
     if (!e.target.closest('.hyves-emoji-picker') && 
         !e.target.closest('.emoji-picker-trigger')) {
         closeAllEmojiPickers();
@@ -937,24 +866,23 @@ function openEmojiPickerStable(formId) {
         return;
     }
     
-    // CRITICAL FIX: Move panel to body to escape parent z-index constraints
+    // Move panel to body to escape parent z-index constraints
     if (panel.parentElement !== document.body) {
-        console.log('Moving emoji panel to body to fix z-index issues');
         document.body.appendChild(panel);
     }
     
-    // ANTI-FLICKER: Zet panel eerst onzichtbaar maar wel gemeten
+    // Anti-flicker setup
     panel.style.visibility = 'hidden';
     panel.style.display = 'block';
     
-    // Calculate position na het element zichtbaar te maken
+    // Calculate position
     const rect = button.getBoundingClientRect();
     const panelRect = panel.getBoundingClientRect();
     const viewWidth = window.innerWidth;
     const viewHeight = window.innerHeight;
     
     let left = rect.left;
-    let top = rect.bottom + 8; // Iets meer ruimte
+    let top = rect.bottom + 8;
     const panelWidth = Math.max(320, panelRect.width);
     const panelHeight = Math.max(280, panelRect.height);
     
@@ -967,79 +895,20 @@ function openEmojiPickerStable(formId) {
         top = Math.max(10, rect.top - panelHeight - 8);
     }
     
-    // CRITICAL: Much higher z-index to escape all parent constraints
+    // Apply styles
     Object.assign(panel.style, {
         position: 'fixed',
         left: left + 'px',
         top: top + 'px',
-        zIndex: '2147483647', // Maximum possible z-index
+        zIndex: '2147483647',
         width: panelWidth + 'px',
         maxHeight: panelHeight + 'px',
         visibility: 'visible',
         display: 'block',
-        pointerEvents: 'auto',
-        
-        // Extra anti-flicker CSS
-        transition: 'none',
-        transform: 'translateZ(0)', // Force hardware acceleration
-        backfaceVisibility: 'hidden',
-        willChange: 'transform',
-        overflow: 'hidden',
-        
-        // Ensure it's above everything
-        isolation: 'isolate'
+        pointerEvents: 'auto'
     });
     
     button.classList.add('active');
-    
-    // ANTI-FLICKER: Enhanced protection
-    addEnhancedFlickerProtection(panel, formId);
-    
-    console.log('✅ Enhanced stable emoji picker opened for:', formId);
-}
-
-function addEnhancedFlickerProtection(panel, formId) {
-    // Verwijder oude event listeners als ze bestaan
-    if (panel._enhancedProtectionAdded) {
-        return;
-    }
-    
-    // Create a protective barrier around the panel
-    const protectionHandler = function(e) {
-        // If the event is within our panel, don't let it bubble up
-        if (panel.contains(e.target)) {
-            e.stopImmediatePropagation();
-        }
-    };
-    
-    // Protect against all mouse events that could cause flicker
-    ['mousemove', 'mouseenter', 'mouseleave', 'mouseover', 'mouseout'].forEach(eventType => {
-        panel.addEventListener(eventType, protectionHandler, true);
-    });
-    
-    // Extra protection: prevent the panel from being affected by parent hover states
-    panel.addEventListener('mouseenter', function(e) {
-        e.stopPropagation();
-        // Force the panel to stay visible
-        this.style.display = 'block';
-        this.style.visibility = 'visible';
-    }, true);
-    
-    panel.addEventListener('mouseleave', function(e) {
-        e.stopPropagation();
-        // Keep the panel open on mouse leave
-    }, true);
-    
-    // Prevent any parent form events from affecting the panel
-    panel.addEventListener('click', function(e) {
-        if (!e.target.closest('.emoji-item') && !e.target.closest('.emoji-picker-close')) {
-            e.stopPropagation();
-        }
-    }, true);
-    
-    panel._enhancedProtectionAdded = true;
-    
-    console.log('Enhanced flicker protection added to panel');
 }
 
 function closeEmojiPicker(formId) {
@@ -1047,15 +916,8 @@ function closeEmojiPicker(formId) {
     const button = document.querySelector(`[data-form-id="${formId}"].emoji-picker-trigger`);
     
     if (panel) {
-        // ANTI-FLICKER: Volledig verbergen
         panel.style.display = 'none';
         panel.style.visibility = 'hidden';
-        
-        // Reset flicker protection flag
-        panel._enhancedProtectionAdded = false;
-        
-        // Don't move the panel back - keep it in body for next time
-        console.log('Closed emoji picker for:', formId);
     }
     
     if (button) {
@@ -1067,9 +929,7 @@ function closeAllEmojiPickers() {
     document.querySelectorAll('.emoji-picker-panel').forEach(panel => {
         panel.style.display = 'none';
         panel.style.visibility = 'hidden';
-        panel._enhancedProtectionAdded = false;
         
-        // Move all panels to body if they aren't already
         if (panel.parentElement !== document.body) {
             document.body.appendChild(panel);
         }
@@ -1081,18 +941,11 @@ function closeAllEmojiPickers() {
 }
 
 function insertEmoji(formId, emoji) {
-    //console.log('🔧 Inserting emoji:', emoji, 'for form:', formId);
-    
     const textareaId = formId + 'Content';
     const textarea = document.getElementById(textareaId);
     
-    //console.log('🔍 Looking for textarea ID:', textareaId);
-    //console.log('🔍 Textarea found:', !!textarea);
-    
     if (!textarea) {
         console.error('❌ Textarea not found for form:', formId);
-        console.log('🔍 Available textareas on page:', 
-            Array.from(document.querySelectorAll('textarea')).map(t => t.id || 'no-id'));
         return;
     }
     
@@ -1105,16 +958,12 @@ function insertEmoji(formId, emoji) {
     
     const newPos = start + emoji.length;
     
-    //console.log('✅ Emoji inserted at position:', newPos);
-    
     setTimeout(() => {
         textarea.focus();
         textarea.setSelectionRange(newPos, newPos);
         
         // Trigger input event for character counter
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        
-        console.log('✅ Textarea focused and input event triggered');
     }, 10);
 }
 
@@ -1138,7 +987,7 @@ function initAvatarUpload() {
     
     if (preview) {
         preview.classList.add('hidden');
-        preview.style.display = '';  // Reset inline style
+        preview.style.display = '';
     }
     
     // File selection
@@ -1148,39 +997,33 @@ function initAvatarUpload() {
     
     // File selected
     if (fileInput) {
-    fileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file && isValidAvatarFile(file)) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (previewImage && preview && uploadBtn) {
-                    previewImage.src = e.target.result;
-                    preview.classList.remove('hidden');  // ✅ Correct
-                    uploadBtn.disabled = false;
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-}
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file && isValidAvatarFile(file)) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (previewImage && preview && uploadBtn) {
+                        previewImage.src = e.target.result;
+                        preview.classList.remove('hidden');
+                        uploadBtn.disabled = false;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
     
     // Remove preview
     if (removePreview) {
-    removePreview.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (fileInput) fileInput.value = '';
-        if (preview) preview.classList.add('hidden');      // ✅ Fix: geen style.display
-        if (previewImage) previewImage.src = '';
-        if (uploadBtn) uploadBtn.disabled = true;
-    });
-}
-
-    // Initialisatie
-    if (preview) {
-        preview.classList.add('hidden');
-        preview.style.display = '';  // Reset inline style  
+        removePreview.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (fileInput) fileInput.value = '';
+            if (preview) preview.classList.add('hidden');
+            if (previewImage) previewImage.src = '';
+            if (uploadBtn) uploadBtn.disabled = true;
+        });
     }
     
     // Upload avatar
@@ -1214,26 +1057,23 @@ function initAvatarUpload() {
             })
             .then(response => response.json())
             .then(data => {
-                    if (data.success) {
-                        // Update huidige avatar
-                        if (data.avatar_url && currentAvatar) {
-                            currentAvatar.src = data.avatar_url;
-                        }
-                        
-                        // 🔧 FIX: Reset form MAAR behoud preview
-                        if (fileInput) fileInput.value = '';
-                        
-                        // 🔧 FIX: Verberg preview NA een korte delay
-                        setTimeout(() => {
-                            if (preview) preview.classList.add('hidden');  // ← Juiste variabele naam!
-                        }, 1500);
-                        
-                        showAvatarMessage(data.message || 'Avatar succesvol geüpload!', 'success');
-                        updateNavigationAvatar(data.avatar_url);
-                        
-                    } else {
-                        showAvatarMessage(data.message || 'Upload mislukt', 'error');
+                if (data.success) {
+                    if (data.avatar_url && currentAvatar) {
+                        currentAvatar.src = data.avatar_url;
                     }
+                    
+                    if (fileInput) fileInput.value = '';
+                    
+                    setTimeout(() => {
+                        if (preview) preview.classList.add('hidden');
+                    }, 1500);
+                    
+                    showAvatarMessage(data.message || 'Avatar succesvol geüpload!', 'success');
+                    updateNavigationAvatar(data.avatar_url);
+                    
+                } else {
+                    showAvatarMessage(data.message || 'Upload mislukt', 'error');
+                }
             })
             .catch(error => {
                 console.error('Upload error:', error);
@@ -1279,6 +1119,159 @@ function initAvatarUpload() {
             }
         });
     }
+}
+
+/**
+ * ===== LINK PREVIEW DETECTION =====
+ */
+function initLinkPreviewDetection() {
+    console.log('🔧 Initializing link preview detection...');
+    
+    const postTextareas = document.querySelectorAll('#postFormContent, #profilePostFormContent');
+    
+    postTextareas.forEach(function(textarea, index) {
+        if (!textarea) return;
+        
+        let timeout;
+        let currentPreviewContainer = null;
+        
+        const form = textarea.closest('form');
+        if (form) {
+            currentPreviewContainer = form.querySelector('.link-preview-container');
+            
+            if (!currentPreviewContainer) {
+                currentPreviewContainer = document.createElement('div');
+                currentPreviewContainer.className = 'link-preview-container hidden mt-3';
+                
+                const textareaWrapper = textarea.closest('.input-wrapper, .mb-4') || textarea.parentNode;
+                textareaWrapper.appendChild(currentPreviewContainer);
+            }
+        }
+        
+        textarea.addEventListener('input', function() {
+            clearTimeout(timeout);
+            
+            timeout = setTimeout(function() {
+                const content = textarea.value;
+                const urlPattern = /https?:\/\/[^\s]+/i;
+                const match = content.match(urlPattern);
+                
+                if (match && currentPreviewContainer) {
+                    generateRealtimePreview(match[0], currentPreviewContainer);
+                } else if (currentPreviewContainer) {
+                    hidePreviewContainer(currentPreviewContainer);
+                }
+            }, 1000);
+        });
+    });
+    
+    console.log('✅ Link preview detection initialized');
+}
+
+function generateRealtimePreview(url, container) {
+    container.innerHTML = `
+        <div class="link-preview-loading">
+            <div class="loading-spinner"></div>
+            <span>Link preview laden...</span>
+        </div>
+    `;
+    container.classList.remove('hidden');
+    
+    fetch('?route=linkpreview/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `url=${encodeURIComponent(url)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.preview) {
+            showRealtimePreview(data.preview, container);
+        } else {
+            hidePreviewContainer(container);
+        }
+    })
+    .catch(error => {
+        console.error('Preview generation failed:', error);
+        hidePreviewContainer(container);
+    });
+}
+
+function showRealtimePreview(preview, container) {
+    container.innerHTML = `
+        <div class="link-preview">
+            <div class="link-preview-card">
+                <div class="link-preview-layout">
+                    <div class="link-preview-content">
+                        <div class="link-preview-domain">📌 ${preview.domain}</div>
+                        ${preview.title ? `<div class="link-preview-title">${preview.title}</div>` : ''}
+                        ${preview.description ? `<div class="link-preview-description">${preview.description.substring(0, 120)}${preview.description.length > 120 ? '...' : ''}</div>` : ''}
+                    </div>
+                    ${preview.image_url ? `
+                        <div class="link-preview-image">
+                            <img src="${preview.image_url}" alt="Preview" loading="lazy">
+                        </div>
+                    ` : ''}
+                </div>
+                <button type="button" onclick="hidePreviewContainer(this.closest('.link-preview-container'))" class="link-preview-remove">×</button>
+            </div>
+        </div>
+    `;
+    container.classList.remove('hidden');
+}
+
+function hidePreviewContainer(container) {
+    if (container) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+    }
+}
+
+/**
+ * ===== VRIENDEN TOEVOEGEN =====
+ */
+function initAddFriendButtons() {
+    const addFriendBtns = document.querySelectorAll('.add-friend-btn');
+    
+    addFriendBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const username = this.dataset.username;
+            const userId = this.dataset.userId;
+            
+            this.style.pointerEvents = 'none';
+            this.textContent = 'Bezig...';
+            
+            fetch(this.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'user=' + encodeURIComponent(username)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = 'Verzonden ✓';
+                    this.classList.remove('primary');
+                    this.classList.add('success');
+                } else {
+                    this.textContent = '+ Toevoegen';
+                    this.style.pointerEvents = 'auto';
+                    alert(data.message || 'Er ging iets mis');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.textContent = '+ Toevoegen';
+                this.style.pointerEvents = 'auto';
+                alert('Er ging iets mis bij het toevoegen');
+            });
+        });
+    });
 }
 
 /**
@@ -1328,7 +1321,6 @@ function updateNavigationAvatar(avatarUrl) {
     navAvatars.forEach(avatar => {
         avatar.src = avatarUrl;
     });
-    console.log('Navigation avatar updated:', avatarUrl);
 }
 
 function showNotification(message, type = 'info') {
@@ -1349,8 +1341,25 @@ function showNotification(message, type = 'info') {
 }
 
 /**
- * ===== DEBUG HELPERS =====
+ * ===== GLOBAL FUNCTIONS =====
  */
+// Voor de image modal
+function openImageModal(imageUrl) {
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.add('hidden');
+}
+
+// Voor post menu's
+function togglePostMenu(postId) {
+    const menu = document.getElementById(`post-menu-${postId}`);
+    menu.classList.toggle('hidden');
+}
+
+// Debug functie
 function debugSocialCore() {
     console.log('=== SocialCore Debug Info ===');
     console.log('State:', window.socialCoreState);
@@ -1359,153 +1368,12 @@ function debugSocialCore() {
     console.log('Emoji panels:', document.querySelectorAll('.emoji-picker-panel').length);
     console.log('Comment like buttons:', document.querySelectorAll('.comment-like-button').length);
     console.log('==============================');
-    initPostMenus();
 }
-
-console.log('🔍 All functions available:', typeof initPostMenus, typeof initLikeButtons, typeof initEmojiPicker);
 
 // Global debug functie beschikbaar maken
 window.debugSocialCore = debugSocialCore;
 
-// Voeg dit toe aan je bestaande theme.js
-
-/**
- * Real-time link preview functionaliteit
- */
-function initLinkPreviewDetection() {
-    console.log('🔧 Initializing link preview detection...');
-    
-    // GEFIXTE ELEMENT SELECTIE - gebruik de correcte IDs
-    const postTextareas = document.querySelectorAll('#postFormContent, #profilePostFormContent');
-    
-    console.log('🔍 Found textareas for link preview:', postTextareas.length);
-    
-    postTextareas.forEach(function(textarea, index) {
-        if (!textarea) return;
-        
-        console.log('🔧 Setting up link preview for textarea ' + (index + 1) + ': ' + textarea.id);
-        
-        let timeout;
-        let currentPreviewContainer = null;
-        
-        // Zoek of maak preview container
-        const form = textarea.closest('form');
-        if (form) {
-            console.log('📋 Found parent form for textarea:', textarea.id);
-            
-            // Controleer of preview container al bestaat
-            currentPreviewContainer = form.querySelector('.link-preview-container');
-            
-            if (!currentPreviewContainer) {
-                console.log('➕ Creating new preview container');
-                // Maak preview container aan
-                currentPreviewContainer = document.createElement('div');
-                currentPreviewContainer.className = 'link-preview-container hidden mt-3';
-                
-                // Voeg toe na de textarea wrapper
-                const textareaWrapper = textarea.closest('.input-wrapper, .mb-4') || textarea.parentNode;
-                textareaWrapper.appendChild(currentPreviewContainer);
-                console.log('✅ Preview container added to DOM');
-            } else {
-                console.log('♻️ Using existing preview container');
-            }
-        }
-        
-        textarea.addEventListener('input', function() {
-            clearTimeout(timeout);
-            
-            timeout = setTimeout(function() {
-                const content = textarea.value;
-                const urlPattern = /https?:\/\/[^\s]+/i;
-                const match = content.match(urlPattern);
-                
-                if (match && currentPreviewContainer) {
-                    console.log('🔗 URL detected, generating preview:', match[0]);
-                    generateRealtimePreview(match[0], currentPreviewContainer);
-                } else if (currentPreviewContainer) {
-                    hidePreviewContainer(currentPreviewContainer);
-                }
-            }, 1000); // 1 seconde delay
-        });
-        
-        console.log('✅ Link preview setup complete for: ' + textarea.id);
-    });
-    
-    console.log('✅ Link preview detection initialized');
-}
-
-/**
- * Genereer real-time preview
- */
-function generateRealtimePreview(url, container) {
-    // Toon loading state
-    container.innerHTML = `
-        <div class="link-preview-loading">
-            <div class="loading-spinner"></div>
-            <span>Link preview laden...</span>
-        </div>
-    `;
-    container.classList.remove('hidden');
-    
-    // AJAX call naar LinkPreviewController
-    fetch('?route=linkpreview/generate', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `url=${encodeURIComponent(url)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.preview) {
-            showRealtimePreview(data.preview, container);
-        } else {
-            hidePreviewContainer(container);
-        }
-    })
-    .catch(error => {
-        console.error('Preview generation failed:', error);
-        hidePreviewContainer(container);
-    });
-}
-
-/**
- * Toon preview in container
- */
-function showRealtimePreview(preview, container) {
-    container.innerHTML = `
-        <div class="link-preview">
-            <div class="link-preview-card">
-                <div class="link-preview-layout">
-                    <div class="link-preview-content">
-                        <div class="link-preview-domain">📌 ${preview.domain}</div>
-                        ${preview.title ? `<div class="link-preview-title">${preview.title}</div>` : ''}
-                        ${preview.description ? `<div class="link-preview-description">${preview.description.substring(0, 120)}${preview.description.length > 120 ? '...' : ''}</div>` : ''}
-                    </div>
-                    ${preview.image_url ? `
-                        <div class="link-preview-image">
-                            <img src="${preview.image_url}" alt="Preview" loading="lazy">
-                        </div>
-                    ` : ''}
-                </div>
-                <button type="button" onclick="hidePreviewContainer(this.closest('.link-preview-container'))" class="link-preview-remove">×</button>
-            </div>
-        </div>
-    `;
-    container.classList.remove('hidden');
-}
-
-/**
- * Verberg preview container
- */
-function hidePreviewContainer(container) {
-    if (container) {
-        container.classList.add('hidden');
-        container.innerHTML = '';
-    }
-}
-
-// CSS voor loading en preview styling
+// Add link preview CSS
 const linkPreviewStyles = `
 <style>
 .link-preview-container {
@@ -1638,72 +1506,6 @@ if (!document.querySelector('#link-preview-styles')) {
     document.head.appendChild(styleElement);
 }
 
-// Initialiseer na DOM load
-document.addEventListener('DOMContentLoaded', function() {
-    initLinkPreviewDetection();
-});
+console.log("🎨 theme.js active");
 
-// Vrienden toevoegen functionaliteit
-function initAddFriendButtons() {
-    const addFriendBtns = document.querySelectorAll('.add-friend-btn');
-    
-    addFriendBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const username = this.dataset.username;
-            const userId = this.dataset.userId;
-            
-            // Disable button tijdens request
-            this.style.pointerEvents = 'none';
-            this.textContent = 'Bezig...';
-            
-            // AJAX request
-            fetch(this.href, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'  // Zorgt voor AJAX detectie
-                },
-                body: 'user=' + encodeURIComponent(username)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.textContent = 'Verzonden ✓';
-                    this.classList.remove('primary');
-                    this.classList.add('success');
-                } else {
-                    this.textContent = '+ Toevoegen';
-                    this.style.pointerEvents = 'auto';
-                    alert(data.message || 'Er ging iets mis');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                this.textContent = '+ Toevoegen';
-                this.style.pointerEvents = 'auto';
-                alert('Er ging iets mis bij het toevoegen');
-            });
-        });
-    });
 }
-
-
-
-// TIJDELIJKE DEBUG - voeg toe onderaan theme.js
-// setTimeout(function() {
-//     console.log('=== PROFILE PAGE DEBUG ===');
-//     console.log('All textareas:', document.querySelectorAll('textarea').length);
-//     console.log('All forms:', document.querySelectorAll('form').length);
-//     console.log('Forms with enctype:', document.querySelectorAll('form[enctype*="multipart"]').length);
-    
-//     // Toon alle element IDs op de pagina
-//     const allIds = Array.from(document.querySelectorAll('[id]')).map(el => el.id);
-//     console.log('All IDs on page:', allIds);
-    
-//     // Zoek specifiek naar post gerelateerde IDs
-//     const postIds = allIds.filter(id => id.includes('post') || id.includes('Post'));
-//     console.log('Post-related IDs:', postIds);
-//     console.log('========================');
-// }, 2000);

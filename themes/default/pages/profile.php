@@ -318,7 +318,11 @@
                                                         <!-- Regular timeline post -->
                                                         <div class="font-bold text-blue-600"><?= htmlspecialchars($post['user_name']) ?></div>
                                                     <?php endif; ?>
-                                                    <div class="text-gray-500 text-sm"><?= $post['created_at'] ?></div>
+                                                    <div class="text-gray-500 text-sm">
+                                                        <a href="<?= base_url('?route=post&id=' . $post['id']) ?>" class="post-permalink">
+                                                            <?= $post['created_at'] ?>
+                                                        </a>
+                                                    </div>
                                                 </div>
                                                 
                                                 <!-- Verwijder/opties menu -->
@@ -362,15 +366,26 @@
                                             </div>
                                             
                                             <!-- Post actions -->
-                                            <div class="flex justify-between text-sm border-t border-gray-200 pt-3">
-                                                <button class="hyves-action-button like-button <?= isset($post['is_liked']) && $post['is_liked'] ? 'liked' : '' ?>" data-post-id="<?= $post['id'] ?>">
-                                                    <span class="like-icon">👍</span>
-                                                    <span class="text"><span class="like-count"><?= $post['likes'] ?? 0 ?></span> Respect!</span>
-                                                </button>
-                                                <button class="flex items-center space-x-1 text-blue-600 hover:text-blue-800">
-                                                    <span>💬</span>
-                                                    <span><?= $post['comments'] ?? 0 ?> Reacties</span>
-                                                </button>
+                                            <div class="post-interactions">
+                                                <div class="interaction-buttons">
+                                                    <button class="hyves-action-button like-button <?= isset($post['is_liked']) && $post['is_liked'] ? 'liked' : '' ?>" data-post-id="<?= $post['id'] ?>">
+                                                        <span class="like-icon">👍</span>
+                                                        <span class="text">
+                                                            <span class="like-count"><?= $post['likes'] ?? 0 ?></span> Respect!
+                                                        </span>
+                                                    </button>
+                                                    
+                                                    <a href="<?= base_url('?route=post&id=' . $post['id']) ?>#comments" class="comment-indicator comment-link">
+                                                        <span class="comment-icon">💬</span>
+                                                        <span class="comment-count"><?= $post['comments'] ?? 0 ?></span>
+                                                        <span class="text">Reacties</span>
+                                                    </a>
+                                                    
+                                                    <button class="hyves-action-button share-button" onclick="sharePost(<?= $post['id'] ?>)">
+                                                        <span class="share-icon">📤</span>
+                                                        <span class="text">Delen</span>
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <!-- Comments container -->

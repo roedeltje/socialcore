@@ -386,6 +386,7 @@ class Controller
                                 'profile/edit' => 'pages/edit-profile.php',
                                 'profile/avatar' => 'pages/edit-profile.php',
                                 'feed/index' => 'pages/timeline.php',
+                                'post/single' => 'pages/single-post.php',
                                 'auth/login' => 'pages/login.php',
                                 'auth/register' => 'pages/register.php',
                                 'about/index' => 'pages/about.php',

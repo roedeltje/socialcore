@@ -814,4 +814,12 @@ class PostService
 
 
     private function insertPost($content, $userId, $type, $targetUserId, $privacy) { /* ... */ }
+
+    /**
+     * Publieke methode voor chat uploads (wrapper rond private method)
+     */
+    public function uploadChatImage($file, $userId) 
+    {
+        return $this->handleSecureImageUpload($file, $userId);
+    }
 }

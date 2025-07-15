@@ -72,6 +72,108 @@
         </div>
 
         <div class="settings-section">
+            <h3><i class="fas fa-comments"></i> Chat Functies</h3>
+            <p class="section-description">Configureer het chat systeem en gerelateerde functies.</p>
+            
+            <div class="form-group">
+                <label for="chat_mode">Chat Systeem Modus</label>
+                <select id="chat_mode" name="chat_mode" class="form-control">
+                    <option value="auto" <?= $settings['chat_mode'] === 'auto' ? 'selected' : '' ?>>
+                        Automatisch - Gebruik thema chat als beschikbaar, anders core chat
+                    </option>
+                    <option value="force_core" <?= $settings['chat_mode'] === 'force_core' ? 'selected' : '' ?>>
+                        Altijd Core Chat - Gebruik altijd de standaard chat interface
+                    </option>
+                    <option value="force_theme" <?= $settings['chat_mode'] === 'force_theme' ? 'selected' : '' ?>>
+                        Altijd Thema Chat - Gebruik altijd de thema-specifieke chat
+                    </option>
+                </select>
+                <small class="form-hint">
+                    Bepaalt welke chat interface wordt gebruikt. 'Automatisch' is aanbevolen voor meeste sites.
+                </small>
+            </div>
+            
+            <div class="social-features-grid">
+                <div class="form-check">
+                    <input type="checkbox" 
+                           id="chat_features_emoji" 
+                           name="chat_features_emoji" 
+                           class="form-check-input" 
+                           <?= $settings['chat_features_emoji'] === '1' ? 'checked' : '' ?>>
+                    <label for="chat_features_emoji" class="form-check-label">
+                        <strong>Emoji Picker</strong>
+                        <br><small>Gebruikers kunnen emoji's toevoegen aan hun berichten</small>
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" 
+                           id="chat_features_file_upload" 
+                           name="chat_features_file_upload" 
+                           class="form-check-input" 
+                           <?= $settings['chat_features_file_upload'] === '1' ? 'checked' : '' ?>>
+                    <label for="chat_features_file_upload" class="form-check-label">
+                        <strong>Bestanden Uploaden</strong>
+                        <br><small>Gebruikers kunnen afbeeldingen en bestanden delen in chat</small>
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" 
+                           id="chat_features_real_time" 
+                           name="chat_features_real_time" 
+                           class="form-check-input" 
+                           <?= $settings['chat_features_real_time'] === '1' ? 'checked' : '' ?>>
+                    <label for="chat_features_real_time" class="form-check-label">
+                        <strong>Real-time Updates</strong>
+                        <br><small>Berichten verschijnen direct zonder pagina verversing (experimenteel)</small>
+                    </label>
+                </div>
+            </div>
+
+            <div class="chat-limits-grid">
+                <div class="form-group">
+                    <label for="chat_max_message_length">Maximale Berichtlengte</label>
+                    <input type="number" 
+                           id="chat_max_message_length" 
+                           name="chat_max_message_length" 
+                           class="form-control" 
+                           value="<?= $settings['chat_max_message_length'] ?>"
+                           min="100" 
+                           max="5000" 
+                           step="50">
+                    <small class="form-hint">Aantal karakters (aanbevolen: 1000)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="chat_max_file_size">Maximale Bestandsgrootte</label>
+                    <input type="number" 
+                           id="chat_max_file_size" 
+                           name="chat_max_file_size" 
+                           class="form-control" 
+                           value="<?= $settings['chat_max_file_size'] ?>"
+                           min="512" 
+                           max="10240" 
+                           step="256">
+                    <small class="form-hint">In KB (aanbevolen: 2048 = 2MB)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="chat_online_timeout">Online Status Timeout</label>
+                    <input type="number" 
+                           id="chat_online_timeout" 
+                           name="chat_online_timeout" 
+                           class="form-control" 
+                           value="<?= $settings['chat_online_timeout'] ?>"
+                           min="5" 
+                           max="60" 
+                           step="5">
+                    <small class="form-hint">Minuten voordat gebruiker als offline wordt beschouwd</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
             <h3><i class="fas fa-heart"></i> Interactie Functies</h3>
             <p class="section-description">Configureer hoe gebruikers kunnen reageren op content.</p>
             
@@ -373,6 +475,23 @@
 .engagement-list li span {
     color: var(--text-color);
     line-height: 1.4;
+}
+
+.chat-limits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.chat-limits-grid .form-group {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .chat-limits-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {

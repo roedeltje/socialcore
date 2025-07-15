@@ -170,7 +170,11 @@ echo "</div>";
                                                 </a>
                                                 <div class="post-type">plaatste een bericht</div>
                                             <?php endif; ?>
-                                            <div class="post-time"><?= $post['created_at'] ?></div>
+                                            <div class="post-time">
+                                                <a href="<?= base_url('?route=post&id=' . $post['id']) ?>" class="post-permalink">
+                                                    <?= $post['created_at'] ?>
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -220,7 +224,9 @@ echo "</div>";
                                     <div class="post-stats">
                                         <span class="stats-likes"><?= $post['likes'] ?> respect</span>
                                         <span class="stats-separator">•</span>
-                                        <span class="stats-comments"><?= $post['comments'] ?> reacties</span>
+                                        <a href="<?= base_url('?route=post&id=' . $post['id']) ?>#comments" class="stats-comments comment-link">
+                                            <?= $post['comments'] ?> reacties
+                                        </a>
                                     </div>
                                     
                                     <div class="post-actions">

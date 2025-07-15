@@ -23,6 +23,7 @@ use App\Controllers\PhotosController;
 use App\Controllers\SearchHandler;
 use App\Handlers\PrivacyHandler;
 use App\Handlers\SecurityHandler;
+use App\Handlers\NotificationsHandler;
 use App\Controllers\MigrationController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\Admin\DashboardController;
@@ -871,98 +872,181 @@ return [
     'notifications/delete' => createHandlerRoute('NotificationsHandler', 'delete'),
     'notifications/count' => createHandlerRoute('NotificationsHandler', 'getCountApi'),
 
-    'messages' => [
-        'callback' => function () {
-            $messagesController = new MessagesController();
-            $messagesController->index();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+    // ChatHandler routes (volledig systeem)
+    'chat-debug-test' => createHandlerRoute('ChatHandler', 'debugTest', false),
+    'chat' => createHandlerRoute('ChatHandler', 'index'),
+    'chat/compose' => createHandlerRoute('ChatHandler', 'compose'),
+    'chat/conversation' => createHandlerRoute('ChatHandler', 'conversation', ['auth']),
+    'chat/send' => createHandlerRoute('ChatHandler', 'sendMessage'),
+    'chat/reply' => createHandlerRoute('ChatHandler', 'replyMessage'),
+    'chat/get-new' => createHandlerRoute('ChatHandler', 'getNewMessages'),
+    'chat/check-new' => createHandlerRoute('ChatHandler', 'checkNewMessages'),
+    'chat/mark-read' => createHandlerRoute('ChatHandler', 'markAsRead'),
 
-    'messages/conversation' => [
-        'callback' => function () {
-            $otherUserId = $_GET['user'] ?? null;
+    // Post Handler Routes Open een individueel bericht
+    'post' => createHandlerRoute('PostHandler', 'viewPost', false), // viewPost in plaats van view
+
+    // // 1. Hoofdpagina berichten (werkt al!)
+    // 'messages' => createHandlerRoute('MessageHandler', 'viewConversations'),
+
+    // // 2. Specifieke conversatie bekijken
+    // 'messages/conversation' => [
+    //     'callback' => function () {
+    //         $otherUserId = $_GET['user'] ?? null;
             
-            if (!$otherUserId || !is_numeric($otherUserId)) {
-                $_SESSION['error_message'] = 'Ongeldige gebruiker.';
-                redirect('messages');
-                return;
-            }
+    //         if (!$otherUserId || !is_numeric($otherUserId)) {
+    //             $_SESSION['error_message'] = 'Ongeldige gebruiker.';
+    //             header('Location: ' . base_url('?route=messages'));
+    //             exit;
+    //         }
             
-            $messagesController = new MessagesController();
-            $messagesController->conversation($otherUserId);
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'messages/compose' => [
-        'callback' => function () {
-            $messagesController = new MessagesController();
-            $messagesController->compose();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
-
-    'messages/new' => [
-        'callback' => function () {
-            // Haal username uit URL segmenten voor direct naar gebruiker
-            $uri = $_SERVER['REQUEST_URI'];
-            $segments = explode('/', trim($uri, '/'));
+    //         // Zet user ID om naar friend_id voor Handler
+    //         $_GET['friend_id'] = $otherUserId;
             
-            // Zoek naar 'new' in de segmenten
-            $newIndex = array_search('new', $segments);
-            $username = null;
+    //         $handler = new App\Handlers\MessageHandler();
+    //         $handler->viewConversation();
+    //     },
+    //     'middleware' => [AuthMiddleware::class]
+    // ],
+
+    // // 3. Nieuw bericht opstellen (zonder specifieke ontvanger)
+    // 'messages/compose' => createHandlerRoute('MessageHandler', 'composeMessage'),
+
+    // // 4. Nieuw bericht naar specifieke gebruiker (messages/new/username)
+    // 'messages/new' => [
+    //     'callback' => function () {
+    //         // Behoud de URL segment parsing logica
+    //         $uri = $_SERVER['REQUEST_URI'];
+    //         $segments = explode('/', trim($uri, '/'));
             
-            // Als er een segment na 'new' is, gebruik dit als username
-            if ($newIndex !== false && isset($segments[$newIndex + 1])) {
-                $username = $segments[$newIndex + 1];
-            }
+    //         $newIndex = array_search('new', $segments);
+    //         $username = null;
             
-            $messagesController = new MessagesController();
-            $messagesController->compose($username);
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+    //         if ($newIndex !== false && isset($segments[$newIndex + 1])) {
+    //             $username = $segments[$newIndex + 1];
+    //         }
+            
+    //         // Geef username door aan Handler
+    //         $_GET['to_username'] = $username;
+            
+    //         $handler = new App\Handlers\MessageHandler();
+    //         $handler->composeMessage();
+    //     },
+    //     'middleware' => [AuthMiddleware::class]
+    // ],
 
-    'messages/send' => [
-        'callback' => function () {
-            $messagesController = new MessagesController();
-            $messagesController->send();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+    // // 5. Bericht verzenden (AJAX endpoint)
+    // 'messages/send' => createHandlerRoute('MessageHandler', 'sendMessage'),
 
-    'messages/reply' => [
-        'callback' => function () {
-            $messagesController = new MessagesController();
-            $messagesController->reply();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+    // // 6. Bericht beantwoorden (AJAX endpoint voor conversatie)
+    // 'messages/reply' => createHandlerRoute('MessageHandler', 'replyMessage'),
 
-    'messages/mark-read' => [
-        'callback' => function () {
-            $messagesController = new MessagesController();
-            $messagesController->markAsRead();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+    // // 7. Berichten markeren als gelezen (AJAX endpoint)
+    // 'messages/mark-read' => createHandlerRoute('MessageHandler', 'markAsRead'),
 
-    'messages/check-new' => [
-        'callback' => function () {
-            $messagesController = new MessagesController();
-            $messagesController->checkNewMessages();
-        },
-        'middleware' => [AuthMiddleware::class]
-    ],
+    // // 8. Controleren op nieuwe berichten (AJAX endpoint)
+    // 'messages/check-new' => createHandlerRoute('MessageHandler', 'checkNewMessages'),
 
-    'messages/get-new' => [
-    'callback' => function () {
-        $messagesController = new MessagesController();
-        $messagesController->getNewMessages();
-    },
-    'middleware' => [AuthMiddleware::class]
-],
+    // // 9. Nieuwe berichten ophalen (AJAX endpoint)
+    // 'messages/get-new' => createHandlerRoute('MessageHandler', 'getNewMessages'),
+
+    // 'messages-debug-test' => createHandlerRoute('MessageHandler', 'debugTest', false),
+
+// STAP 3: Verwijder test route (niet meer nodig)
+// 'messages-test' => createHandlerRoute('MessageHandler', 'viewConversations'),
+
+//     'messages' => [
+//         'callback' => function () {
+//             $messagesController = new MessagesController();
+//             $messagesController->index();
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/conversation' => [
+//         'callback' => function () {
+//             $otherUserId = $_GET['user'] ?? null;
+            
+//             if (!$otherUserId || !is_numeric($otherUserId)) {
+//                 $_SESSION['error_message'] = 'Ongeldige gebruiker.';
+//                 redirect('messages');
+//                 return;
+//             }
+            
+//             $messagesController = new MessagesController();
+//             $messagesController->conversation($otherUserId);
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/compose' => [
+//         'callback' => function () {
+//             $messagesController = new MessagesController();
+//             $messagesController->compose();
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/new' => [
+//         'callback' => function () {
+//             // Haal username uit URL segmenten voor direct naar gebruiker
+//             $uri = $_SERVER['REQUEST_URI'];
+//             $segments = explode('/', trim($uri, '/'));
+            
+//             // Zoek naar 'new' in de segmenten
+//             $newIndex = array_search('new', $segments);
+//             $username = null;
+            
+//             // Als er een segment na 'new' is, gebruik dit als username
+//             if ($newIndex !== false && isset($segments[$newIndex + 1])) {
+//                 $username = $segments[$newIndex + 1];
+//             }
+            
+//             $messagesController = new MessagesController();
+//             $messagesController->compose($username);
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/send' => [
+//         'callback' => function () {
+//             $messagesController = new MessagesController();
+//             $messagesController->send();
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/reply' => [
+//         'callback' => function () {
+//             $messagesController = new MessagesController();
+//             $messagesController->reply();
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/mark-read' => [
+//         'callback' => function () {
+//             $messagesController = new MessagesController();
+//             $messagesController->markAsRead();
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/check-new' => [
+//         'callback' => function () {
+//             $messagesController = new MessagesController();
+//             $messagesController->checkNewMessages();
+//         },
+//         'middleware' => [AuthMiddleware::class]
+//     ],
+
+//     'messages/get-new' => [
+//     'callback' => function () {
+//         $messagesController = new MessagesController();
+//         $messagesController->getNewMessages();
+//     },
+//     'middleware' => [AuthMiddleware::class]
+// ],
 
     'comments/delete' => [
     'callback' => function () {

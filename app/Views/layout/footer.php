@@ -21,5 +21,10 @@
             </div>
         </div>
     </footer>
+    <!-- Core Chat Configuration -->
+    <script>
+        window.SOCIALCORE_CHAT_MODE = 'core';
+        console.log("💬 Core Chat JavaScript Mode Active");
+    </script>
 </body>
 </html>

@@ -53,4 +53,17 @@ return [
     'privacy_policy' => 'Privacybeleid',
     'terms_of_service' => 'Gebruiksvoorwaarden',
     'language' => 'Taal',
+
+    //Chat
+    'start_conversation' => 'Gesprek starten',
+    'select_friend_to_chat' => 'Selecteer een vriend om mee te chatten',
+    'back_to_chat' => 'Terug naar chat',
+    'search_friends' => 'Zoek vrienden',
+    'no_friends_yet' => 'Nog geen vrienden',
+    'add_friends_to_chat' => 'Voeg vrienden toe om te kunnen chatten',
+    'find_friends' => 'Vrienden zoeken',
+    'online' => 'Online',
+    'offline' => 'Offline',
+    'friend_available' => 'vriend beschikbaar',
+    'friends_available' => 'vrienden beschikbaar',
 ];

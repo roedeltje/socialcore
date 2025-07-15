@@ -6,6 +6,10 @@
     <title>SocialCore</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<?= base_url('js/main.js') ?>"></script>
+<script>
+    console.log("🎯 CORE HEADER LOADED - This should appear in Core Chat");
+</script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <header class="bg-blue-600 text-white shadow-md">

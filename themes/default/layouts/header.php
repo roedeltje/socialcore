@@ -166,6 +166,26 @@
                             <div class="dropdown-menu" id="userDropdownMenu">
                                 <a href="<?= base_url('profile') ?>"><i class="fas fa-user"></i> Profiel bekijken</a>
                                 <a href="<?= base_url('profile/edit') ?>"><i class="fas fa-cog"></i> Instellingen</a>
+                                <?php
+                                // Haal chat unread count op
+                                $chatUnreadCount = 0;
+                                if (isset($_SESSION['user_id'])) {
+                                    try {
+                                        // Je kunt dit later uitbreiden met een echte chat unread count
+                                        // $chatHandler = new \App\Controllers\ChatHandler();
+                                        // $chatUnreadCount = $chatHandler->getUnreadMessageCount($_SESSION['user_id']);
+                                    } catch (Exception $e) {
+                                        error_log("Error getting chat count in header: " . $e->getMessage());
+                                    }
+                                }
+                                ?>
+                                <a href="<?= base_url('?route=chat') ?>">
+                                    <i class="fas fa-comments"></i> Chat
+                                    <?php if ($chatUnreadCount > 0): ?>
+                                        (<?= $chatUnreadCount ?>)
+                                    <?php endif; ?>
+                                </a>
+                                <a href="<?= base_url('messages') ?>"><i class="fas fa-envelope"></i> Berichten</a>
                                 <a href="<?= base_url('notifications') ?>">
                                     <i class="fas fa-bell"></i> Meldingen 
                                     <?php if ($notificationCount > 0): ?>

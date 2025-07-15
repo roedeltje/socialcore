@@ -2567,6 +2567,38 @@ a:hover {
     color: #6366f1; /* Licht paars voor bezochte hashtags */
 }
 
+/* Post permalink styling */
+.post-permalink {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.post-permalink:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Specifiek voor timestamps */
+.post-time .post-permalink:hover,
+.text-gray-500 .post-permalink:hover {
+    color: #2563eb;
+}
+
+/* Comment link styling */
+.comment-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.comment-link:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
 /* Voor mobiele apparaten - grotere klik area */
 @media (max-width: 768px) {
     .hashtag-link {
