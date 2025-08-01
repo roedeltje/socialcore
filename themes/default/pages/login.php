@@ -1,82 +1,354 @@
-<?php /* Socialcore default thema login pagina */
+<?php
+// Include core header voor navigatie (optioneel voor login)
+// if (file_exists(__DIR__ . '/../layout/header.php')) {
+//     include __DIR__ . '/../layout/header.php';
+// }
+
+// Handle form submission (POST) - Use existing AuthController logic
+$errors = [];
+$old_input = [];
+$success_message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Use the existing AuthController to process login
+    $authController = new \App\Controllers\AuthController();
+    
+    // Temporarily capture output to prevent redirects
+    ob_start();
+    $authController->login();
+    ob_end_clean();
+    
+    // Check if login was successful (user would be redirected, so we're still here = failure)
+    if (isset($_SESSION['error'])) {
+        $errors['general'] = $_SESSION['error'];
+        unset($_SESSION['error']);
+    }
+    
+    // Keep old input on error
+    $old_input = $_POST;
+    unset($old_input['password']); // Never keep password
+}
+
+// Check for success messages from registration etc.
+if (isset($_SESSION['success'])) {
+    $success_message = $_SESSION['success'];
+    unset($_SESSION['success']);
+}
 ?>
 
-<div class="flex justify-center items-center min-h-[calc(100vh-200px)]">
-    <div class="w-full max-w-md">
-        <div class="bg-white shadow-md rounded-lg px-8 py-6">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Inloggen</h2>
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inloggen - SocialCore</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .core-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 3rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .core-badge {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            color: #374151 !important;
+            background-color: #ffffff !important;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .form-input.error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .success-message {
+            background: #f0fdf4;
+            color: #166534;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.875rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .checkbox {
+            width: 1.125rem;
+            height: 1.125rem;
+            border: 2px solid #d1d5db;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .checkbox:checked {
+            background: #667eea;
+            border-color: #667eea;
+        }
+        
+        .links {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #f3f4f6;
+        }
+        
+        .link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .link:hover {
+            color: #5a67d8;
+            text-decoration: underline;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .logo-subtitle {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-card {
+            animation: slideIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="core-container">
+        <div class="login-card">
+            <span class="core-badge">CORE VIEW</span>
             
-            <?php if (isset($_SESSION['error'])): ?>
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    <?= $_SESSION['error'] ?>
-                    <?php unset($_SESSION['error']); ?>
+            <!-- Logo -->
+            <div class="logo">
+                <div class="logo-text">SocialCore</div>
+                <div class="logo-subtitle">Your community, your rules, always connected</div>
+            </div>
+            
+            <!-- Success Message -->
+            <?php if (!empty($success_message)): ?>
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i>
+                    <?= htmlspecialchars($success_message) ?>
                 </div>
             <?php endif; ?>
             
-            <?php if (isset($_SESSION['success'])): ?>
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    <?= $_SESSION['success'] ?>
-                    <?php unset($_SESSION['success']); ?>
+            <!-- General Error -->
+            <?php if (!empty($errors['general'])): ?>
+                <div class="error-message" style="background: #fef2f2; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1.5rem; border: 1px solid #fecaca;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <?= htmlspecialchars($errors['general']) ?>
                 </div>
             <?php endif; ?>
             
-            <form method="POST" action="<?= base_url('login/process') ?>">
-                <div class="mb-4">
-                    <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Gebruikersnaam of Email</label>
-                    <input type="text" id="username" name="username" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Voer je gebruikersnaam of email in" required>
+            <!-- Login Form -->
+            <form method="POST" action="/?route=auth/login">
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <i class="fas fa-user"></i> Gebruikersnaam of E-mail
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input <?= !empty($errors['username']) ? 'error' : '' ?>"
+                        value="<?= htmlspecialchars($old_input['username'] ?? '') ?>"
+                        placeholder="gebruikersnaam of email@example.com"
+                        autocomplete="username"
+                        required
+                    >
+                    <?php if (!empty($errors['username'])): ?>
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <?= htmlspecialchars($errors['username']) ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
-                <div class="mb-6">
-                    <label for="password" class="block text-gray-700 text-sm font-medium mb-2">Wachtwoord</label>
-                    <input type="password" id="password" name="password" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Voer je wachtwoord in" required>
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <i class="fas fa-lock"></i> Wachtwoord
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input <?= !empty($errors['password']) ? 'error' : '' ?>"
+                        placeholder="Je wachtwoord"
+                        required
+                    >
+                    <?php if (!empty($errors['password'])): ?>
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <?= htmlspecialchars($errors['password']) ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <input id="remember_me" name="remember_me" type="checkbox" 
-                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                        <label for="remember_me" class="ml-2 block text-sm text-gray-700">
-                            Onthoud mij
-                        </label>
-                    </div>
-                    
-                    <a href="<?= base_url('forgot-password') ?>" class="text-sm text-blue-600 hover:underline">
-                        Wachtwoord vergeten?
-                    </a>
+                <div class="checkbox-group">
+                    <input 
+                        type="checkbox" 
+                        id="remember_me" 
+                        name="remember_me" 
+                        class="checkbox"
+                        <?= !empty($old_input['remember_me']) ? 'checked' : '' ?>
+                    >
+                    <label for="remember_me" class="form-label" style="margin-bottom: 0;">
+                        Ingelogd blijven
+                    </label>
                 </div>
                 
-                <div>
-                    <button type="submit" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
-                        Inloggen
-                    </button>
-                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Inloggen
+                </button>
             </form>
             
-            <!-- Conditional registration link - only show if registration is open -->
-            <?php if (isset($registration_open) && $registration_open): ?>
-                <div class="mt-6 text-center">
-                    <p class="text-sm text-gray-600">
-                        Nog geen account? 
-                        <a href="<?= base_url('register') ?>" class="font-medium text-blue-600 hover:underline">
-                            Registreer hier
-                        </a>
-                    </p>
-                </div>
-            <?php else: ?>
-                <div class="mt-6 text-center">
-                    <p class="text-sm text-gray-500">
-                        <svg class="inline-block w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                        </svg>
-                        Registratie is momenteel gesloten
-                    </p>
-                </div>
-            <?php endif; ?>
+            <!-- Links -->
+            <div class="links">
+                <p>
+                    <a href="/?route=auth/register" class="link">
+                        <i class="fas fa-user-plus"></i> Account aanmaken
+                    </a>
+                </p>
+                <p style="margin-top: 0.5rem;">
+                    <a href="/?route=auth/forgot-password" class="link">
+                        <i class="fas fa-key"></i> Wachtwoord vergeten?
+                    </a>
+                </p>
+            </div>
         </div>
     </div>
-</div>
+</body>
+</html>

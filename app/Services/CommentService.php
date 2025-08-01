@@ -21,148 +21,254 @@ class CommentService
      * Voeg een nieuwe comment toe aan een post
      * Migratie van FeedController->addComment()
      */
-    public function addComment()
-    {
+    // public function addComment()
+    // {
         
-        // TEST: Simpele debug om te zien of deze method wordt aangeroepen
-        file_put_contents('/var/www/socialcore.local/debug/test_debug_' . date('Y-m-d') . '.log', 
-            "[" . date('Y-m-d H:i:s') . "] FeedController addComment() method called\n", 
-            FILE_APPEND | LOCK_EX);
+    //     // TEST: Simpele debug om te zien of deze method wordt aangeroepen
+    //     file_put_contents('/var/www/socialcore.local/debug/test_debug_' . date('Y-m-d') . '.log', 
+    //         "[" . date('Y-m-d H:i:s') . "] FeedController addComment() method called\n", 
+    //         FILE_APPEND | LOCK_EX);
         
-        ob_clean();
-        header('Content-Type: application/json');
+    //     ob_clean();
+    //     header('Content-Type: application/json');
 
-        // Controleer of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn om te reageren']);
-            exit;
-        }
+    //     // Controleer of gebruiker is ingelogd
+    //     if (!isset($_SESSION['user_id'])) {
+    //         echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn om te reageren']);
+    //         exit;
+    //     }
         
-        // Controleer of het een POST request is
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
-            exit;
-        }
+    //     // Controleer of het een POST request is
+    //     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    //         echo json_encode(['success' => false, 'message' => 'Ongeldige request']);
+    //         exit;
+    //     }
 
-        // **NIEUW: Alleen rate limiting toevoegen**
-        $rateLimitCheck = $this->checkRateLimit($_SESSION['user_id'], 'comment_create', 20, 3600);
-        if (!$rateLimitCheck['allowed']) {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Je hebt te veel reacties geplaatst. Probeer het over ' . $rateLimitCheck['retry_after'] . ' minuten opnieuw.'
-            ]);
-            exit;
-        }
+    //     // **NIEUW: Alleen rate limiting toevoegen**
+    //     $rateLimitCheck = $this->checkRateLimit($_SESSION['user_id'], 'comment_create', 20, 3600);
+    //     if (!$rateLimitCheck['allowed']) {
+    //         echo json_encode([
+    //             'success' => false, 
+    //             'message' => 'Je hebt te veel reacties geplaatst. Probeer het over ' . $rateLimitCheck['retry_after'] . ' minuten opnieuw.'
+    //         ]);
+    //         exit;
+    //     }
 
         
-        // Haal de gegevens op uit het formulier
-        $postId = $_POST['post_id'] ?? null;
-        $content = trim($_POST['comment_content'] ?? '');
-        $userId = $_SESSION['user_id'];
+    //     // Haal de gegevens op uit het formulier
+    //     $postId = $_POST['post_id'] ?? null;
+    //     $content = trim($_POST['comment_content'] ?? '');
+    //     $userId = $_SESSION['user_id'];
 
-         // ✅ DEBUG: HIER toevoegen (na rate limiting)
-        file_put_contents('/var/www/socialcore.local/debug/comment_service_' . date('Y-m-d') . '.log', 
-            "[" . date('Y-m-d H:i:s') . "] === CommentService::addComment() CALLED ===\n" . 
-            "Post ID: {$postId}\n" .
-            "User ID: {$userId}\n" .
-            "Content: '{$content}'\n" .
-            "Starting validation...\n\n", 
-            FILE_APPEND | LOCK_EX);
+    //      // ✅ DEBUG: HIER toevoegen (na rate limiting)
+    //     file_put_contents('/var/www/socialcore.local/debug/comment_service_' . date('Y-m-d') . '.log', 
+    //         "[" . date('Y-m-d H:i:s') . "] === CommentService::addComment() CALLED ===\n" . 
+    //         "Post ID: {$postId}\n" .
+    //         "User ID: {$userId}\n" .
+    //         "Content: '{$content}'\n" .
+    //         "Starting validation...\n\n", 
+    //         FILE_APPEND | LOCK_EX);
         
-        // Validatie
-        if (!$postId) {
-            echo json_encode(['success' => false, 'message' => 'Post ID is verplicht']);
-            exit;
-        }
+    //     // Validatie
+    //     if (!$postId) {
+    //         echo json_encode(['success' => false, 'message' => 'Post ID is verplicht']);
+    //         exit;
+    //     }
         
-        if (empty($content)) {
-            echo json_encode(['success' => false, 'message' => 'Reactie mag niet leeg zijn']);
-            exit;
-        }
+    //     if (empty($content)) {
+    //         echo json_encode(['success' => false, 'message' => 'Reactie mag niet leeg zijn']);
+    //         exit;
+    //     }
         
-        if (strlen($content) > 500) {
-            echo json_encode(['success' => false, 'message' => 'Reactie mag maximaal 500 karakters bevatten']);
-            exit;
-        }
+    //     if (strlen($content) > 500) {
+    //         echo json_encode(['success' => false, 'message' => 'Reactie mag maximaal 500 karakters bevatten']);
+    //         exit;
+    //     }
 
-        // **NIEUW: Content Sanitization toevoegen**
-        $originalContent = $content;
-        $content = $this->sanitizeCommentContent($content);
+    //     // **NIEUW: Content Sanitization toevoegen**
+    //     $originalContent = $content;
+    //     $content = $this->sanitizeCommentContent($content);
 
-        // **NIEUW: Spam Detection toevoegen**
-            $isSpam = $this->isSpamContent($content);
-            if ($isSpam) {
-                $this->logSecurityEvent($_SESSION['user_id'], 'spam_comment_blocked', [
-                    'post_id' => $postId,
-                    'content_length' => strlen($content)
-                ]);
+    //     // **NIEUW: Spam Detection toevoegen**
+    //         $isSpam = $this->isSpamContent($content);
+    //         if ($isSpam) {
+    //             $this->logSecurityEvent($_SESSION['user_id'], 'spam_comment_blocked', [
+    //                 'post_id' => $postId,
+    //                 'content_length' => strlen($content)
+    //             ]);
                 
-                echo json_encode([
-                    'success' => false, 
-                    'message' => 'Je reactie lijkt op spam. Probeer een andere formulering.'
-                ]);
-                exit;
-            }
+    //             echo json_encode([
+    //                 'success' => false, 
+    //                 'message' => 'Je reactie lijkt op spam. Probeer een andere formulering.'
+    //             ]);
+    //             exit;
+    //         }
 
-            // **NIEUW: Profanity Filter toevoegen**
-            if (SecuritySettings::get('enable_profanity_filter', false)) {
-                $profanityCheck = $this->containsProfanity($content);
-                if ($profanityCheck) {
-                    $this->logSecurityEvent($_SESSION['user_id'], 'profanity_comment_blocked', [
-                        'post_id' => $postId,
-                        'content_length' => strlen($content)
-                    ]);
+    //         // **NIEUW: Profanity Filter toevoegen**
+    //         if (SecuritySettings::get('enable_profanity_filter', false)) {
+    //             $profanityCheck = $this->containsProfanity($content);
+    //             if ($profanityCheck) {
+    //                 $this->logSecurityEvent($_SESSION['user_id'], 'profanity_comment_blocked', [
+    //                     'post_id' => $postId,
+    //                     'content_length' => strlen($content)
+    //                 ]);
                     
-                    echo json_encode([
-                        'success' => false, 
-                        'message' => 'Je reactie bevat niet-toegestane taal. Pas je bericht aan.'
-                    ]);
-                    exit;
-                }
-            }
+    //                 echo json_encode([
+    //                     'success' => false, 
+    //                     'message' => 'Je reactie bevat niet-toegestane taal. Pas je bericht aan.'
+    //                 ]);
+    //                 exit;
+    //             }
+    //         }
         
-        try {
-            // Controleer of de post bestaat
-            $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
-            $stmt->execute([$postId]);
-            $post = $stmt->fetch(PDO::FETCH_ASSOC);
+    //     try {
+    //         // Controleer of de post bestaat
+    //         $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
+    //         $stmt->execute([$postId]);
+    //         $post = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if (!$post) {
-                echo json_encode(['success' => false, 'message' => 'Post niet gevonden']);
-                exit;
-            }
+    //         if (!$post) {
+    //             echo json_encode(['success' => false, 'message' => 'Post niet gevonden']);
+    //             exit;
+    //         }
             
-            // Voeg de comment toe aan de database
-            $result = $this->saveComment($postId, $userId, $content);
+    //         // Voeg de comment toe aan de database
+    //         $result = $this->saveComment($postId, $userId, $content);
             
-            if ($result['success']) {
+    //         if ($result['success']) {
 
-                // **NIEUW: Log de successful comment activity**
-                $this->logActivity($_SESSION['user_id'], 'comment_create', [
-                    'post_id' => $postId,
-                    'comment_id' => $result['comment_id'],
-                    'content_length' => strlen($content)
-                ]);
+    //             // **NIEUW: Log de successful comment activity**
+    //             $this->logActivity($_SESSION['user_id'], 'comment_create', [
+    //                 'post_id' => $postId,
+    //                 'comment_id' => $result['comment_id'],
+    //                 'content_length' => strlen($content)
+    //             ]);
 
-                // Haal de nieuwe comment op om terug te sturen
-                $comment = $this->getCommentById($result['comment_id']);
+    //             // Haal de nieuwe comment op om terug te sturen
+    //             $comment = $this->getCommentById($result['comment_id']);
                 
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Reactie toegevoegd!',
-                    'comment' => $comment
-                ]);
-            } else {
-                echo json_encode(['success' => false, 'message' => $result['message']]);
-            }
+    //             echo json_encode([
+    //                 'success' => true,
+    //                 'message' => 'Reactie toegevoegd!',
+    //                 'comment' => $comment
+    //             ]);
+    //         } else {
+    //             echo json_encode(['success' => false, 'message' => $result['message']]);
+    //         }
             
-        } catch (Exception $e) {
-            error_log('Fout bij toevoegen comment: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'Er ging iets mis bij het toevoegen van je reactie']);
+    //     } catch (Exception $e) {
+    //         error_log('Fout bij toevoegen comment: ' . $e->getMessage());
+    //         echo json_encode(['success' => false, 'message' => 'Er ging iets mis bij het toevoegen van je reactie']);
+    //     }
+        
+    //     exit;
+    // }
+
+    public function addComment($postId, $userId, $content)
+{
+    // Debug logging
+    file_put_contents('/var/www/socialcore.local/debug/comment_service_' . date('Y-m-d') . '.log', 
+        "[" . date('Y-m-d H:i:s') . "] === CommentService::addComment() CALLED ===\n" . 
+        "Post ID: {$postId}\n" .
+        "User ID: {$userId}\n" .
+        "Content: '{$content}'\n" .
+        "Starting validation...\n\n", 
+        FILE_APPEND | LOCK_EX);
+
+    // Rate limiting check
+    $rateLimitCheck = $this->checkRateLimit($userId, 'comment_create', 20, 3600);
+    if (!$rateLimitCheck['allowed']) {
+        return [
+            'success' => false, 
+            'message' => 'Je hebt te veel reacties geplaatst. Probeer het over ' . $rateLimitCheck['retry_after'] . ' minuten opnieuw.'
+        ];
+    }
+
+    // Validatie
+    if (!$postId) {
+        return ['success' => false, 'message' => 'Post ID is verplicht'];
+    }
+    
+    if (empty($content)) {
+        return ['success' => false, 'message' => 'Reactie mag niet leeg zijn'];
+    }
+    
+    if (strlen($content) > 500) {
+        return ['success' => false, 'message' => 'Reactie mag maximaal 500 karakters bevatten'];
+    }
+
+    // Content sanitization
+    $originalContent = $content;
+    $content = $this->sanitizeCommentContent($content);
+
+    // Spam detection
+    $isSpam = $this->isSpamContent($content);
+    if ($isSpam) {
+        $this->logSecurityEvent($userId, 'spam_comment_blocked', $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', [
+            'post_id' => $postId,
+            'content_length' => strlen($content)
+        ]);
+        
+        return [
+            'success' => false, 
+            'message' => 'Je reactie lijkt op spam. Probeer een andere formulering.'
+        ];
+    }
+
+    // Profanity filter
+    if (SecuritySettings::get('enable_profanity_filter', false)) {
+        $profanityCheck = $this->containsProfanity($content);
+        if ($profanityCheck) {
+            $this->logSecurityEvent($userId, 'profanity_comment_blocked', $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', [
+                'post_id' => $postId,
+                'content_length' => strlen($content)
+            ]);
+            
+            return [
+                'success' => false, 
+                'message' => 'Je reactie bevat niet-toegestane taal. Pas je bericht aan.'
+            ];
+        }
+    }
+    
+    try {
+        // Controleer of de post bestaat
+        $stmt = $this->db->prepare("SELECT id FROM posts WHERE id = ? AND is_deleted = 0");
+        $stmt->execute([$postId]);
+        $post = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$post) {
+            return ['success' => false, 'message' => 'Post niet gevonden'];
         }
         
-        exit;
+        // Voeg de comment toe aan de database
+        $result = $this->saveComment($postId, $userId, $content);
+        
+        if ($result['success']) {
+            // Log de successful comment activity
+            $this->logActivity($userId, 'comment_create', $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', [
+                'post_id' => $postId,
+                'comment_id' => $result['comment_id'],
+                'content_length' => strlen($content)
+            ]);
+
+            // Haal de nieuwe comment op om terug te sturen
+            $comment = $this->getCommentById($result['comment_id']);
+            
+            return [
+                'success' => true,
+                'message' => 'Reactie toegevoegd!',
+                'comment' => $comment
+            ];
+        } else {
+            return ['success' => false, 'message' => $result['message']];
+        }
+        
+    } catch (Exception $e) {
+        error_log('Fout bij toevoegen comment: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Er ging iets mis bij het toevoegen van je reactie'];
     }
+}
 
     /**
      * Sla een comment op in de database
@@ -468,8 +574,44 @@ class CommentService
      */
     public function getCommentsForPost($postId, $viewerId = null)
     {
-        // TODO: Migreer logica van FeedController->getCommentsForPosts()
-        return [];
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    c.id,
+                    c.content,
+                    c.created_at,
+                    c.likes_count,
+                    u.id as user_id,
+                    u.username,
+                    COALESCE(up.display_name, u.username) as user_name
+                FROM post_comments c
+                JOIN users u ON c.user_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE c.post_id = ? AND c.is_deleted = 0
+                ORDER BY c.created_at ASC
+            ");
+            $stmt->execute([$postId]);
+            $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Verrijk elke comment met extra data
+            foreach ($comments as &$comment) {
+                $comment['avatar'] = $this->getUserAvatar($comment['user_id']);
+                $comment['time_ago'] = $this->formatDate($comment['created_at']);
+                
+                // Check if viewer has liked this comment (optioneel)
+                if ($viewerId) {
+                    $likeStmt = $this->db->prepare("SELECT id FROM comment_likes WHERE comment_id = ? AND user_id = ?");
+                    $likeStmt->execute([$comment['id'], $viewerId]);
+                    $comment['liked_by_viewer'] = (bool)$likeStmt->fetch();
+                }
+            }
+            
+            return $comments;
+            
+        } catch (Exception $e) {
+            error_log('CommentService getCommentsForPost error: ' . $e->getMessage());
+            return [];
+        }
     }
     
     /**

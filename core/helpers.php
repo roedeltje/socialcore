@@ -611,3 +611,248 @@ function createCrudHandlerRoutes($handlerClass, $basePath, $requireAuth = true) 
         "{$basePath}/delete" => createHandlerRoute($handlerClass, 'delete', $requireAuth),
     ];
 }
+
+/**
+ * Get system configuration value
+ * @param string $key Configuration key
+ * @param mixed $default Default value if not found
+ * @return mixed Configuration value
+ */
+function get_system_config($key, $default = null)
+{
+    try {
+        $db = \App\Database\Database::getInstance()->getPdo();
+        
+        // Check timeline_config table first (legacy compatibility)
+        $searchKey = 'timeline_' . $key;
+
+            $stmt = $db->prepare("
+                SELECT setting_value 
+                FROM site_settings 
+                WHERE setting_name = ? 
+                LIMIT 1
+            ");
+            $stmt->execute([$searchKey]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($result) {
+                $converted = convert_config_value($result['setting_value']);
+                return $converted;
+            }
+        
+        // Fallback to site_settings if timeline_config doesn't have it
+        $stmt = $db->prepare("
+            SELECT setting_value 
+            FROM site_settings 
+            WHERE setting_name = ? 
+            LIMIT 1
+        ");
+        $stmt->execute(['timeline_' . $key]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result) {
+            return convert_config_value($result['setting_value']);
+        }
+        
+        return $default;
+        
+    } catch (Exception $e) {
+        error_log("Error getting system config '{$key}': " . $e->getMessage());
+        return $default;
+    }
+}
+
+/**
+ * Set system configuration value
+ * @param string $key Configuration key
+ * @param mixed $value Configuration value
+ * @return bool Success status
+ */
+function set_system_config($key, $value)
+{
+    try {
+        $db = \App\Database\Database::getInstance()->getPdo();
+        
+        // Check if timeline_config table exists
+        $tables = $db->query("SHOW TABLES LIKE 'timeline_config'")->fetchAll();
+        
+        if (empty($tables)) {
+            // Create timeline_config table if it doesn't exist
+            $db->exec("
+                CREATE TABLE timeline_config (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    config_key VARCHAR(100) NOT NULL UNIQUE,
+                    config_value TEXT,
+                    description TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_config_key (config_key)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+        }
+        
+        // Convert value to string for storage
+        $valueToStore = $value;
+        if (is_bool($value)) {
+            $valueToStore = $value ? '1' : '0';
+        } elseif (is_array($value) || is_object($value)) {
+            $valueToStore = json_encode($value);
+        } else {
+            $valueToStore = (string) $value;
+        }
+        
+        // Insert or update
+        $stmt = $db->prepare("
+            INSERT INTO timeline_config (config_key, config_value) 
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE 
+            config_value = VALUES(config_value),
+            updated_at = CURRENT_TIMESTAMP
+        ");
+        
+        return $stmt->execute([$key, $valueToStore]);
+        
+    } catch (Exception $e) {
+        error_log("Error setting system config '{$key}': " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Convert string config values to proper PHP types
+ * @param string $value Raw config value from database
+ * @return mixed Converted value
+ */
+function convert_config_value($value)
+{
+    // Handle null/empty
+    if ($value === null || $value === '') {
+        return $value;
+    }
+    
+    // Handle boolean values
+    if (in_array(strtolower($value), ['true', '1', 'yes', 'on'])) {
+        return true;
+    }
+    if (in_array(strtolower($value), ['false', '0', 'no', 'off'])) {
+        return false;
+    }
+    
+    // Handle integers
+    if (is_numeric($value) && !str_contains($value, '.')) {
+        return (int) $value;
+    }
+    
+    // Handle floats
+    if (is_numeric($value)) {
+        return (float) $value;
+    }
+    
+    // Handle JSON
+    if (is_string($value) && (str_starts_with($value, '{') || str_starts_with($value, '['))) {
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $decoded;
+        }
+    }
+    
+    // Return as string
+    return $value;
+}
+
+/**
+ * Get all system configuration as array
+ * @return array All configuration values
+ */
+function get_all_system_config()
+{
+    try {
+        $db = \App\Database\Database::getInstance()->getPdo();
+        
+        $stmt = $db->query("SELECT config_key, config_value FROM timeline_config");
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $config = [];
+        foreach ($results as $row) {
+            $config[$row['config_key']] = convert_config_value($row['config_value']);
+        }
+        
+        return $config;
+        
+    } catch (Exception $e) {
+        error_log("Error getting all system config: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Initialize default system configuration
+ * @return bool Success status
+ */
+function initialize_system_config()
+{
+    $defaults = [
+        'use_core' => false,  // Default to theme system
+        'posts_per_page' => 20,
+        'profile_posts_per_page' => 10,
+        'photos_per_page' => 12,
+        'allow_guest_profiles' => false,
+        'default_privacy' => 'friends',
+        'enable_link_previews' => true,
+        'enable_emoji_picker' => true,
+        'max_post_length' => 1000,
+        'max_image_size' => 5242880  // 5MB
+    ];
+    
+    $success = true;
+    foreach ($defaults as $key => $value) {
+        // Only set if not already exists
+        if (get_system_config($key, null) === null) {
+            if (!set_system_config($key, $value)) {
+                $success = false;
+            }
+        }
+    }
+    
+    return $success;
+}
+
+/**
+ * Check if system is in core mode
+ * @return bool True if core mode is enabled
+ */
+function is_core_mode()
+{
+    return get_system_config('use_core', false);
+}
+
+/**
+ * Check if theme mode is enabled
+ * @return bool True if theme mode is enabled
+ */
+function is_theme_mode()
+{
+    return !is_core_mode();
+}
+
+/**
+ * Switch system mode
+ * @param bool $useCore True for core mode, false for theme mode
+ * @return bool Success status
+ */
+function set_system_mode($useCore)
+{
+    return set_system_config('use_core', $useCore);
+}
+
+/**
+ * Legacy compatibility: getTimelineConfig
+ * @param string $key Configuration key
+ * @param mixed $default Default value
+ * @return mixed Configuration value
+ * @deprecated Use get_system_config() instead
+ */
+function getTimelineConfig($key, $default = null)
+{
+    return get_system_config($key, $default);
+}

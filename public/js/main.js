@@ -5,6 +5,9 @@
  * Unified chat functionality voor BEIDE core en theme chat views
  * Automatische detectie van pagina type en beschikbare elementen
  */
+console.log('🚀 Main.js is loaded for Core Timeline!');
+console.log('Current URL:', window.location.href);
+console.log('DOM ready state:', document.readyState);
 
 console.log("🚀 SocialCore Main Chat JavaScript Loading...");
 
@@ -1793,18 +1796,787 @@ function empty(value) {
 }
 
 /**
- * Initialize when DOM is ready
+ * 💬 Open conversation with a specific user
  */
-// document.addEventListener('DOMContentLoaded', function() {
-//     console.log("🔄 DOM Ready - checking for universal chat initialization");
+function openConversation(friendId) {
+    console.log('🔗 Opening conversation with user:', friendId);
     
-//     // Wacht even tot alle elementen zeker beschikbaar zijn
-//     setTimeout(() => {
-//         initUniversalChat();
-//     }, 50); // Korte delay om zeker te zijn dat alles geladen is
-// });
-
-// Export main function for manual initialization
-//window.initUniversalChat = initUniversalChat;
+    if (!friendId || friendId <= 0) {
+        console.error('❌ Invalid friend ID:', friendId);
+        return;
+    }
+    
+    // Use same URL structure as startHyvesConversation
+    window.location.href = `/?route=chat/conversation&with=${friendId}`;
+}
 
 console.log("✅ SocialCore Main Chat JavaScript Loaded");
+
+// ========================================
+// 📰 TIMELINE UNIVERSAL FUNCTIONS 
+// Voeg deze functies toe aan /public/js/main.js
+// ========================================
+
+/**
+ * 🎯 Initialize Timeline System (Universal - werkt voor alle thema's)
+ */
+function initTimeline() {
+    console.log('🎯 Initializing Universal Timeline System...');
+    
+    // Check if we're on a timeline page
+    if (isTimelinePage()) {
+        initTimelinePostForm();
+        initTimelineActions();
+        initTimelineFilters();
+        initInfiniteScroll();
+        
+        console.log('✅ Timeline system initialized');
+    }
+}
+
+/**
+ * 🔍 Check if current page has timeline functionality
+ */
+function isTimelinePage() {
+    return document.querySelector('.hyves-timeline') || 
+           document.querySelector('.timeline-posts') ||
+           document.querySelector('#timeline-container') ||
+           document.querySelector('[data-timeline="true"]');
+}
+
+/**
+ * ✏️ Initialize Timeline Post Form (Universal)
+ */
+function initTimelinePostForm() {
+    // Support multiple form IDs/classes voor verschillende thema's
+    const formSelectors = [
+        '#postForm',           // Default theme
+        '#timelinePostForm',   // Twitter theme
+        '.post-form',          // Class-based
+        '[data-post-form]'     // Data attribute
+    ];
+    
+    let postForm = null;
+    for (const selector of formSelectors) {
+        postForm = document.querySelector(selector);
+        if (postForm) break;
+    }
+    
+    if (!postForm) {
+        console.log('ℹ️ No post form found on this page');
+        return;
+    }
+    
+    console.log('📝 Initializing timeline post form:', postForm.id || postForm.className);
+    
+    // Prevent default form submission
+    postForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitButton = postForm.querySelector('button[type="submit"]');
+        const originalText = submitButton ? submitButton.textContent : '';
+        
+        // Disable submit button
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Plaatsen...';
+            submitButton.classList.add('loading');
+        }
+        
+        // Create FormData (supports both text and file uploads)
+        const formData = new FormData(postForm);
+        
+        // AJAX submit
+        fetch('/?route=feed/create', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success notification
+                showNotification('Bericht succesvol geplaatst!', 'success');
+                
+                // Reset form
+                resetTimelineForm(postForm);
+                
+                // Add new post to timeline (if post data is returned)
+                if (data.post) {
+                    addPostToTimeline(data.post);
+                } else {
+                    // Fallback: reload timeline posts
+                    refreshTimeline();
+                }
+            } else {
+                showNotification(data.message || 'Er is een fout opgetreden', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Timeline post error:', error);
+            showNotification('Netwerkfout bij het plaatsen van het bericht', 'error');
+        })
+        .finally(() => {
+            // Re-enable submit button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+                submitButton.classList.remove('loading');
+            }
+        });
+    });
+    
+    // Initialize other form features
+    initTimelineCharacterCounter(postForm);
+    initTimelineImageUpload(postForm);
+    initTimelineTextarea(postForm);
+}
+
+/**
+ * 🔤 Initialize character counter for timeline forms
+ */
+function initTimelineCharacterCounter(form) {
+    const textarea = form.querySelector('textarea[name="content"]');
+    const counter = form.querySelector('.character-count') || form.querySelector('[data-character-count]');
+    
+    if (!textarea) return;
+    
+    const maxLength = 1000;
+    
+    // Create counter if it doesn't exist
+    if (!counter) {
+        const counterEl = document.createElement('div');
+        counterEl.className = 'character-count';
+        counterEl.textContent = `0/${maxLength}`;
+        textarea.parentNode.insertBefore(counterEl, textarea.nextSibling);
+        counter = counterEl;
+    }
+    
+    function updateCounter() {
+        const length = textarea.value.length;
+        counter.textContent = `${length}/${maxLength}`;
+        
+        // Add warning classes
+        counter.classList.toggle('warning', length > maxLength * 0.8);
+        counter.classList.toggle('danger', length > maxLength);
+        
+        // Update submit button state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = length > maxLength || length === 0;
+        }
+    }
+    
+    textarea.addEventListener('input', updateCounter);
+    textarea.addEventListener('paste', () => setTimeout(updateCounter, 10));
+    
+    // Initial update
+    updateCounter();
+}
+
+/**
+ * 🖼️ Initialize image upload for timeline forms
+ */
+function initTimelineImageUpload(form) {
+    const fileInput = form.querySelector('input[type="file"][name="image"]');
+    const previewContainer = form.querySelector('.image-preview') || form.querySelector('[data-image-preview]');
+    
+    if (!fileInput) return;
+    
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        
+        if (!file) {
+            clearImagePreview();
+            return;
+        }
+        
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            showNotification('Selecteer een geldige afbeelding', 'error');
+            fileInput.value = '';
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) { // 5MB
+            showNotification('Afbeelding is te groot (max 5MB)', 'error');
+            fileInput.value = '';
+            return;
+        }
+        
+        // Show preview
+        showImagePreview(file, previewContainer);
+    });
+    
+    function showImagePreview(file, container) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            // Create or update preview container
+            let preview = container;
+            if (!preview) {
+                preview = document.createElement('div');
+                preview.className = 'image-preview';
+                fileInput.parentNode.insertBefore(preview, fileInput.nextSibling);
+            }
+            
+            preview.innerHTML = `
+                <div class="preview-image-container">
+                    <img src="${e.target.result}" alt="Preview" class="preview-image">
+                    <button type="button" class="remove-image" onclick="clearTimelineImagePreview()">&times;</button>
+                </div>
+                <p class="preview-filename">${file.name}</p>
+            `;
+            
+            preview.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(file);
+    }
+    
+    // Global function for removing image (called from HTML)
+    window.clearTimelineImagePreview = function() {
+        fileInput.value = '';
+        if (previewContainer) {
+            previewContainer.style.display = 'none';
+            previewContainer.innerHTML = '';
+        }
+    };
+}
+
+/**
+ * 📝 Initialize auto-expanding textarea
+ */
+function initTimelineTextarea(form) {
+    const textarea = form.querySelector('textarea[name="content"]');
+    
+    if (!textarea) return;
+    
+    function autoResize() {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+    
+    textarea.addEventListener('input', autoResize);
+    textarea.addEventListener('paste', () => setTimeout(autoResize, 10));
+    
+    // Initial resize
+    autoResize();
+}
+
+/**
+ * 🔄 Reset timeline form after successful submission
+ */
+function resetTimelineForm(form) {
+    // Reset all form fields
+    form.reset();
+    
+    // Clear image preview
+    const preview = form.querySelector('.image-preview');
+    if (preview) {
+        preview.style.display = 'none';
+        preview.innerHTML = '';
+    }
+    
+    // Reset textarea height
+    const textarea = form.querySelector('textarea[name="content"]');
+    if (textarea) {
+        textarea.style.height = 'auto';
+    }
+    
+    // Reset character counter
+    const counter = form.querySelector('.character-count');
+    if (counter) {
+        counter.textContent = '0/1000';
+        counter.classList.remove('warning', 'danger');
+    }
+    
+    // Reset submit button
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true; // Disabled until user types
+    }
+}
+
+/**
+ * ⚡ Initialize Timeline Actions (likes, comments, shares)
+ */
+function initTimelineActions() {
+    // Like buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.like-button') || e.target.closest('[data-action="like"]')) {
+            e.preventDefault();
+            handleTimelineLike(e.target.closest('.like-button, [data-action="like"]'));
+        }
+        
+        // Comment toggles
+        if (e.target.closest('.comment-button') || e.target.closest('[data-action="comment"]')) {
+            e.preventDefault();
+            toggleTimelineComments(e.target.closest('.comment-button, [data-action="comment"]'));
+        }
+        
+        // Share buttons (placeholder for now)
+        if (e.target.closest('.share-button') || e.target.closest('[data-action="share"]')) {
+            e.preventDefault();
+            handleTimelineShare(e.target.closest('.share-button, [data-action="share"]'));
+        }
+    });
+}
+
+/**
+ * 👍 Handle timeline post likes
+ */
+function handleTimelineLike(button) {
+    const postId = button.dataset.postId || button.closest('[data-post-id]')?.dataset.postId;
+    
+    if (!postId) {
+        console.error('No post ID found for like button');
+        return;
+    }
+    
+    // Disable button temporarily
+    button.disabled = true;
+    
+    const formData = new FormData();
+    formData.append('post_id', postId);
+    
+    fetch('/?route=feed/like', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update like button appearance
+            button.classList.toggle('liked', data.liked);
+            
+            // Update like count
+            const countElement = button.querySelector('.like-count') || button.querySelector('[data-like-count]');
+            if (countElement) {
+                countElement.textContent = data.like_count || 0;
+            }
+            
+            // Update button text if needed
+            const textElement = button.querySelector('.action-text') || button.querySelector('.text');
+            if (textElement) {
+                const count = data.like_count || 0;
+                textElement.innerHTML = `<span class="like-count">${count}</span> Respect!`;
+            }
+        } else {
+            showNotification(data.message || 'Fout bij het liken van het bericht', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Like error:', error);
+        showNotification('Netwerkfout bij het liken', 'error');
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+
+/**
+ * 💬 Toggle comments section
+ */
+function toggleTimelineComments(button) {
+    const postContainer = button.closest('[data-post-id]') || button.closest('.hyves-post-card') || button.closest('.post-card');
+    
+    if (!postContainer) {
+        console.error('No post container found for comments toggle');
+        return;
+    }
+    
+    const commentsSection = postContainer.querySelector('.comments-section') || postContainer.querySelector('[data-comments]');
+    
+    if (!commentsSection) {
+        console.error('No comments section found in post');
+        return;
+    }
+    
+    // Toggle visibility
+    if (commentsSection.style.display === 'none' || !commentsSection.style.display) {
+        commentsSection.style.display = 'block';
+        button.classList.add('active');
+        
+        // Focus comment input if available
+        const commentInput = commentsSection.querySelector('textarea[name="comment_content"]') || commentsSection.querySelector('.comment-input');
+        if (commentInput) {
+            setTimeout(() => commentInput.focus(), 100);
+        }
+    } else {
+        commentsSection.style.display = 'none';
+        button.classList.remove('active');
+    }
+}
+
+/**
+ * 📤 Handle timeline post sharing (placeholder)
+ */
+function handleTimelineShare(button) {
+    const postId = button.dataset.postId || button.closest('[data-post-id]')?.dataset.postId;
+    
+    if (!postId) {
+        console.error('No post ID found for share button');
+        return;
+    }
+    
+    // Simple sharing implementation (can be expanded)
+    const postUrl = `${window.location.origin}/?route=post&id=${postId}`;
+    
+    if (navigator.share) {
+        // Native sharing API
+        navigator.share({
+            title: 'Check out this post on SocialCore',
+            url: postUrl
+        }).catch(console.error);
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(postUrl).then(() => {
+            showNotification('Link gekopieerd naar klembord!', 'success');
+        }).catch(() => {
+            // Further fallback: show share modal
+            showShareModal(postUrl);
+        });
+    }
+}
+
+/**
+ * 📋 Show share modal (fallback for browsers without clipboard API)
+ */
+function showShareModal(url) {
+    const modal = document.createElement('div');
+    modal.className = 'share-modal';
+    modal.innerHTML = `
+        <div class="share-modal-content">
+            <h3>Deel dit bericht</h3>
+            <input type="text" value="${url}" readonly onclick="this.select()">
+            <div class="share-buttons">
+                <button onclick="this.closest('.share-modal').remove()">Sluiten</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Auto-select URL
+    modal.querySelector('input').select();
+}
+
+/**
+ * 🔍 Initialize Timeline Filters
+ */
+function initTimelineFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn') || document.querySelectorAll('[data-filter]');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter || this.textContent.toLowerCase();
+            
+            // Update active state
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Apply filter
+            applyTimelineFilter(filter);
+        });
+    });
+}
+
+/**
+ * 🔧 Apply timeline filter
+ */
+function applyTimelineFilter(filter) {
+    const posts = document.querySelectorAll('[data-post-id]') || document.querySelectorAll('.post-card');
+    
+    posts.forEach(post => {
+        const postType = post.dataset.postType || 'text';
+        
+        switch(filter) {
+            case 'alle berichten':
+            case 'all':
+                post.style.display = 'block';
+                break;
+            case 'foto\'s':
+            case 'photos':
+                post.style.display = postType === 'photo' ? 'block' : 'none';
+                break;
+            case 'video\'s':
+            case 'videos':
+                post.style.display = postType === 'video' ? 'block' : 'none';
+                break;
+            case 'links':
+                post.style.display = postType === 'link' ? 'block' : 'none';
+                break;
+            default:
+                post.style.display = 'block';
+        }
+    });
+}
+
+/**
+ * 🔄 Initialize Infinite Scroll
+ */
+function initInfiniteScroll() {
+    let isLoading = false;
+    let hasMorePosts = true;
+    
+    function checkScrollPosition() {
+        if (isLoading || !hasMorePosts) return;
+        
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const documentHeight = document.documentElement.offsetHeight;
+        
+        // Trigger when user is 200px from bottom
+        if (scrollPosition >= documentHeight - 200) {
+            loadMoreTimelinePosts();
+        }
+    }
+    
+    function loadMoreTimelinePosts() {
+        if (isLoading) return;
+        
+        isLoading = true;
+        
+        // Get last post ID
+        const posts = document.querySelectorAll('[data-post-id]');
+        const lastPost = posts[posts.length - 1];
+        const lastPostId = lastPost ? lastPost.dataset.postId : 0;
+        
+        // Show loading indicator
+        showLoadingIndicator();
+        
+        fetch(`/?route=timeline&action=load_more&last_id=${lastPostId}&limit=10`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.posts.length > 0) {
+                // Add new posts to timeline
+                data.posts.forEach(post => addPostToTimeline(post));
+                hasMorePosts = data.has_more;
+            } else {
+                hasMorePosts = false;
+                showNotification('Geen nieuwe berichten meer', 'info');
+            }
+        })
+        .catch(error => {
+            console.error('Load more posts error:', error);
+            showNotification('Fout bij het laden van meer berichten', 'error');
+        })
+        .finally(() => {
+            isLoading = false;
+            hideLoadingIndicator();
+        });
+    }
+    
+    // Throttled scroll listener
+    let scrollTimeout;
+    window.addEventListener('scroll', function() {
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+        scrollTimeout = setTimeout(checkScrollPosition, 100);
+    });
+}
+
+/**
+ * ➕ Add new post to timeline
+ */
+function addPostToTimeline(post) {
+    const timelineContainer = document.querySelector('.timeline-posts') || 
+                            document.querySelector('.hyves-timeline .timeline-posts') ||
+                            document.querySelector('[data-timeline-posts]');
+    
+    if (!timelineContainer) {
+        console.error('Timeline container not found');
+        return;
+    }
+    
+    // Create post element
+    const postElement = createPostElement(post);
+    
+    // Add to top of timeline (for new posts) or bottom (for infinite scroll)
+    if (post.isNew) {
+        timelineContainer.insertBefore(postElement, timelineContainer.firstChild);
+        
+        // Smooth scroll to new post
+        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Highlight new post briefly
+        postElement.classList.add('new-post-highlight');
+        setTimeout(() => postElement.classList.remove('new-post-highlight'), 3000);
+    } else {
+        timelineContainer.appendChild(postElement);
+    }
+}
+
+/**
+ * 🏗️ Create post HTML element
+ */
+function createPostElement(post) {
+    const postDiv = document.createElement('div');
+    postDiv.className = 'hyves-post-card';
+    postDiv.setAttribute('data-post-id', post.id);
+    postDiv.setAttribute('data-post-type', post.type);
+    
+    postDiv.innerHTML = `
+        <div class="post-header">
+            <div class="post-author">
+                <img src="${post.avatar}" alt="${post.user_name}" class="author-avatar">
+                <div class="author-info">
+                    <a href="${window.location.origin}/profile/${post.user_id}" class="author-name">
+                        ${post.user_name}
+                    </a>
+                    <div class="post-type">plaatste een bericht</div>
+                    <div class="post-time">
+                        <a href="/?route=post&id=${post.id}" class="post-permalink">
+                            ${post.time_ago}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="post-content">
+            ${post.content ? `<div class="post-text">${post.content_formatted || post.content}</div>` : ''}
+            ${post.media_url ? `<div class="post-media"><img src="${post.media_url}" alt="Post afbeelding" class="media-image"></div>` : ''}
+        </div>
+        
+        <div class="post-footer">
+            <div class="post-stats">
+                <span class="stats-likes">${post.likes} respect</span>
+                <span class="stats-separator">•</span>
+                <span class="stats-comments">${post.comments} reacties</span>
+            </div>
+            
+            <div class="post-actions">
+                <button class="hyves-action-btn like-button ${post.is_liked ? 'liked' : ''}" data-post-id="${post.id}">
+                    <span class="action-icon">👍</span>
+                    <span class="action-text">
+                        <span class="like-count">${post.likes}</span> Respect!
+                    </span>
+                </button>
+                <button class="hyves-action-btn comment-button">
+                    <span class="action-icon">💬</span>
+                    <span class="action-text">Reageren</span>
+                </button>
+                <button class="hyves-action-btn share-button" data-post-id="${post.id}">
+                    <span class="action-icon">📤</span>
+                    <span class="action-text">Delen</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="comments-section" style="display: none;">
+            <!-- Comments will be loaded here -->
+        </div>
+    `;
+    
+    return postDiv;
+}
+
+/**
+ * 🔄 Refresh timeline posts
+ */
+function refreshTimeline() {
+    const timelineContainer = document.querySelector('.timeline-posts') || 
+                            document.querySelector('.hyves-timeline .timeline-posts') ||
+                            document.querySelector('[data-timeline-posts]');
+    
+    if (!timelineContainer) return;
+    
+    // Show loading state
+    showLoadingIndicator();
+    
+    fetch('/?route=timeline&action=get_posts&limit=20', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Clear current posts
+            timelineContainer.innerHTML = '';
+            
+            // Add refreshed posts
+            data.posts.forEach(post => addPostToTimeline(post));
+        }
+    })
+    .catch(error => {
+        console.error('Refresh timeline error:', error);
+        showNotification('Fout bij het verversen van de timeline', 'error');
+    })
+    .finally(() => {
+        hideLoadingIndicator();
+    });
+}
+
+/**
+ * 📡 Timeline AJAX posts ophalen
+ * Voor gebruik in TimelineService->getPostsAjax()
+ */
+function getTimelinePostsAjax(config = {}) {
+    const params = new URLSearchParams({
+        action: 'get_posts',
+        limit: config.limit || 20,
+        offset: config.offset || 0
+    });
+    
+    // 🚀 NIEUWE URL STRUCTUUR
+    return fetch(`/?route=timeline&${params.toString()}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json());
+}
+
+/**
+ * 📊 Show loading indicator
+ */
+function showLoadingIndicator() {
+    let indicator = document.querySelector('.timeline-loading');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'timeline-loading';
+        indicator.innerHTML = `
+            <div class="loading-spinner"></div>
+            <p>Berichten laden...</p>
+        `;
+        
+        const timeline = document.querySelector('.timeline-posts') || document.body;
+        timeline.appendChild(indicator);
+    }
+    
+    indicator.style.display = 'block';
+}
+
+/**
+ * 📊 Hide loading indicator
+ */
+function hideLoadingIndicator() {
+    const indicator = document.querySelector('.timeline-loading');
+    if (indicator) {
+        indicator.style.display = 'none';
+    }
+}
+
+// ========================================
+// 🎯 INITIALIZATION
+// ========================================
+
+// Initialize timeline when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTimeline);
+} else {
+    initTimeline();
+}

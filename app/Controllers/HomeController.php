@@ -14,7 +14,17 @@ class HomeController extends Controller
             exit;
         }
         
-        // Check registration status voor homepage display
+        // ✅ NIEUW: Check of Core mode aan staat
+        $configValue = get_system_config('use_core', 0);
+        $useCore = ($configValue == 1);
+        
+        if ($useCore) {
+            // Core mode: Redirect direct naar Core login
+            header('Location: ' . base_url('?route=auth/login'));
+            exit;
+        }
+        
+        // Theme mode: Toon normale homepage met ingebouwde login form
         $registrationOpen = SecuritySettings::isEnabled('open_registration');
         
         $this->view('home/index', [

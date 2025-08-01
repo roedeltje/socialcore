@@ -1,0 +1,90 @@
+/* Timeline Comments Styling */
+.comment-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-content {
+    display: flex;
+    gap: 12px;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.comment-body {
+    flex: 1;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #ffffff; /* Was: #1f2937 - nu wit voor donkere achtergrond */
+}
+
+.comment-time {
+    color: #9ca3af; /* Was: #6b7280 - nu lichter grijs */
+    font-size: 0.875rem;
+}
+
+.comment-text {
+    color: #e5e7eb; /* Was: #374151 - nu lichtgrijs voor donkere achtergrond */
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 16px;
+    font-size: 0.875rem;
+}
+
+.comment-action-btn {
+    color: #9ca3af; /* Was: #6b7280 - nu lichter */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.2s;
+}
+
+.comment-action-btn:hover {
+    color: #60a5fa; /* Was: #3b82f6 - nu lichter blauw */
+}
+
+.comment-action-btn.liked {
+    color: #60a5fa; /* Was: #3b82f6 - nu lichter blauw */
+}
+
+.loading {
+    text-align: center;
+    color: #9ca3af; /* Was: #6b7280 - nu lichter */
+    padding: 20px;
+}
+
+.no-comments {
+    text-align: center;
+    color: #6b7280; /* Was: #9ca3af - nu iets donkerder dan loading */
+    padding: 20px;
+    font-style: italic;
+}
+
+.error {
+    text-align: center;
+    color: #f87171; /* Was: #ef4444 - nu lichter rood */
+    padding: 20px;
+}

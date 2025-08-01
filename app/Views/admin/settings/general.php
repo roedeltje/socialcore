@@ -1,3 +1,23 @@
+<?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+<div style="background: lime; color: black; padding: 15px; margin: 10px; border: 3px solid green;">
+    <h2>🟢 FORM SUBMITTED - POST Data:</h2>
+    <strong>timeline_use_core:</strong> <?= $_POST['timeline_use_core'] ?? 'NOT SET' ?><br>
+    <strong>All POST data:</strong>
+    <pre><?= print_r($_POST, true) ?></pre>
+</div>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['success_message']) || isset($_SESSION['error_message'])): ?>
+<div style="background: orange; padding: 15px; margin: 10px; border: 3px solid darkorange;">
+    <h2>🟡 SESSION Messages:</h2>
+    <?php if (isset($_SESSION['success_message'])): ?>
+        <p><strong>Success:</strong> <?= $_SESSION['success_message'] ?></p>
+    <?php endif; ?>
+    <?php if (isset($_SESSION['error_message'])): ?>
+        <p><strong>Error:</strong> <?= $_SESSION['error_message'] ?></p>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 <!-- /app/Views/admin/settings/general.php -->
 <div class="admin-content-wrapper">
     <div class="page-header">
@@ -137,6 +157,70 @@
                 </div>
             </div>
         </div>
+
+        <div class="settings-section">
+    <h3><i class="fas fa-stream"></i> Timeline Systeem</h3>
+    <p class="section-description">Kies welk timeline systeem gebruikt wordt op je platform.</p>
+    
+    <!-- DEBUG: Toon huidige waarde -->
+    <div style="background: yellow; padding: 5px; margin: 5px 0;">
+        <strong>DEBUG:</strong> Huidige timeline_use_core waarde = <?= $settings['timeline_use_core'] ?? 'NOT SET' ?>
+    </div>
+    
+    <div class="form-group">
+        <label>Timeline Modus</label>
+        <div class="radio-group">
+            <div class="form-check">
+                <input type="radio" 
+                       id="timeline_theme" 
+                       name="timeline_use_core" 
+                       value="0" 
+                       class="form-check-input"
+                       <?= ($settings['timeline_use_core'] ?? '0') == '0' ? 'checked' : '' ?>>
+                <label for="timeline_theme" class="form-check-label">
+                    <strong>Theme System Active</strong>
+                    <br><small>Gebruikt het actieve thema</small>
+                </label>
+            </div>
+            
+            <div class="form-check">
+                <input type="radio" 
+                       id="timeline_core" 
+                       name="timeline_use_core" 
+                       value="1" 
+                       class="form-check-input"
+                       <?= ($settings['timeline_use_core'] ?? '0') == '1' ? 'checked' : '' ?>>
+                <label for="timeline_core" class="form-check-label">
+                    <strong>Core System Active</strong>
+                    <br><small>Core Systeem wanneer er geen thema is</small>
+                </label>
+            </div>
+        </div>
+        
+        <!-- DEBUG: JavaScript test -->
+        <div style="background: lightblue; padding: 5px; margin: 5px 0;">
+            <strong>DEBUG:</strong> 
+            <span id="selected-value">Geen selectie</span>
+            <script>
+                document.querySelectorAll('input[name="timeline_use_core"]').forEach(function(radio) {
+                    radio.addEventListener('change', function() {
+                        document.getElementById('selected-value').textContent = 'Geselecteerd: ' + this.value;
+                    });
+                    
+                    // Toon huidige selectie
+                    if (radio.checked) {
+                        document.getElementById('selected-value').textContent = 'Huidige: ' + radio.value;
+                    }
+                });
+            </script>
+        </div>
+        
+        <small class="form-hint">
+            <strong>Let op:</strong> Deze instelling wordt direct toegepast na opslaan.
+            <a href="/?route=timeline" target="_blank">Test de timeline</a> na wijziging.
+        </small>
+    </div>
+</div>
 
         <div class="settings-section">
             <h3><i class="fas fa-user-plus"></i> Gebruikersregistratie</h3>

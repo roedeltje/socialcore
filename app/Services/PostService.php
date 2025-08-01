@@ -200,11 +200,112 @@ class PostService
                 "[" . date('Y-m-d H:i:s') . "] Database insert successful, Post ID: {$postId}\n\n", 
                 FILE_APPEND | LOCK_EX);
             
-            return [
+            $postData = null;
+            if (true) {
+                file_put_contents('/var/www/socialcore.local/debug/postservice_internal_' . date('Y-m-d') . '.log', 
+                    "[" . date('Y-m-d H:i:s') . "] AJAX request detected - fetching full post data\n", 
+                    FILE_APPEND | LOCK_EX);
+                
+                try {
+                    // Haal gebruikersgegevens op
+                    $userStmt = $this->db->prepare("
+                        SELECT u.username, u.name, u.email, up.avatar 
+                        FROM users u 
+                        LEFT JOIN user_profiles up ON u.id = up.user_id 
+                        WHERE u.id = ?
+                    ");
+                    $userStmt->execute([$userId]);
+                    $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    // Haal post media op indien aanwezig
+                    $mediaPath = null;
+                    if ($imagePath) {
+                        $mediaStmt = $this->db->prepare("
+                            SELECT filename, file_path, full_url 
+                            FROM post_media 
+                            WHERE post_id = ? 
+                            ORDER BY id DESC 
+                            LIMIT 1
+                        ");
+                        $mediaStmt->execute([$postId]);
+                        $mediaData = $mediaStmt->fetch(PDO::FETCH_ASSOC);
+                        if ($mediaData) {
+                            $mediaPath = $mediaData['filename']; // Voor timeline weergave
+                        }
+                    }
+                    
+                    // Genereer avatar URL
+                    $avatarUrl = null;
+                    if (!empty($userData['avatar'])) {
+                        // Controleer of het al een volledige URL is
+                        if (strpos($userData['avatar'], 'http') === 0) {
+                            $avatarUrl = $userData['avatar'];
+                        } else {
+                            $avatarUrl = base_url('uploads/' . $userData['avatar']);
+                        }
+                    } else {
+                        $avatarUrl = base_url('theme-assets/default/images/default-avatar.png');
+                    }
+                    
+                    // Format content voor weergave
+                    $formattedContent = nl2br(htmlspecialchars($content));
+                    
+                    // Haal link preview op indien aanwezig
+                    $linkPreviewData = null;
+                    if ($linkPreviewId) {
+                        $previewStmt = $this->db->prepare("
+                            SELECT title, description, image_url, url, domain 
+                            FROM link_previews 
+                            WHERE id = ?
+                        ");
+                        $previewStmt->execute([$linkPreviewId]);
+                        $linkPreviewData = $previewStmt->fetch(PDO::FETCH_ASSOC);
+                    }
+                    
+                    // Bouw volledige post data array
+                    $postData = [
+                        'id' => $postId,
+                        'content' => $content,
+                        'content_formatted' => $formattedContent,
+                        'user_id' => $userId,
+                        'user_name' => $userData['name'] ?? 'Onbekende gebruiker',
+                        'username' => $userData['username'] ?? 'onbekend',
+                        'avatar' => $userData['avatar'],
+                        'avatar_url' => $avatarUrl,
+                        'created_at' => 'Net geplaatst',
+                        'type' => $contentType,
+                        'likes' => 0,
+                        'comments' => 0,
+                        'is_liked' => false,
+                        'media_path' => $mediaPath,
+                        'preview_url' => $linkPreviewData['url'] ?? null,
+                        'link_preview' => $linkPreviewData
+                    ];
+                    
+                    file_put_contents('/var/www/socialcore.local/debug/postservice_internal_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] Post data prepared for AJAX response\n", 
+                        FILE_APPEND | LOCK_EX);
+                        
+                } catch (Exception $e) {
+                    file_put_contents('/var/www/socialcore.local/debug/postservice_internal_' . date('Y-m-d') . '.log', 
+                        "[" . date('Y-m-d H:i:s') . "] Error fetching post data: " . $e->getMessage() . "\n", 
+                        FILE_APPEND | LOCK_EX);
+                }
+            }
+            
+            // Return response met conditionale post data
+            $response = [
                 'success' => true, 
                 'message' => 'Post succesvol aangemaakt',
                 'post_id' => $postId
             ];
+            
+            // Voeg post data toe alleen voor AJAX requests
+            if ($postData !== null) {
+                $response['post'] = $postData;
+            }
+            
+            return $response;
             
         } catch (Exception $e) {
             file_put_contents('/var/www/socialcore.local/debug/postservice_internal_' . date('Y-m-d') . '.log', 

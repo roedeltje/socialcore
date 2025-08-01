@@ -22,7 +22,7 @@ $error = $data['error'] ?? null;
 </head>
 <body>
     <!-- Include navigation -->
-    <?php include __DIR__ . '/../../themes/default/partials/navigation.php'; ?>
+    <?php include(THEME_PATH . '/partials/navigation.php'); ?>
 
     <div class="notifications-settings-container">
         <!-- Page Header -->

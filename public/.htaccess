@@ -22,7 +22,12 @@
     RewriteRule ^admin/([^/]+)/?$ index.php?route=admin/$1 [QSA,L]
     RewriteRule ^admin/([^/]+)/([^/]+)/?$ index.php?route=admin/$1&action=$2 [QSA,L]
     
-    # Feed routes - /feed, /feed/create, etc.
+    # FIX: Specifieke feed action routes EERST
+    RewriteRule ^feed/delete/?$ index.php?route=feed/delete [QSA,L]
+    RewriteRule ^feed/like/?$ index.php?route=feed/like [QSA,L]
+    RewriteRule ^feed/create/?$ index.php?route=feed/create [QSA,L]
+    
+    # Dan pas de algemene feed routes
     RewriteRule ^feed/?$ index.php?route=feed [QSA,L]
     RewriteRule ^feed/([^/]+)/?$ index.php?route=feed/$1 [QSA,L]
     

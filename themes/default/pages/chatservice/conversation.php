@@ -163,7 +163,7 @@ $avatar_placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0
         </div>
         
         <div class="char-counter">
-            <span id="charCount">0</span>/1000
+            <span id="charCounter">0</span>/1000
         </div>
     </form>
 
@@ -501,9 +501,11 @@ document.head.appendChild(lazyStyle);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     overflow: hidden;
-    height: calc(100vh - 180px);
+    height: calc(100vh - 160px);
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 0;
 }
 
 .hyves-conversation-header {
@@ -589,12 +591,17 @@ document.head.appendChild(lazyStyle);
     flex: 1;
     overflow: hidden;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
 }
 
 .hyves-messages-wrapper {
     height: 100%;
     overflow-y: auto;
     padding: 20px;
+    position: relative;
+    z-index: 3;
+    /* Zorg dat er genoeg ruimte is onder de berichten */
+    padding-bottom: 40px;
 }
 
 .hyves-no-messages {
@@ -634,6 +641,17 @@ document.head.appendChild(lazyStyle);
     display: flex;
     flex-direction: column;
     gap: 16px;
+    margin-bottom: 20px; /* Extra ruimte onder laatste bericht */
+}
+
+.hyves-message-own .hyves-message-text {
+    color: white;
+    background: transparent;
+}
+
+.hyves-message-friend .hyves-message-text {
+    color: #333;
+    background: transparent;
 }
 
 .hyves-message {
@@ -657,14 +675,20 @@ document.head.appendChild(lazyStyle);
 }
 
 .hyves-message-content {
-    flex: 1;
+    position: relative;
+    z-index: 5;
+    width: 100%;
 }
 
 .hyves-message-bubble {
+    position: relative;
+    z-index: 8;
     padding: 16px 20px;
     border-radius: 20px;
     word-wrap: break-word;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* Zorg dat content niet overloopt */
+    overflow: visible;
 }
 
 .hyves-message-friend .hyves-message-bubble {
@@ -680,6 +704,8 @@ document.head.appendChild(lazyStyle);
 
 .hyves-message-media {
     margin-bottom: 12px;
+    position: relative;
+    z-index: 6;
 }
 
 .hyves-message-image {
@@ -698,6 +724,16 @@ document.head.appendChild(lazyStyle);
     margin-top: 6px;
     font-size: 11px;
     opacity: 0.7;
+    position: relative;
+    z-index: 9;
+}
+
+.hyves-message-bubble .hyves-message-text {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 15 !important; /* Hoogste prioriteit */
 }
 
 .hyves-message-own .hyves-message-meta {
@@ -708,6 +744,8 @@ document.head.appendChild(lazyStyle);
     background: white;
     border-top: 3px solid #e1e5e9;
     padding: 20px 24px;
+    position: relative;
+    z-index: 1; /* LAGER dan message content */
 }
 
 .hyves-input-wrapper {
@@ -717,7 +755,9 @@ document.head.appendChild(lazyStyle);
     background: #f8f9fa;
     border: 2px solid #e1e5e9;
     border-radius: 24px;
-    padding: 12px 16px;
+    padding: 8px 16px;
+    position: relative;
+    z-index: 2;
 }
 
 .hyves-emoji-button, .hyves-photo-button {
@@ -733,6 +773,15 @@ document.head.appendChild(lazyStyle);
 
 .hyves-emoji-button:hover, .hyves-photo-button:hover {
     background: #e9ecef;
+}
+.hyves-message-text {
+    position: relative;
+    z-index: 10; /* Zorg dat tekst boven andere elementen staat */
+    background: transparent;
+    padding: 0;
+    margin: 8px 0 0 0; /* Ruimte tussen afbeelding en tekst */
+    word-wrap: break-word;
+    line-height: 1.4;
 }
 
 .hyves-message-textarea {
@@ -851,10 +900,8 @@ document.head.appendChild(lazyStyle);
     }
     
     .hyves-conversation-header {
-        flex-direction: column;
-        gap: 12px;
-        text-align: center;
-    }
+    padding: 15px 24px; /* Was 20px - nu 5px minder */
+}
     
     .hyves-message {
         max-width: 85%;
@@ -863,6 +910,100 @@ document.head.appendChild(lazyStyle);
     .hyves-input-wrapper {
         flex-wrap: wrap;
     }
+}
+
+.char-counter,
+.hyves-char-counter,
+.hyves-input-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+    width: 100%;
+    padding: 0 4px;
+}
+
+/* Counter zelf rechts uitlijnen */
+.char-counter .counter,
+.hyves-char-counter .counter,
+.char-count {
+    margin-left: auto; /* Push naar rechts */
+    font-weight: 500;
+    color: #666;
+    min-width: 60px;
+    text-align: right;
+}
+
+/* Counter states (verschillende kleuren) */
+.char-counter.near-limit,
+.hyves-char-counter.near-limit {
+    color: #ff6b35;
+}
+
+.char-counter.at-limit,
+.hyves-char-counter.at-limit {
+    color: #ff4757;
+    font-weight: bold;
+}
+
+/* Specifiek voor Hyves chat styling */
+.hyves-input-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+    padding: 0 16px; /* Zelfde padding als input wrapper */
+}
+
+.hyves-input-meta .left-info {
+    flex: 1;
+    color: #999;
+}
+
+.hyves-input-meta .char-count {
+    color: #666;
+    font-weight: 500;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Als counter in input wrapper zit */
+.hyves-input-wrapper + .char-counter,
+.hyves-input-wrapper + .hyves-input-meta {
+    margin-top: 8px;
+    padding: 0 16px;
+}
+
+/* Fix voor Tailwind conflicts */
+.char-counter * {
+    box-sizing: border-box;
+}
+
+/* Near limit styling */
+.char-count.near-limit {
+    color: #ff6b35 !important;
+    font-weight: 600;
+}
+
+/* At limit styling */
+.char-count.at-limit {
+    color: #ff4757 !important;
+    font-weight: bold;
+    animation: pulse-warning 1s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Debug helper */
+.char-counter-debug {
+    border: 1px solid red;
+    background: rgba(255,0,0,0.1);
 }
 
 /* Image Preview Styling (Hyves-stijl) */
@@ -876,8 +1017,8 @@ document.head.appendChild(lazyStyle);
 }
 
 #chatImagePreview .preview-img {
-    max-width: 120px;
-    max-height: 80px;
+    max-width: 80px; /* Was 120px - consistent met andere preview */
+    max-height: 60px; /* Was 80px - consistent */
     border-radius: 8px;
     object-fit: cover;
     margin-bottom: 8px;
@@ -994,9 +1135,15 @@ document.head.appendChild(lazyStyle);
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    .hyves-message-image {
+        max-width: 150px !important; /* Nog kleiner op mobiel */
+        max-height: 150px !important;
+    }
+
+    .preview-img,
     #chatImagePreview .preview-img {
-        max-width: 80px;
-        max-height: 60px;
+        max-width: 60px; /* Nog compacter op mobiel */
+        max-height: 45px;
     }
     
     .hyves-emoji-grid {
@@ -1009,6 +1156,20 @@ document.head.appendChild(lazyStyle);
         padding: 6px 12px;
     }
 }
+
+@media (max-width: 480px) {
+    .hyves-message-image {
+        max-width: 120px !important; /* Zeer klein op kleine schermen */
+        max-height: 120px !important;
+    }
+    
+    .preview-img,
+    #chatImagePreview .preview-img {
+        max-width: 50px;
+        max-height: 40px;
+    }
+}
+
 .message-form {
     background: white;
     border-top: 3px solid #e1e5e9;
@@ -1167,7 +1328,7 @@ document.head.appendChild(lazyStyle);
 
 .char-counter {
     display: flex;
-    justify-content: space-between;
+    justify-content: right;
     align-items: center;
     margin-top: 8px;
     font-size: 12px;
@@ -1205,8 +1366,8 @@ document.head.appendChild(lazyStyle);
 
 /* Chat afbeeldingen BLIJVEN normaal */
 .hyves-message-image {
-    max-width: 300px !important;
-    max-height: 300px !important;
+    max-width: 200px !important; /* Was 300px - nu 33% kleiner */
+    max-height: 200px !important; /* Was 300px - nu 33% kleiner */
     width: auto !important;
     height: auto !important;
     object-fit: cover;
@@ -1239,8 +1400,8 @@ document.head.appendChild(lazyStyle);
 
 /* Preview afbeeldingen in form blijven ook normaal */
 .preview-img {
-    max-width: 120px;
-    max-height: 80px;
+    max-width: 80px; /* Was 120px - nu 33% kleiner */
+    max-height: 60px; /* Was 80px - nu 25% kleiner */
     border-radius: 8px;
     object-fit: cover;
     margin-bottom: 8px;

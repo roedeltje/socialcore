@@ -109,10 +109,12 @@ class LikeService
             ]);
 
             return [
-                'success' => true,
-                'action' => $action,
-                'like_count' => $newLikeCount
-            ];
+                        'success' => true,
+                        'liked' => ($action === 'liked'),
+                        'likes_count' => $newLikeCount,
+                        'like_count' => $newLikeCount,  // Backup voor compatibiliteit
+                        'action' => $action              // Behoud voor logging/debugging
+                    ];
             
         } catch (Exception $e) {
             error_log('LikeService togglePostLike error: ' . $e->getMessage());

@@ -2,6 +2,10 @@
 
 namespace App\Core;
 
+use App\Services\TimelineService;
+use App\Database\Database;
+use Exception;
+
 /**
  * SocialCore Theme Functions - WordPress-inspired template functions
  * 
@@ -287,3 +291,352 @@ class ThemeFunctions
         self::$themeManager->setActiveTheme($theme);
     }
 }
+
+// ========================================
+// 🎯 TIMELINE HELPER FUNCTIONS (WordPress-style)
+// ⚠️  BELANGRIJK: Deze functies staan BUITEN de class!
+// ========================================
+
+/**
+ * 🎯 Render complete timeline (WordPress-style)
+ * 
+ * Usage in any theme:
+ * <?php $timeline_data = render_timeline(); ?>
+ * <?php $timeline_data = render_timeline(['limit' => 10, 'show_post_form' => false]); ?>
+ */
+function render_timeline($options = []) 
+{
+    $timeline = new \App\Services\TimelineService();
+    return $timeline->renderTimeline($options);
+}
+
+/**
+ * 🎯 Get timeline posts only (WordPress-style)
+ * 
+ * Usage:
+ * <?php $posts = get_timeline_posts(['limit' => 5]); ?>
+ * <?php foreach($posts as $post): ?>
+ *   <div class="post"><?= htmlspecialchars($post['content']) ?></div>
+ * <?php endforeach; ?>
+ */
+function get_timeline_posts($options = []) 
+{
+    $timeline = new \App\Services\TimelineService();
+    return $timeline->getPosts($options);
+}
+
+/**
+ * 🎯 Get current user data (WordPress-style)
+ * 
+ * Usage:
+ * <?php $user = get_current_timeline_user(); ?>
+ * <h1>Welcome <?= htmlspecialchars($user['name']) ?>!</h1>
+ */
+function get_current_timeline_user($userId = null) 
+{
+    $timeline = new \App\Services\TimelineService();
+    return $timeline->getCurrentUser($userId);
+}
+
+/**
+ * 🎯 Get sidebar widget data (WordPress-style)
+ * 
+ * Usage:
+ * <?php $sidebar = get_sidebar_data(); ?>
+ * <div class="online-friends">
+ *   <?php foreach($sidebar['online_friends'] as $friend): ?>
+ *     <span><?= htmlspecialchars($friend['name']) ?></span>
+ *   <?php endforeach; ?>
+ * </div>
+ */
+function get_sidebar_data($userId = null) 
+{
+    $timeline = new \App\Services\TimelineService();
+    $userId = $userId ?? ($_SESSION['user_id'] ?? null);
+    return $timeline->getSidebarData($userId);
+}
+
+/**
+ * 🎯 Get online friends widget (WordPress-style)
+ * 
+ * Usage:
+ * <?php $friends = get_online_friends(); ?>
+ * <?php if(!empty($friends)): ?>
+ *   <h3>Online Friends (<?= count($friends) ?>)</h3>
+ *   <?php foreach($friends as $friend): ?>
+ *     <a href="/profile/<?= urlencode($friend['username']) ?>"><?= htmlspecialchars($friend['name']) ?></a>
+ *   <?php endforeach; ?>
+ * <?php endif; ?>
+ */
+function get_online_friends($userId = null, $limit = 10) 
+{
+    $sidebar = get_sidebar_data($userId);
+    return $sidebar['online_friends'] ?? [];
+}
+
+/**
+ * 🎯 Get trending hashtags (WordPress-style)
+ * 
+ * Usage:
+ * <?php $hashtags = get_trending_hashtags(5); ?>
+ * <?php foreach($hashtags as $tag): ?>
+ *   <a href="/search/hashtag/<?= urlencode($tag['tag']) ?>">#<?= htmlspecialchars($tag['tag']) ?></a>
+ *   <span>(<?= number_format($tag['count']) ?> posts)</span>
+ * <?php endforeach; ?>
+ */
+function get_trending_hashtags($limit = 5) 
+{
+    $sidebar = get_sidebar_data();
+    return array_slice($sidebar['trending_hashtags'] ?? [], 0, $limit);
+}
+
+/**
+ * 🎯 Get suggested users (WordPress-style)
+ * 
+ * Usage:
+ * <?php $suggestions = get_suggested_users(3); ?>
+ * <div class="suggestions">
+ *   <?php foreach($suggestions as $user): ?>
+ *     <div class="suggestion">
+ *       <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="<?= htmlspecialchars($user['name']) ?>">
+ *       <a href="/profile/<?= urlencode($user['username']) ?>"><?= htmlspecialchars($user['name']) ?></a>
+ *       <a href="/friends/add/<?= urlencode($user['username']) ?>">Add Friend</a>
+ *     </div>
+ *   <?php endforeach; ?>
+ * </div>
+ */
+function get_suggested_users($limit = 3) 
+{
+    $sidebar = get_sidebar_data();
+    return array_slice($sidebar['suggested_users'] ?? [], 0, $limit);
+}
+
+/**
+ * 🎯 Timeline stats (WordPress-style)
+ * 
+ * Usage:
+ * <?php $stats = get_timeline_stats(); ?>
+ * <p>Total posts: <?= number_format($stats['total_posts']) ?></p>
+ * <p>Active users: <?= number_format($stats['active_users']) ?></p>
+ */
+function get_timeline_stats() 
+{
+    try {
+        $db = \App\Database\Database::getInstance()->getPdo();
+        
+        // Total posts
+        $stmt = $db->prepare("SELECT COUNT(*) FROM posts WHERE is_deleted = 0");
+        $stmt->execute();
+        $total_posts = $stmt->fetchColumn();
+        
+        // Active users (posted in last 7 days)
+        $stmt = $db->prepare("
+            SELECT COUNT(DISTINCT user_id) 
+            FROM posts 
+            WHERE is_deleted = 0 
+            AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
+        ");
+        $stmt->execute();
+        $active_users = $stmt->fetchColumn();
+        
+        // Total likes
+        $stmt = $db->prepare("SELECT COUNT(*) FROM post_likes");
+        $stmt->execute();
+        $total_likes = $stmt->fetchColumn();
+        
+        // Total comments
+        $stmt = $db->prepare("SELECT COUNT(*) FROM post_comments WHERE is_deleted = 0");
+        $stmt->execute();
+        $total_comments = $stmt->fetchColumn();
+        
+        return [
+            'total_posts' => $total_posts,
+            'active_users' => $active_users,
+            'total_likes' => $total_likes,
+            'total_comments' => $total_comments
+        ];
+        
+    } catch(\Exception $e) {
+        error_log('get_timeline_stats error: ' . $e->getMessage());
+        return [
+            'total_posts' => 0,
+            'active_users' => 0,
+            'total_likes' => 0,
+            'total_comments' => 0
+        ];
+    }
+}
+
+/**
+ * 🎯 Quick timeline for home pages (WordPress-style)
+ * 
+ * Usage:
+ * <?php quick_timeline(); ?> <!-- Shows 5 posts with basic styling -->
+ * <?php quick_timeline(10); ?> <!-- Shows 10 posts -->
+ */
+function quick_timeline($limit = 5) 
+{
+    $posts = get_timeline_posts(['limit' => $limit]);
+    
+    if(empty($posts)) {
+        echo '<p class="no-posts">No posts available</p>';
+        return;
+    }
+    
+    echo '<div class="quick-timeline">';
+    foreach($posts as $post) {
+        echo '<div class="quick-post">';
+        echo '<div class="post-author">';
+        echo '<img src="' . htmlspecialchars($post['avatar']) . '" alt="' . htmlspecialchars($post['user_name']) . '" class="author-avatar">';
+        echo '<span class="author-name">' . htmlspecialchars($post['user_name']) . '</span>';
+        echo '<span class="post-time">' . htmlspecialchars($post['time_ago']) . '</span>';
+        echo '</div>';
+        
+        if(!empty($post['content'])) {
+            echo '<div class="post-content">' . ($post['content_formatted'] ?? nl2br(htmlspecialchars($post['content']))) . '</div>';
+        }
+        
+        if(!empty($post['media_url'])) {
+            echo '<div class="post-media"><img src="' . htmlspecialchars($post['media_url']) . '" alt="Post image"></div>';
+        }
+        
+        echo '<div class="post-actions">';
+        echo '<span class="likes">' . intval($post['likes']) . ' likes</span>';
+        echo '<span class="comments">' . intval($post['comments']) . ' comments</span>';
+        echo '</div>';
+        echo '</div>';
+    }
+    echo '</div>';
+}
+
+/**
+ * 🎯 Render timeline widget (WordPress-style)
+ * 
+ * Usage in sidebars:
+ * <?php echo timeline_widget(['type' => 'online_friends', 'limit' => 5]); ?>
+ * <?php echo timeline_widget(['type' => 'trending', 'limit' => 3]); ?>
+ * <?php echo timeline_widget(['type' => 'suggestions', 'limit' => 2]); ?>
+ */
+function timeline_widget($options = []) 
+{
+    $type = $options['type'] ?? 'online_friends';
+    $limit = $options['limit'] ?? 5;
+    $title = $options['title'] ?? '';
+    
+    switch($type) {
+        case 'online_friends':
+            $data = get_online_friends(null, $limit);
+            $default_title = 'Who\'s Online (' . count($data) . ')';
+            break;
+            
+        case 'trending':
+            $data = get_trending_hashtags($limit);
+            $default_title = 'Trending Now';
+            break;
+            
+        case 'suggestions':
+            $data = get_suggested_users($limit);
+            $default_title = 'People You May Know';
+            break;
+            
+        default:
+            return '';
+    }
+    
+    $widget_title = $title ?: $default_title;
+    $widget_class = 'timeline-widget widget-' . $type;
+    
+    ob_start();
+    ?>
+    <div class="<?= $widget_class ?>">
+        <h3 class="widget-title"><?= htmlspecialchars($widget_title) ?></h3>
+        <div class="widget-content">
+            <?php if(!empty($data)): ?>
+                <?php 
+                // Include the appropriate widget template
+                $widget_template = THEME_PATH . "/widgets/{$type}.php";
+                if(defined('THEME_PATH') && file_exists($widget_template)) {
+                    include $widget_template;
+                } else {
+                    // Fallback inline rendering
+                    foreach($data as $item): ?>
+                        <div class="widget-item">
+                            <?php if($type === 'online_friends' || $type === 'suggestions'): ?>
+                                <img src="<?= htmlspecialchars($item['avatar']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="item-avatar">
+                                <a href="<?= base_url('profile/' . urlencode($item['username'])) ?>" class="item-name"><?= htmlspecialchars($item['name']) ?></a>
+                            <?php elseif($type === 'trending'): ?>
+                                <a href="<?= base_url('?route=search/hashtag&tag=' . urlencode($item['tag'])) ?>" class="hashtag">#<?= htmlspecialchars($item['tag']) ?></a>
+                                <span class="count"><?= number_format($item['count']) ?> posts</span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach;
+                } ?>
+            <?php else: ?>
+                <p class="widget-empty">No <?= htmlspecialchars($type) ?> available</p>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+// ========================================
+// 🎯 AJAX HELPERS (WordPress-style)
+// ========================================
+
+/**
+ * 🎯 Timeline AJAX endpoint helper
+ * 
+ * Usage in JavaScript:
+ * fetch('/?route=api/timeline&action=get_posts&limit=10&offset=20')
+ * fetch('/?route=api/timeline&action=load_more&last_id=123')
+ */
+function handle_timeline_ajax() 
+{
+    if(!isset($_GET['action'])) {
+        return;
+    }
+    
+    $timeline = new \App\Services\TimelineService();
+    
+    switch($_GET['action']) {
+        case 'get_posts':
+            $config = [
+                'limit' => intval($_GET['limit'] ?? 20),
+                'offset' => intval($_GET['offset'] ?? 0),
+                'user_id' => $_SESSION['user_id'] ?? null
+            ];
+            $timeline->getPostsAjax($config);
+            break;
+            
+        case 'load_more':
+            $lastPostId = intval($_GET['last_id'] ?? 0);
+            $limit = intval($_GET['limit'] ?? 10);
+            $timeline->loadMorePosts($lastPostId, $limit);
+            break;
+            
+        default:
+            header('HTTP/1.0 404 Not Found');
+            echo json_encode(['error' => 'Unknown action']);
+            exit;
+    }
+}
+
+/**
+ * 🔧 Initialize timeline AJAX handling
+ * Call this function in your bootstrap or routing system
+ */
+function init_timeline_ajax() 
+{
+    // Register AJAX handler if this is an AJAX request
+    if(isset($_GET['route']) && $_GET['route'] === 'api/timeline') {
+        handle_timeline_ajax();
+    }
+}
+
+// ========================================
+// 🚀 AUTO-INITIALIZE (optioneel)
+// ========================================
+
+// Uncomment de volgende regel als je automatische AJAX initialisatie wilt:
+// init_timeline_ajax();

@@ -292,7 +292,7 @@ private function jsonResponse($data)
         
         // Fix de avatar URLs voor elke vriend
         foreach ($friends as &$friend) {
-            $friend['avatar_url'] = $this->getAvatarUrl($friend['avatar']);
+            $friend['avatar_url'] = get_avatar_url($friend['avatar']);
             
             // Format ook de display name als fallback
             if (empty($friend['display_name'])) {

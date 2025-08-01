@@ -1,105 +1,4 @@
-<!-- <?php /* SocialCore nieuwsfeed in authentieke Hyves-stijl */ ?>
-<?php
-// Voeg deze code TIJDELIJK toe aan het begin van een werkende pagina
-// Bijvoorbeeld in /themes/default/pages/timeline.php of home.php
-
-echo "<div style='background: #f0f0f0; padding: 20px; margin: 20px; border: 2px solid #ccc;'>";
-echo "<h2>🔍 Theme Debug Info</h2>";
-
-try {
-    // Check database direct
-    $db = App\Database\Database::getInstance()->getPdo();
-    $stmt = $db->prepare("SELECT setting_value FROM site_settings WHERE setting_name = 'active_theme'");
-    $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    echo "<strong>Database active_theme:</strong> " . ($result ? $result['setting_value'] : 'NIET GEVONDEN') . "<br>";
-    
-    // Check ThemeManager
-    $themeManager = App\Core\ThemeManager::getInstance();
-    echo "<strong>ThemeManager actieve theme:</strong> " . $themeManager->getActiveTheme() . "<br>";
-    
-    // Check if Twitter theme exists
-    echo "<strong>Twitter theme bestaat:</strong> " . ($themeManager->themeExists('twitter') ? 'JA' : 'NEE') . "<br>";
-    
-    // Check paths
-    echo "<strong>Twitter templates pad:</strong> " . BASE_PATH . "/themes/twitter/<br>";
-    echo "<strong>Twitter assets pad:</strong> " . BASE_PATH . "/public/theme-assets/twitter/<br>";
-    
-    // Check actual directories
-    $twitterThemePath = BASE_PATH . "/themes/twitter";
-    $twitterAssetsPath = BASE_PATH . "/public/theme-assets/twitter";
-    
-    echo "<strong>Twitter theme dir bestaat:</strong> " . (is_dir($twitterThemePath) ? 'JA' : 'NEE') . "<br>";
-    echo "<strong>Twitter assets dir bestaat:</strong> " . (is_dir($twitterAssetsPath) ? 'JA' : 'NEE') . "<br>";
-    
-    if (is_dir($twitterAssetsPath)) {
-        $cssPath = $twitterAssetsPath . "/css/style.css";
-        echo "<strong>Twitter CSS bestaat:</strong> " . (file_exists($cssPath) ? 'JA' : 'NEE') . "<br>";
-    }
-    
-} catch (Exception $e) {
-    echo "<strong>Error:</strong> " . $e->getMessage();
-}
-
-echo "</div>";
-?>
-<?php
-// Voeg deze code toe ONDER de vorige debug code in timeline.php
-
-echo "<div style='background: #ffe6e6; padding: 20px; margin: 20px; border: 2px solid #ff9999;'>";
-echo "<h2>🎨 Template & CSS Debug</h2>";
-
-try {
-    $themeManager = App\Core\ThemeManager::getInstance();
-    
-    // Check welke template file wordt gebruikt
-    echo "<strong>Huidige template bestand:</strong> " . __FILE__ . "<br>";
-    
-    // Check CSS URL's
-    echo "<strong>Actieve theme CSS URL:</strong> " . $themeManager->getThemeCssUrl() . "<br>";
-    echo "<strong>Twitter CSS URL:</strong> " . $themeManager->getThemeCssUrl('style.css', 'twitter') . "<br>";
-    
-    // Check template path
-    $timelinePath = $themeManager->getThemeTemplatePath('pages/timeline.php');
-    echo "<strong>Timeline template path:</strong> " . $timelinePath . "<br>";
-    echo "<strong>Timeline template bestaat:</strong> " . (file_exists($timelinePath) ? 'JA' : 'NEE') . "<br>";
-    
-    // Check of er Twitter templates zijn
-    $twitterTimelinePath = BASE_PATH . "/themes/twitter/pages/timeline.php";
-    echo "<strong>Twitter timeline template:</strong> " . $twitterTimelinePath . "<br>";
-    echo "<strong>Twitter timeline bestaat:</strong> " . (file_exists($twitterTimelinePath) ? 'JA' : 'NEE') . "<br>";
-    
-    // Check header template (waar CSS wordt geladen)
-    $headerPath = $themeManager->getThemeTemplatePath('layouts/header.php');
-    echo "<strong>Header template path:</strong> " . $headerPath . "<br>";
-    echo "<strong>Header template bestaat:</strong> " . (file_exists($headerPath) ? 'JA' : 'NEE') . "<br>";
-    
-    // Check Twitter header
-    $twitterHeaderPath = BASE_PATH . "/themes/twitter/layouts/header.php";
-    echo "<strong>Twitter header template:</strong> " . $twitterHeaderPath . "<br>";
-    echo "<strong>Twitter header bestaat:</strong> " . (file_exists($twitterHeaderPath) ? 'JA' : 'NEE') . "<br>";
-    
-} catch (Exception $e) {
-    echo "<strong>Error:</strong> " . $e->getMessage();
-}
-
-echo "</div>";
-
-// Check welke CSS daadwerkelijk wordt geladen in de HTML
-echo "<div style='background: #e6f3ff; padding: 20px; margin: 20px; border: 2px solid #66ccff;'>";
-echo "<h2>💻 HTML Debug</h2>";
-echo "<strong>Check je browser Developer Tools → Elements tab om te zien welke CSS files worden geladen!</strong><br>";
-echo "Verwacht: <code>/theme-assets/twitter/css/style.css</code><br>";
-echo "</div>";
-echo "<div style='background: #ffe6cc; padding: 20px; margin: 20px; border: 2px solid #ff9900;'>";
-echo "<h2>🔄 Theme Loader Debug</h2>";
-$themeDebug = debug_theme_system();
-foreach ($themeDebug as $key => $value) {
-    echo "<strong>{$key}:</strong> {$value}<br>";
-}
-echo "</div>";
-?> -->
-<?php echo "<!-- Timeline.php geladen -->"; ?>
+<?php /* SocialCore nieuwsfeed in authentieke Hyves-stijl */ ?>
 
 <!-- Hyves-stijl homepage container -->
 <div class="hyves-homepage">
@@ -125,12 +24,14 @@ echo "</div>";
                 <div class="composer-body">
                     <?php include THEME_PATH . '/partials/messages.php'; ?>
                     
-                    <?php 
-                        $form_id = 'postForm';
-                        $context = 'timeline';
-                        $user = $current_user;
-                        include THEME_PATH . '/partials/post-form.php';
-                    ?>
+                    <!-- Modern post form compatible met core functionaliteit -->
+                    
+                        <?php 
+                            $form_id = 'timelinePostForm';
+                            $context = 'timeline';
+                            $user = $current_user;
+                            include THEME_PATH . '/partials/post-form.php';
+                        ?>
                 </div>
             </div>
             
@@ -146,10 +47,10 @@ echo "</div>";
                     </div>
                 </div>
                 
-                <div class="timeline-posts">
+                <div class="timeline-posts" id="timelinePosts">
                     <?php if (!empty($posts)): ?>
                         <?php foreach ($posts as $post): ?>
-                            <div class="hyves-post-card" data-post-id="<?= $post['id'] ?>">
+                            <article class="hyves-post-card" data-post-id="<?= $post['id'] ?>">
                                 <!-- Post Header -->
                                 <div class="post-header">
                                     <div class="post-author">
@@ -157,15 +58,15 @@ echo "</div>";
                                              alt="<?= htmlspecialchars($post['user_name']) ?>" 
                                              class="author-avatar">
                                         <div class="author-info">
-                                            <?php if ($post['is_wall_message'] && !empty($post['wall_message_header'])): ?>
-                                                <!-- Krabbel header: Afzender → Ontvanger -->
-                                                <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="author-name">
-                                                    <?= htmlspecialchars($post['wall_message_header']) ?>
+                                            <?php if ($post['is_wall_message'] ?? false): ?>
+                                                <!-- Krabbel header -->
+                                                <a href="<?= base_url('profile/' . $post['username']) ?>" class="author-name">
+                                                    <?= htmlspecialchars($post['wall_message_header'] ?? $post['user_name']) ?>
                                                 </a>
                                                 <div class="post-type">plaatste een krabbel</div>
                                             <?php else: ?>
                                                 <!-- Gewoon tijdlijn bericht -->
-                                                <a href="<?= base_url('profile/' . $post['user_id']) ?>" class="author-name">
+                                                <a href="<?= base_url('profile/' . $post['username']) ?>" class="author-name">
                                                     <?= htmlspecialchars($post['user_name']) ?>
                                                 </a>
                                                 <div class="post-type">plaatste een bericht</div>
@@ -179,18 +80,15 @@ echo "</div>";
                                     </div>
                                     
                                     <!-- Post menu voor eigenaar/admin -->
-                                    <?php if (isset($_SESSION['user_id']) && ($post['user_id'] == $_SESSION['user_id'] || isset($_SESSION['role']) && $_SESSION['role'] === 'admin')): ?>
+                                    <?php if (isset($_SESSION['user_id']) && ($post['user_id'] == $_SESSION['user_id'] || ($_SESSION['role'] ?? '') === 'admin')): ?>
                                         <div class="post-menu">
-                                            <button type="button" class="post-menu-button">
+                                            <button type="button" class="post-menu-button" data-post-id="<?= $post['id'] ?>">
                                                 <span class="menu-dots">⋯</span>
                                             </button>
-                                            <div class="post-menu-dropdown hidden">
-                                                <form action="<?= base_url('feed/delete') ?>" method="post" class="delete-post-form">
-                                                    <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
-                                                    <button type="button" class="delete-post-button">
-                                                        🗑️ Bericht verwijderen
-                                                    </button>
-                                                </form>
+                                            <div class="post-menu-dropdown hidden" data-post-id="<?= $post['id'] ?>">
+                                                <button type="button" class="delete-post-button" data-post-id="<?= $post['id'] ?>">
+                                                    🗑️ Bericht verwijderen
+                                                </button>
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -198,46 +96,46 @@ echo "</div>";
                                 
                                 <!-- Post Content -->
                                 <div class="post-content">
-                                <?php if (!empty($post['content'])): ?>
-                                    <div class="post-text">
-                                        <?= $post['content_formatted'] ?? nl2br(htmlspecialchars($post['content'])) ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <!-- Media (foto/video) - BESTAANDE CODE -->
-                                <?php if (!empty($post['media_path'])): ?>
-                                    <div class="post-media">
-                                        <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
-                                            alt="Post afbeelding" 
-                                            class="media-image">
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <!-- Link preview (NIEUWE FUNCTIONALITEIT) -->
-                                <?php if ($post['type'] === 'link' && !empty($post['preview_url'])): ?>
-                                    <?php get_theme_component('link-preview', ['post' => $post]); ?>
-                                <?php endif; ?>
-                            </div>
+                                    <?php if (!empty($post['content'])): ?>
+                                        <div class="post-text">
+                                            <?= $post['content_formatted'] ?? nl2br(htmlspecialchars($post['content'])) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Media (foto/video) -->
+                                    <?php if (!empty($post['media_path'])): ?>
+                                        <div class="post-media">
+                                            <img src="<?= base_url('uploads/' . $post['media_path']) ?>" 
+                                                alt="Post afbeelding" 
+                                                class="media-image">
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Link preview -->
+                                    <?php if ($post['type'] === 'link' && !empty($post['preview_url'])): ?>
+                                        <?php get_theme_component('link-preview', ['post' => $post]); ?>
+                                    <?php endif; ?>
+                                </div>
                                 
                                 <!-- Post Footer - Hyves-stijl interactie knoppen -->
                                 <div class="post-footer">
                                     <div class="post-stats">
-                                        <span class="stats-likes"><?= $post['likes'] ?> respect</span>
+                                        <span class="stats-likes like-count"><?= $post['likes'] ?? 0 ?> respect</span>
                                         <span class="stats-separator">•</span>
-                                        <a href="<?= base_url('?route=post&id=' . $post['id']) ?>#comments" class="stats-comments comment-link">
-                                            <?= $post['comments'] ?> reacties
-                                        </a>
+                                        <button class="stats-comments comment-toggle" data-post-id="<?= $post['id'] ?>">
+                                            <span class="comment-count"><?= $post['comments'] ?? 0 ?></span> reacties
+                                        </button>
                                     </div>
                                     
                                     <div class="post-actions">
-                                        <button class="hyves-action-btn like-button <?= $post['is_liked'] ? 'liked' : '' ?>" 
+                                        <button class="hyves-action-btn like-button <?= ($post['is_liked'] ?? false) ? 'liked' : '' ?>" 
                                                 data-post-id="<?= $post['id'] ?>">
                                             <span class="action-icon">👍</span>
                                             <span class="action-text">
                                                 <span class="like-count"><?= $post['likes'] ?? 0 ?></span> Respect!
                                             </span>
                                         </button>
-                                        <button class="hyves-action-btn comment-button">
+                                        <button class="hyves-action-btn comment-button comment-toggle" data-post-id="<?= $post['id'] ?>">
                                             <span class="action-icon">💬</span>
                                             <span class="action-text">Reageren</span>
                                         </button>
@@ -260,15 +158,23 @@ echo "</div>";
                                 extract($comments_data);
                                 include THEME_PATH . '/partials/comments-section.php';
                                 ?>
-                            </div>
+                            </article>
                         <?php endforeach; ?>
+
+                                <div class="load-more-container" style="text-align: center; padding: 30px; display: flex; justify-content: center; align-items: center;">
+                                    <button type="button" id="loadMorePosts" class="hyves-submit-btn" style="margin: 0 auto;">
+                                        <span class="submit-icon">📄</span>
+                                        <span class="submit-text">Meer berichten laden</span>
+                                    </button>
+                                </div>
+
                     <?php else: ?>
                         <!-- Lege staat -->
                         <div class="empty-timeline">
                             <div class="empty-icon">📭</div>
                             <h3>Nog geen berichten!</h3>
                             <p>Voeg vrienden toe om hun berichten te zien, of plaats je eerste bericht.</p>
-                            <button class="hyves-btn primary">Vrienden zoeken</button>
+                            <a href="<?= base_url('friends') ?>" class="hyves-btn primary">Vrienden zoeken</a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -286,7 +192,7 @@ echo "</div>";
                 </div>
                 <div class="widget-body">
                     <div class="user-mini-profile">
-                        <img src="<?= get_avatar_url($_SESSION['avatar'] ?? null) ?>" 
+                        <img src="<?= get_avatar_url($current_user['avatar'] ?? null) ?>" 
                              alt="<?= htmlspecialchars($current_user['name']) ?>" 
                              class="user-avatar">
                         <div class="user-info">
@@ -319,7 +225,7 @@ echo "</div>";
                 <div class="widget-header">
                     <span class="icon">🟢</span>
                     <h4>Wie is er online?</h4>
-                    <span class="online-count"><?= count($online_friends) ?></span>
+                    <span class="online-count"><?= count($online_friends ?? []) ?></span>
                 </div>
                 <div class="widget-body">
                     <?php if (!empty($online_friends)): ?>
@@ -328,12 +234,12 @@ echo "</div>";
                                 <div class="friend-item">
                                     <div class="friend-avatar-wrapper">
                                         <img src="<?= get_avatar_url($friend['avatar']) ?>" 
-                                                alt="<?= htmlspecialchars($friend['name']) ?>" 
-                                                class="friend-avatar">
-                                            <span class="online-indicator"></span>
+                                             alt="<?= htmlspecialchars($friend['name']) ?>" 
+                                             class="friend-avatar">
+                                        <span class="online-indicator"></span>
                                     </div>
                                     <div class="friend-info">
-                                        <a href="<?= base_url('profile/' . $friend['id']) ?>" class="friend-name">
+                                        <a href="<?= base_url('profile/' . $friend['username']) ?>" class="friend-name">
                                             <?= htmlspecialchars($friend['name']) ?>
                                         </a>
                                         <span class="friend-status">Online</span>
@@ -360,7 +266,7 @@ echo "</div>";
                 </div>
                 <div class="widget-body">
                     <div class="trending-list">
-                        <?php foreach ($trending_hashtags as $hashtag): ?>
+                        <?php foreach ($trending_hashtags ?? [] as $hashtag): ?>
                             <div class="trending-item">
                                 <span class="trending-icon">📈</span>
                                 <div class="trending-info">
@@ -383,21 +289,19 @@ echo "</div>";
                 </div>
                 <div class="widget-body">
                     <div class="suggestions-list">
-                        <?php foreach ($suggested_users as $user): ?>
+                        <?php foreach ($suggested_users ?? [] as $user): ?>
                             <div class="suggestion-item">
-                                <img src="<?= $this->getAvatarUrl($user['avatar']) ?>" 
-                                    alt="<?= htmlspecialchars($user['name']) ?>" 
-                                    class="suggestion-avatar">
+                                <img src="<?= get_avatar_url($user['avatar']) ?>" 
+                                     alt="<?= htmlspecialchars($user['name']) ?>" 
+                                     class="suggestion-avatar">
                                 <div class="suggestion-info">
-                                    <a href="<?= base_url('?route=profile&user=' . $user['username']) ?>" class="suggestion-name">
+                                    <a href="<?= base_url('profile/' . $user['username']) ?>" class="suggestion-name">
                                         <?= htmlspecialchars($user['name']) ?>
                                     </a>
-                                    
-                                    <!-- GEFIXTE KNOP: Link naar vriendschapsverzoek -->
                                     <a href="<?= base_url('?route=friends/add&user=' . $user['username']) ?>" 
-                                    class="hyves-btn mini primary add-friend-btn"
-                                    data-user-id="<?= $user['id'] ?>"
-                                    data-username="<?= htmlspecialchars($user['username']) ?>">
+                                       class="hyves-btn mini primary add-friend-btn"
+                                       data-user-id="<?= $user['id'] ?>"
+                                       data-username="<?= htmlspecialchars($user['username']) ?>">
                                         + Toevoegen
                                     </a>
                                 </div>
@@ -407,7 +311,7 @@ echo "</div>";
                 </div>
             </div>
             
-            <!-- Navigatie widget (mobiel-vriendelijk) -->
+            <!-- Navigatie widget -->
             <div class="hyves-widget nav-widget">
                 <div class="widget-header">
                     <span class="icon">🧭</span>
@@ -443,9 +347,10 @@ echo "</div>";
     </div>
 </div>
 
-<?php 
-// Clear old content na gebruik
-if (isset($_SESSION['old_content'])) {
-    unset($_SESSION['old_content']);
-}
-?>
+<script>
+// Maak current user data beschikbaar voor JavaScript
+window.currentUser = {
+    id: <?= $_SESSION['user_id'] ?? 0 ?>,
+    role: '<?= $_SESSION['role'] ?? 'user' ?>'
+};
+</script>

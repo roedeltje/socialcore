@@ -1012,3 +1012,52 @@
         margin-bottom: 28px;
     }
 }
+
+.media-image,
+.post-media img,
+.post-image {
+    width: 100% !important;
+    max-height: 450px !important;        /* Iets hoger voor Hyves-stijl */
+    height: auto !important;
+    object-fit: contain !important;      /* Hele afbeelding tonen, geen cropping */
+    border-radius: 12px !important;
+    background: #f8fafc !important;     /* Lichte achtergrond voor witruimte */
+    margin-top: 15px !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Hover effect voor Hyves-stijl */
+.media-image:hover,
+.post-media img:hover,
+.post-image:hover {
+    transform: scale(1.01) !important;
+    box-shadow: 0 8px 25px rgba(74, 144, 226, 0.2) !important;
+}
+
+/* Dark mode achtergrond voor witruimte */
+@media (prefers-color-scheme: dark) {
+    .media-image,
+    .post-media img,
+    .post-image {
+        background: #2d2d2d !important;
+    }
+}
+
+/* Responsive aanpassingen voor Hyves thema */
+@media (max-width: 768px) {
+    .media-image,
+    .post-media img,
+    .post-image {
+        max-height: 350px !important;
+        border-radius: 8px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .media-image,
+    .post-media img,
+    .post-image {
+        max-height: 300px !important;
+        border-radius: 6px !important;
+    }
+}

@@ -1,0 +1,3364 @@
+/*
+ * SocialCore - Complete Core System CSS
+ * Universal, theme-independent styling met #0066cc kleurenpalet
+ * Mobile-first responsive design
+ */
+
+/* CSS Variables - Sky Blue & Sunshine Kleurenpalet */
+:root {
+    --primary-color: #00b4d8;      /* Helder hemelsblauw */
+    --primary-hover: #0077b6;      /* Dieper blauw */
+    --primary-light: #48cae4;      /* Licht aquablauw */
+    --accent-color: #ffb703;       /* Warm geel/oranje */
+    --secondary-color: #6c757d;    /* Neutrale grijs */
+    --success-color: #06ffa5;      /* Fris groen */
+    --error-color: #ff006e;        /* Levendige rode */
+    --warning-color: #fb8500;      /* Warm oranje */
+    --background-color: #f8fafc;   /* Zeer licht blauwgrijs */
+    --surface-color: #ffffff;      /* Helder wit */
+    --text-primary: #1e293b;       /* Donkergrijs (niet zwart) */
+    --text-secondary: #64748b;     /* Medium grijs */
+    --border-color: #e2e8f0;       /* Licht grijs */
+    --shadow: 0 4px 6px rgba(0, 180, 216, 0.1);
+    --radius: 12px;                /* Meer ronde hoeken */
+    --transition: all 0.3s ease;
+    
+    /* Core overlay colors voor glassmorphism */
+    --core-white-overlay: rgba(255, 255, 255, 0.15);
+    --core-white-overlay-hover: rgba(255, 255, 255, 0.25);
+    --core-white-overlay-strong: rgba(255, 255, 255, 0.35);
+    
+    /* Sky Blue gradients */
+    --core-gradient: linear-gradient(135deg, #00b4d8 0%, #0077b6 50%, #023047 100%);
+    --core-gradient-light: linear-gradient(135deg, #48cae4 0%, #00b4d8 50%, #0077b6 100%);
+}
+
+/* Dark mode colors - aangepast voor Sky Blue & Sunshine */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #48cae4;      /* Lichter blauw voor donkere mode */
+        --primary-hover: #00b4d8;      /* Originele sky blue */
+        --primary-light: #90e0ef;      /* Zeer licht blauw */
+        --accent-color: #ffb703;       /* Behoud het gele accent */
+        --background-color: #0f172a;   /* Donkere achtergrond */
+        --surface-color: #1e293b;      /* Donkere surface */
+        --text-primary: #f1f5f9;       /* Lichte tekst */
+        --text-secondary: #94a3b8;     /* Medium lichte tekst */
+        --border-color: #334155;       /* Donkere borders */
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        
+        /* Aangepaste gradients voor dark mode */
+        --core-gradient: linear-gradient(135deg, #1e293b 0%, #334155 50%, #0f172a 100%);
+        --core-gradient-light: linear-gradient(135deg, #334155 0%, #475569 50%, #1e293b 100%);
+    }
+}
+
+/* ================================
+   CORE SYSTEM BASE STYLING
+   ================================ */
+
+/* Base Core Mode Styling - Sky Blue & Sunshine */
+body.core-mode {
+    background: linear-gradient(135deg, #00b4d8, #48cae4) !important;
+    min-height: 100vh !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #333 !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* Alternative gradient options */
+body.core-mode.gradient-light {
+    background: var(--core-gradient-light);
+}
+
+body.core-mode.gradient-sunrise {
+    background: linear-gradient(135deg, #ffb703 0%, #fb8500 30%, #00b4d8 70%, #0077b6 100%);
+}
+
+body.core-mode.gradient-ocean {
+    background: linear-gradient(135deg, #48cae4 0%, #00b4d8 25%, #0077b6 75%, #023047 100%);
+}
+
+/* Core Badge - Sky Blue & Sunshine styling */
+.core-badge {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: linear-gradient(135deg, var(--accent-color) 0%, #fb8500 100%);
+    backdrop-filter: blur(15px);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    z-index: 1000;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(255, 183, 3, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Core Container */
+.core-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Core Card - Verbeterde glassmorphism */
+.core-card {
+    background: var(--core-white-overlay);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: 
+        0 8px 32px rgba(0, 180, 216, 0.15),
+        0 2px 8px rgba(255, 255, 255, 0.1) inset;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle shimmer effect */
+.core-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.core-card:hover::before {
+    left: 100%;
+}
+
+/* Core Typography */
+.core-title {
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.core-subtitle {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.core-text {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+}
+
+.core-text-muted {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.core-link {
+    color: var(--primary-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.core-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+/* Back Links */
+.core-back-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    transition: color 0.2s ease;
+    font-weight: 500;
+}
+
+.core-back-link:hover {
+    color: white;
+}
+
+.core-back-link::before {
+    content: "← ";
+    margin-right: 0.5rem;
+}
+
+/* ================================
+   TIMELINE & POST STYLING
+   ================================ */
+
+/* Reset and base styles */
+.core-timeline * {
+    box-sizing: border-box;
+}
+
+.core-timeline {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--background-color);
+    min-height: 100vh;
+}
+
+/* Container */
+.timeline-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Timeline Header */
+.timeline-header {
+    background: var(--surface-color);
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.timeline-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.timeline-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.timeline-stats {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.current-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--background-color);
+    border-radius: var(--radius);
+}
+
+.current-user-info .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ================================
+   BUTTONS & FORMS
+   ================================ */
+
+/* Core Buttons */
+.core-button,
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
+}
+
+.core-button:hover,
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+}
+
+.core-button:disabled,
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.core-button-secondary,
+.btn-secondary {
+    background: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.core-button-secondary:hover,
+.btn-secondary:hover {
+    background: var(--background-color);
+}
+
+/* Post Form Section */
+.post-form-section {
+    margin-bottom: 20px;
+}
+
+.post-form-container {
+    background: var(--surface-color);
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.post-form-container h2 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+/* Core Input */
+.core-input,
+#post-content {
+    background: var(--core-white-overlay);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 12px;
+    color: white;
+    width: 100%;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+/* Voor Core mode inputs - witte tekst */
+body.core-mode .core-input,
+body.core-mode #post-content {
+    color: white;
+}
+
+/* Voor normale mode inputs - zwarte tekst */
+body:not(.core-mode) .core-input,
+body:not(.core-mode) #post-content {
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+.core-input::placeholder,
+#post-content::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+body:not(.core-mode) .core-input::placeholder,
+body:not(.core-mode) #post-content::placeholder {
+    color: var(--text-secondary);
+}
+
+.core-input:focus,
+#post-content:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+body.core-mode .core-input:focus,
+body.core-mode #post-content:focus {
+    background: var(--core-white-overlay-hover);
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.media-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-media {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.btn-media:hover {
+    background: var(--border-color);
+}
+
+.image-preview {
+    position: relative;
+    max-width: 200px;
+}
+
+.image-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.remove-image {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--error-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* ================================
+   TIMELINE POSTS
+   ================================ */
+
+/* Timeline Posts */
+.timeline-main {
+    margin-bottom: 40px;
+}
+
+.posts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.timeline-post {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.timeline-post:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+/* Post Header */
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.post-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.author-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.author-avatar:hover {
+    border-color: var(--primary-color);
+}
+
+.author-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.author-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.author-name a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.author-name a:hover {
+    color: var(--primary-color);
+}
+
+.post-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Post Menu */
+.post-menu {
+    position: relative;
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.menu-toggle:hover {
+    background: var(--background-color);
+    color: var(--text-primary);
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 120px;
+    z-index: 1000;
+}
+
+.menu-item {
+    display: block;
+    padding: 10px 15px;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: var(--transition);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background: var(--background-color);
+}
+
+.menu-item.delete {
+    color: var(--error-color);
+}
+
+.menu-item.delete:hover {
+    background: rgba(244, 67, 54, 0.1);
+}
+
+/* Post Content */
+.post-content {
+    padding: 20px;
+}
+
+.post-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    word-wrap: break-word;
+}
+
+.post-media {
+    margin-top: 15px;
+}
+
+.post-image {
+    width: 100%;
+    max-height: 500px;
+    height: auto;
+    object-fit: contain !important;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+    margin-top: 12px;
+    background: var(--surface-color);
+}
+
+.post-image:hover {
+    opacity: 0.95;
+    transform: scale(1.01);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.post-media[data-aspect-ratio="wide"] .post-image {
+    max-height: 300px;
+}
+
+.post-media[data-aspect-ratio="tall"] .post-image {
+    max-height: 600px;
+}
+
+/* Post Footer */
+.post-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--background-color);
+}
+
+.post-actions {
+    display: flex;
+    gap: 20px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.action-btn:hover {
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+.like-btn.liked {
+    color: var(--primary-color);
+    background: rgba(0, 102, 204, 0.1);
+}
+
+.like-btn.liked .like-icon {
+    transform: scale(1.2);
+}
+
+/* ================================
+   COMMENTS SECTION
+   ================================ */
+
+.comments-section {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--background-color);
+}
+
+.comment-form {
+    margin-top: 15px;
+}
+
+.comment-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+}
+
+.comment-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.comment-submit {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.comment-submit:hover {
+    background: var(--primary-hover);
+}
+
+/* ================================
+   CORE NAVIGATION SYSTEM
+   ================================ */
+
+.timeline-header,
+.core-header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-bottom: 1px solid #444;
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.timeline-nav,
+.core-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Navigation Buttons */
+.nav-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-btn:hover {
+    background: rgba(0, 102, 204, 0.8);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* User Menu */
+.user-menu-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.user-dropdown {
+    position: relative;
+}
+
+.user-menu-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 6px 12px 6px 8px;
+    border-radius: 25px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.user-menu-btn:hover {
+    background: rgba(0, 102, 204, 0.2);
+    border-color: var(--primary-color);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    object-fit: cover;
+    transition: border-color 0.3s ease;
+}
+
+.user-menu-btn:hover .user-avatar {
+    border-color: var(--primary-color);
+}
+
+/* ================================
+   EMPTY STATES & UTILITIES
+   ================================ */
+
+.empty-timeline {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--surface-color);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+.empty-timeline h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.empty-timeline p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* Load More Button */
+.load-more-container {
+    text-align: center;
+    margin-top: 30px;
+}
+
+/* Image Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    cursor: pointer;
+}
+
+.modal-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    cursor: default;
+}
+
+.modal-content img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: var(--radius);
+}
+
+.modal-close {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: var(--surface-color);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    background: var(--background-color);
+    transform: scale(1.1);
+}
+
+/* ================================
+   UTILITY CLASSES
+   ================================ */
+
+.core-flex { display: flex; gap: 1rem; }
+.core-flex-center { display: flex; align-items: center; justify-content: center; }
+.core-mb-4 { margin-bottom: 1rem; }
+.core-mt-4 { margin-top: 1rem; }
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 5px; }
+.mb-2 { margin-bottom: 10px; }
+.mb-3 { margin-bottom: 15px; }
+.mb-4 { margin-bottom: 20px; }
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: 5px; }
+.mt-2 { margin-top: 10px; }
+.mt-3 { margin-top: 15px; }
+.mt-4 { margin-top: 20px; }
+.d-none { display: none; }
+.d-block { display: block; }
+.d-flex { display: flex; }
+
+/* ================================
+   RESPONSIVE DESIGN
+   ================================ */
+
+@media (max-width: 768px) {
+    .core-container {
+        padding: 1rem;
+    }
+    
+    .core-card {
+        padding: 1.5rem;
+    }
+    
+    .core-title {
+        font-size: 1.5rem;
+    }
+    
+    .core-badge {
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .timeline-container {
+        padding: 10px;
+    }
+    
+    .timeline-header {
+        padding: 15px;
+    }
+    
+    .timeline-nav {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 0 10px;
+    }
+    
+    .nav-left {
+        gap: 10px;
+    }
+    
+    .timeline-title {
+        font-size: 1.3rem;
+    }
+    
+    .post-form-container {
+        padding: 15px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .timeline-post {
+        margin: 0 -5px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+    
+    .post-header,
+    .post-content,
+    .post-footer,
+    .comments-section {
+        padding: 15px;
+    }
+    
+    .post-actions {
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+    
+    .comment-input-group {
+        gap: 8px;
+    }
+    
+    .comment-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .author-avatar {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .current-user-info .user-avatar {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .core-container {
+        padding: 0.5rem;
+    }
+    
+    .timeline-container {
+        padding: 5px;
+    }
+    
+    .timeline-header,
+    .post-form-container {
+        border-radius: 0;
+        margin: 0 -5px;
+        border-left: none;
+        border-right: none;
+    }
+    
+    .timeline-title {
+        font-size: 1.2rem;
+    }
+    
+    .post-header {
+        padding: 12px;
+    }
+    
+    .post-content {
+        padding: 15px 12px;
+    }
+    
+    .post-footer,
+    .comments-section {
+        padding: 12px;
+    }
+    
+    .author-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .post-actions {
+        gap: 10px;
+    }
+    
+    .action-btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+}
+
+/* ================================
+   ANIMATIONS
+   ================================ */
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.timeline-post {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.like-btn.liked .like-icon {
+    animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ================================
+   EMOJI PICKER STYLING
+   ================================ */
+
+.emoji-picker {
+    position: relative;
+    display: inline-block;
+}
+
+.emoji-panel {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.emoji-category {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.emoji-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.emoji-category h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+}
+
+.emoji-grid span {
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.emoji-grid span:hover {
+    background: #f0f0f0;
+    transform: scale(1.1);
+}
+
+.emoji-category span:hover {
+    background: #f0f0f0;
+}
+
+/* ================================
+   LINK PREVIEW STYLES
+   ================================ */
+
+/* Link preview container */
+.link-preview-container {
+    display: block;
+    margin-top: 10px;
+}
+
+.link-preview-container.hidden {
+    display: none !important;
+}
+
+/* Link preview loading state */
+.link-preview-loading {
+    padding: 15px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    text-align: center;
+    background: #f9f9f9;
+    color: #666;
+    font-size: 14px;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+/* Link preview card */
+.link-preview {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    margin-top: 10px;
+    transition: box-shadow 0.2s ease;
+}
+
+.link-preview:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.link-preview-card {
+    position: relative;
+}
+
+.link-preview-layout {
+    display: flex;
+    align-items: stretch;
+}
+
+.link-preview-content {
+    flex: 1;
+    padding: 15px;
+}
+
+.link-preview-domain {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.link-preview-title {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    line-height: 1.3;
+    font-size: 16px;
+}
+
+.link-preview-description {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.link-preview-image {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.link-preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.link-preview:hover .link-preview-image img {
+    transform: scale(1.05);
+}
+
+/* Remove button */
+.link-preview-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.link-preview-remove:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.8);
+    transform: scale(1.1);
+}
+
+.link-preview:hover .link-preview-remove {
+    opacity: 1;
+}
+
+/* ================================
+   PROFILE STYLING
+   ================================ */
+
+/* Profile Container */
+.profile-container,
+.core-profile {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Profile Content */
+.profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Profile Header */
+.profile-header {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+    border: 1px solid #444;
+}
+
+.profile-info {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--primary-color);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.profile-username {
+    font-size: 16px;
+    color: #999;
+    margin-bottom: 16px;
+}
+
+.profile-bio {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #ccc;
+    margin-bottom: 16px;
+}
+
+.profile-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #999;
+    font-size: 14px;
+}
+
+.meta-icon {
+    font-size: 16px;
+}
+
+/* Profile Stats */
+.profile-stats {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #999;
+    margin-top: 4px;
+}
+
+/* Profile Actions */
+.profile-actions {
+    margin-top: 20px;
+}
+
+.action-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.action-btn.secondary {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.action-btn.secondary:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Content Sections */
+.content-section {
+    background: var(--surface-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    width: 100%;
+}
+
+.section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(0, 102, 204, 0.1);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.section-content {
+    padding: 20px;
+}
+
+/* Recent Posts Section */
+.recent-posts-section {
+    margin-bottom: 20px;
+}
+
+.profile-post {
+    background: var(--background-color);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.profile-post:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-1px);
+}
+
+.profile-post:last-child {
+    margin-bottom: 0;
+}
+
+.post-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.post-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    object-fit: cover;
+}
+
+.post-info {
+    flex: 1;
+}
+
+.post-author {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Photos Section */
+.photos-section {
+    margin-bottom: 20px;
+}
+
+.photos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.photo-item {
+    aspect-ratio: 1;
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border: 1px solid var(--border-color);
+    position: relative;
+}
+
+.photo-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.photo-item:hover img {
+    transform: scale(1.1);
+}
+
+.photo-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.photo-item:hover::after {
+    opacity: 1;
+}
+
+.view-all-photos {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.view-all-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--primary-color);
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.view-all-link:hover {
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.empty-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* ================================
+   PRINT STYLES
+   ================================ */
+
+@media print {
+    .timeline-header,
+    .post-form-section,
+    .post-footer,
+    .comments-section,
+    .load-more-container,
+    .core-badge {
+        display: none;
+    }
+    
+    .timeline-post {
+        box-shadow: none;
+        border: 1px solid #000;
+        margin-bottom: 20px;
+        break-inside: avoid;
+    }
+    
+    .post-image {
+        max-height: 300px;
+        object-fit: contain;
+    }
+    
+    body.core-mode {
+        background: white;
+        color: black;
+    }
+    
+    .core-card {
+        background: white;
+        border: 1px solid #000;
+    }
+}
+
+/* ================================
+   DARK MODE ENHANCEMENTS
+   ================================ */
+
+@media (prefers-color-scheme: dark) {
+    .core-timeline {
+        color-scheme: dark;
+    }
+    
+    .timeline-header,
+    .core-header {
+        background: linear-gradient(135deg, #0d1117 0%, #21262d 100%);
+        border-bottom-color: #30363d;
+    }
+    
+    .content-section {
+        background: #2d2d2d;
+        border: 1px solid #444;
+    }
+    
+    .section-header {
+        border-bottom: 1px solid #444;
+    }
+    
+    .profile-post {
+        background: #333;
+        border: 1px solid #444;
+    }
+    
+    .post-image {
+        background: #2d2d2d;
+    }
+}
+
+/* ================================
+   FOCUS STATES FOR ACCESSIBILITY
+   ================================ */
+
+.core-button:focus,
+.btn-primary:focus,
+.btn-secondary:focus,
+.nav-btn:focus,
+.core-input:focus,
+#post-content:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* ================================
+   ANIMATION UTILITIES
+   ================================ */
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ================================
+   FINAL RESPONSIVE ADJUSTMENTS
+   ================================ */
+
+/* Tablet responsive adjustments */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 15px;
+    }
+    
+    .profile-header {
+        padding: 20px;
+    }
+    
+    .profile-info {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+    
+    .profile-stats {
+        justify-content: center;
+        gap: 20px;
+    }
+    
+    .profile-meta {
+        justify-content: center;
+    }
+    
+    .photos-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .section-content {
+        padding: 15px;
+    }
+    
+    .profile-post {
+        padding: 12px;
+    }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 480px) {
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .profile-name {
+        font-size: 24px;
+    }
+    
+    .profile-stats {
+        gap: 15px;
+    }
+    
+    .stat-number {
+        font-size: 20px;
+    }
+    
+    .photos-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .section-header {
+        padding: 12px 15px;
+    }
+    
+    .section-content {
+        padding: 12px;
+    }
+    
+    .profile-post {
+        padding: 10px;
+    }
+    
+    .post-meta {
+        gap: 8px;
+    }
+    
+    .post-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 320px) {
+    .photos-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    
+    .profile-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* 
+ * TAILWIND OVERRIDE SECTION - Voeg dit toe aan je bestaande core-system.css
+ * Deze regels gebruiken !important om Tailwind CSS te overrulen
+ */
+
+/* ================================
+   CORE BASE STYLING - TAILWIND OVERRIDES
+   ================================ */
+
+/* Core Mode Base - Override Tailwind classes */
+body.core-mode {
+    background: linear-gradient(135deg, #00b4d8, #48cae4) !important;
+    color: #333 !important;
+    min-height: 100vh !important;
+}
+
+/* Timeline Container - Override bg-gray classes */
+.core-mode .timeline-container,
+.core-mode .timeline-main {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 15px !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+    box-shadow: 0 8px 32px rgba(0, 180, 216, 0.15) !important;
+}
+
+/* Cards en Posts - Override Tailwind background classes */
+.core-mode .post-card,
+.core-mode .timeline-post,
+.core-mode .card,
+.core-mode .core-card,
+.core-mode .post-form-container,
+.core-mode .content-section {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.1) !important;
+    color: #333 !important;
+}
+
+/* Post Headers - Override text-white classes */
+.core-mode .post-header,
+.core-mode .timeline-header,
+.core-mode .section-header {
+    background: rgba(0, 180, 216, 0.1) !important;
+    color: #333 !important;
+    border-bottom: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+/* Post Content Areas */
+.core-mode .post-content,
+.core-mode .post-text,
+.core-mode .section-content {
+    color: #333 !important;
+    background: transparent !important;
+}
+
+/* Buttons - Override Tailwind button classes */
+.core-mode .btn-primary,
+.core-mode .hyves-action-button,
+.core-mode .action-btn,
+.core-mode .core-button {
+    background: linear-gradient(135deg, #00b4d8, #0077b6) !important;
+    color: white !important;
+    border: none !important;
+    transition: all 0.3s ease !important;
+}
+
+.core-mode .btn-primary:hover,
+.core-mode .hyves-action-button:hover,
+.core-mode .action-btn:hover,
+.core-mode .core-button:hover {
+    background: linear-gradient(135deg, #0077b6, #005577) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 15px rgba(0, 119, 182, 0.3) !important;
+}
+
+/* Secondary Buttons */
+.core-mode .btn-secondary,
+.core-mode .core-button-secondary {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+}
+
+.core-mode .btn-secondary:hover,
+.core-mode .core-button-secondary:hover {
+    background: rgba(0, 180, 216, 0.1) !important;
+    border-color: #00b4d8 !important;
+}
+
+/* Input Fields - Override Tailwind input styling */
+.core-mode .core-input,
+.core-mode #post-content,
+.core-mode input[type="text"],
+.core-mode input[type="email"],
+.core-mode input[type="password"],
+.core-mode textarea {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid rgba(0, 180, 216, 0.3) !important;
+    border-radius: 8px !important;
+    color: #333 !important;
+    padding: 12px !important;
+}
+
+.core-mode .core-input:focus,
+.core-mode #post-content:focus,
+.core-mode input:focus,
+.core-mode textarea:focus {
+    border-color: #00b4d8 !important;
+    box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1) !important;
+    outline: none !important;
+    background: rgba(255, 255, 255, 1) !important;
+}
+
+.core-mode .core-input::placeholder,
+.core-mode #post-content::placeholder,
+.core-mode input::placeholder,
+.core-mode textarea::placeholder {
+    color: rgba(51, 51, 51, 0.6) !important;
+}
+
+/* Navigation Elements */
+.core-mode .nav-btn,
+.core-mode .user-menu-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.core-mode .nav-btn:hover,
+.core-mode .user-menu-btn:hover {
+    background: rgba(0, 180, 216, 0.8) !important;
+    border-color: #00b4d8 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Author/User Info */
+.core-mode .author-name,
+.core-mode .author-name a,
+.core-mode .user-name,
+.core-mode .profile-name {
+    color: #00b4d8 !important;
+}
+
+.core-mode .author-name a:hover {
+    color: #0077b6 !important;
+}
+
+/* Time stamps and meta info */
+.core-mode .post-time,
+.core-mode .meta-item,
+.core-mode .char-counter,
+.core-mode .text-muted {
+    color: rgba(51, 51, 51, 0.7) !important;
+}
+
+/* Footer and Actions */
+.core-mode .post-footer,
+.core-mode .post-actions {
+    background: rgba(248, 250, 252, 0.9) !important;
+    border-top: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+/* Like buttons and interactions */
+.core-mode .like-btn {
+    color: rgba(51, 51, 51, 0.8) !important;
+}
+
+.core-mode .like-btn.liked {
+    color: #00b4d8 !important;
+    background: rgba(0, 180, 216, 0.1) !important;
+}
+
+.core-mode .like-btn:hover {
+    background: rgba(0, 180, 216, 0.1) !important;
+    color: #00b4d8 !important;
+}
+
+/* Comments Section */
+.core-mode .comments-section {
+    background: rgba(248, 250, 252, 0.9) !important;
+    border-top: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+.core-mode .comment-input {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+    color: #333 !important;
+}
+
+.core-mode .comment-submit {
+    background: #00b4d8 !important;
+    color: white !important;
+}
+
+.core-mode .comment-submit:hover {
+    background: #0077b6 !important;
+}
+
+/* Menu Dropdowns */
+.core-mode .menu-dropdown,
+.core-mode .dropdown-menu {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 25px rgba(0, 180, 216, 0.15) !important;
+}
+
+.core-mode .menu-item,
+.core-mode .dropdown-item {
+    color: #333 !important;
+}
+
+.core-mode .menu-item:hover,
+.core-mode .dropdown-item:hover {
+    background: rgba(0, 180, 216, 0.1) !important;
+}
+
+/* Empty States */
+.core-mode .empty-timeline,
+.core-mode .empty-state {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+/* Profile specific overrides */
+.core-mode .profile-header {
+    background: linear-gradient(135deg, rgba(0, 180, 216, 0.9), rgba(72, 202, 228, 0.8)) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.core-mode .profile-bio,
+.core-mode .profile-username {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Stats and Numbers */
+.core-mode .stat-number {
+    color: #ffb703 !important;
+}
+
+.core-mode .stat-label {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ================================
+   ACCENT COLORS - SUNSHINE TOUCHES
+   ================================ */
+
+/* Accent Elements */
+.core-mode .accent,
+.core-mode .highlight,
+.core-mode .featured {
+    color: #ffb703 !important;
+}
+
+.core-mode .success,
+.core-mode .online {
+    color: #06ffa5 !important;
+}
+
+.core-mode .warning {
+    color: #fb8500 !important;
+}
+
+.core-mode .error,
+.core-mode .danger {
+    color: #ff006e !important;
+}
+
+/* ================================
+   MOBILE RESPONSIVE OVERRIDES
+   ================================ */
+
+@media (max-width: 768px) {
+    .core-mode .timeline-container {
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+    
+    .core-mode .timeline-post {
+        border-left: none !important;
+        border-right: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+}
+
+/* ================================
+   GLASSMORPHISM ENHANCEMENTS
+   ================================ */
+
+.core-mode .glassmorphism {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.core-mode .glassmorphism-strong {
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(25px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ================================
+   ANIMATION OVERRIDES
+   ================================ */
+
+.core-mode .timeline-post {
+    animation: slideIn 0.5s ease-out !important;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hover animations */
+.core-mode .timeline-post:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 180, 216, 0.2) !important;
+}
+
+/* 
+ * CONSISTENCY FIX - Extra specifieke overrides
+ * Voeg dit toe aan het einde van je core-system.css
+ */
+
+/* ================================
+   TIMELINE POSTS CONSISTENCY FIX
+   ================================ */
+
+/* Alle donkere post achtergronden overschrijven */
+.core-mode .timeline-post,
+.core-mode .post,
+.core-mode .post-container,
+.core-mode .feed-post,
+.core-mode .social-post {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+/* Post headers specifiek */
+.core-mode .timeline-post .post-header,
+.core-mode .post .post-header {
+    background: rgba(0, 180, 216, 0.1) !important;
+    color: #333 !important;
+}
+
+/* Post content areas */
+.core-mode .timeline-post .post-content,
+.core-mode .post .post-content,
+.core-mode .post-body {
+    background: transparent !important;
+    color: #333 !important;
+}
+
+/* ================================
+   PROFILE PAGE CONSISTENCY
+   ================================ */
+
+/* Profile headers - geen paars meer */
+.core-mode .profile-header,
+.core-mode .user-header,
+.core-mode .profile-banner {
+    background: linear-gradient(135deg, rgba(0, 180, 216, 0.9), rgba(72, 202, 228, 0.8)) !important;
+    color: white !important;
+}
+
+/* Profile stats */
+.core-mode .profile-stats,
+.core-mode .user-stats {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+/* Recente berichten sectie */
+.core-mode .recent-posts,
+.core-mode .user-posts,
+.core-mode .profile-posts {
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ================================
+   FRIENDS PAGE CONSISTENCY
+   ================================ */
+
+/* Vrienden header - Sky Blue i.p.v. paars */
+.core-mode .friends-header,
+.core-mode .page-header,
+.core-mode .section-banner {
+    background: linear-gradient(135deg, #00b4d8, #48cae4) !important;
+    color: white !important;
+}
+
+/* Vrienden cards */
+.core-mode .friend-card,
+.core-mode .user-card,
+.core-mode .member-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+    color: #333 !important;
+}
+
+/* ================================
+   CHAT CONSISTENCY (al goed, maar extra zekerheid)
+   ================================ */
+
+.core-mode .chat-container,
+.core-mode .message-container,
+.core-mode .conversation-area {
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.core-mode .chat-message,
+.core-mode .message-bubble {
+    background: rgba(248, 250, 252, 0.9) !important;
+    color: #333 !important;
+}
+
+/* ================================
+   SETTINGS PAGES CONSISTENCY
+   ================================ */
+
+/* Alle settings headers uniform Sky Blue */
+.core-mode .settings-header,
+.core-mode .page-title,
+.core-mode .section-title-header {
+    background: linear-gradient(135deg, #00b4d8, #48cae4) !important;
+    color: white !important;
+}
+
+/* Settings content */
+.core-mode .settings-content,
+.core-mode .form-section,
+.core-mode .config-section {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+/* ================================
+   FORM ELEMENTS CONSISTENCY
+   ================================ */
+
+/* Alle form elementen uniform */
+.core-mode input,
+.core-mode textarea,
+.core-mode select,
+.core-mode .form-control,
+.core-mode .input-field {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid rgba(0, 180, 216, 0.3) !important;
+    color: #333 !important;
+}
+
+.core-mode input:focus,
+.core-mode textarea:focus,
+.core-mode select:focus {
+    border-color: #00b4d8 !important;
+    box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1) !important;
+}
+
+/* ================================
+   BUTTON CONSISTENCY
+   ================================ */
+
+/* Alle primary buttons Sky Blue */
+.core-mode button,
+.core-mode .btn,
+.core-mode .button,
+.core-mode input[type="submit"],
+.core-mode .primary-btn {
+    background: linear-gradient(135deg, #00b4d8, #0077b6) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.core-mode button:hover,
+.core-mode .btn:hover,
+.core-mode .button:hover {
+    background: linear-gradient(135deg, #0077b6, #005577) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Secondary buttons */
+.core-mode .btn-secondary,
+.core-mode .secondary-btn,
+.core-mode .btn-outline {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #00b4d8 !important;
+    border: 2px solid #00b4d8 !important;
+}
+
+/* Success buttons (groen) */
+.core-mode .btn-success,
+.core-mode .success-btn {
+    background: #06ffa5 !important;
+    color: #333 !important;
+}
+
+/* Warning buttons (oranje) */
+.core-mode .btn-warning,
+.core-mode .warning-btn {
+    background: #ffb703 !important;
+    color: #333 !important;
+}
+
+/* Danger buttons (rood) */
+.core-mode .btn-danger,
+.core-mode .danger-btn {
+    background: #ff006e !important;
+    color: white !important;
+}
+
+/* ================================
+   MODAL/DROPDOWN CONSISTENCY
+   ================================ */
+
+.core-mode .modal,
+.core-mode .popup,
+.core-mode .overlay {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #333 !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+}
+
+.core-mode .dropdown,
+.core-mode .select-options,
+.core-mode .menu-list {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+}
+
+/* ================================
+   NOTIFICATION/ALERT CONSISTENCY
+   ================================ */
+
+.core-mode .alert,
+.core-mode .notification,
+.core-mode .message {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+    border-left: 4px solid #00b4d8 !important;
+}
+
+.core-mode .alert-success {
+    border-left-color: #06ffa5 !important;
+}
+
+.core-mode .alert-warning {
+    border-left-color: #ffb703 !important;
+}
+
+.core-mode .alert-error,
+.core-mode .alert-danger {
+    border-left-color: #ff006e !important;
+}
+
+/* ================================
+   SIDEBAR/NAVIGATION CONSISTENCY
+   ================================ */
+
+.core-mode .sidebar,
+.core-mode .nav-sidebar,
+.core-mode .side-panel {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-right: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+.core-mode .nav-item,
+.core-mode .sidebar-item {
+    color: #333 !important;
+}
+
+.core-mode .nav-item:hover,
+.core-mode .sidebar-item:hover {
+    background: rgba(0, 180, 216, 0.1) !important;
+}
+
+/* ================================
+   TABLE CONSISTENCY
+   ================================ */
+
+.core-mode table,
+.core-mode .data-table {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+.core-mode th {
+    background: rgba(0, 180, 216, 0.1) !important;
+    color: #333 !important;
+}
+
+.core-mode tr:nth-child(even) {
+    background: rgba(248, 250, 252, 0.5) !important;
+}
+
+/* ================================
+   BADGE/TAG CONSISTENCY
+   ================================ */
+
+.core-mode .badge,
+.core-mode .tag,
+.core-mode .label {
+    background: #00b4d8 !important;
+    color: white !important;
+}
+
+.core-mode .badge-success {
+    background: #06ffa5 !important;
+    color: #333 !important;
+}
+
+.core-mode .badge-warning {
+    background: #ffb703 !important;
+    color: #333 !important;
+}
+
+.core-mode .badge-danger {
+    background: #ff006e !important;
+    color: white !important;
+}
+
+/* ================================
+   PROGRESS/LOADING CONSISTENCY
+   ================================ */
+
+.core-mode .progress-bar {
+    background: #00b4d8 !important;
+}
+
+.core-mode .loading-spinner {
+    border-top-color: #00b4d8 !important;
+}
+
+/* ================================
+   FOOTER CONSISTENCY
+   ================================ */
+
+.core-mode .footer,
+.core-mode .page-footer {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+    border-top: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+/* ================================
+   RESPONSIVE MOBILE CONSISTENCY
+   ================================ */
+
+@media (max-width: 768px) {
+    .core-mode .mobile-header,
+    .core-mode .header-mobile {
+        background: linear-gradient(135deg, #00b4d8, #48cae4) !important;
+        color: white !important;
+    }
+    
+    .core-mode .mobile-nav,
+    .core-mode .bottom-nav {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-top: 1px solid rgba(0, 180, 216, 0.2) !important;
+    }
+}
+
+/* ================================
+   FINAL CATCH-ALL OVERRIDES
+   ================================ */
+
+/* Als laatste redmiddel - alle divs met donkere achtergrond */
+.core-mode div[class*="dark"],
+.core-mode div[class*="gray-"],
+.core-mode .bg-dark,
+.core-mode .bg-gray-900,
+.core-mode .bg-gray-800,
+.core-mode .bg-gray-700 {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+/* Alle text-white classes overschrijven */
+.core-mode .text-white,
+.core-mode [class*="text-white"] {
+    color: #333 !important;
+}
+
+/* Behalve in headers waar witte tekst wel moet blijven */
+.core-mode .profile-header .text-white,
+.core-mode .page-header .text-white,
+.core-mode .settings-header .text-white {
+    color: white !important;
+}
+
+/* 
+ * VISUAL FIXES - Navigatie contrast, afbeelding grootte, achtergronden
+ * Voeg dit toe aan het einde van je core-system.css
+ */
+
+/* ================================
+   NAVIGATIE CONTRAST FIX
+   ================================ */
+
+/* Navigatie tekst veel duidelijker maken */
+.core-mode .nav-link,
+.core-mode .navbar-nav .nav-link,
+.core-mode .navigation a,
+.core-mode .nav-item a,
+.core-mode .menu-item {
+    color: white !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+
+.core-mode .nav-link:hover,
+.core-mode .navbar-nav .nav-link:hover,
+.core-mode .navigation a:hover {
+    color: #ffb703 !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Navigatie iconen ook wit maken */
+.core-mode .nav-link i,
+.core-mode .nav-item i,
+.core-mode .navbar-nav i {
+    color: white !important;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2)) !important;
+}
+
+/* Actieve navigatie item */
+.core-mode .nav-link.active,
+.core-mode .nav-item.active a {
+    color: #ffb703 !important;
+    font-weight: 700 !important;
+}
+
+/* ================================
+   FEED AFBEELDING GROOTTE FIX
+   ================================ */
+
+/* Timeline afbeeldingen kleiner maken */
+.core-mode .timeline-post .post-image,
+.core-mode .feed-post .post-image,
+.core-mode .post .post-image,
+.core-mode .post-media img {
+    max-height: 400px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    border-radius: 12px !important;
+    margin-top: 12px !important;
+}
+
+/* Voor hele brede afbeeldingen nog kleiner */
+.core-mode .post-media[data-aspect-ratio="wide"] .post-image,
+.core-mode .timeline-post .post-image[style*="aspect-ratio"] {
+    max-height: 300px !important;
+}
+
+/* Voor vierkante afbeeldingen */
+.core-mode .post-media[data-aspect-ratio="square"] .post-image {
+    max-height: 350px !important;
+}
+
+/* Responsive aanpassingen voor mobiel */
+@media (max-width: 768px) {
+    .core-mode .timeline-post .post-image,
+    .core-mode .post-media img {
+        max-height: 250px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .core-mode .timeline-post .post-image,
+    .core-mode .post-media img {
+        max-height: 200px !important;
+    }
+}
+
+/* ================================
+   PROFIEL ACHTERGROND FIX
+   ================================ */
+
+/* Profiel foto sectie achtergrond licht maken */
+.core-mode .profile-photos,
+.core-mode .photos-section,
+.core-mode .user-photos,
+.core-mode .photo-gallery {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+/* Profiel foto grid achtergrond */
+.core-mode .photos-grid,
+.core-mode .photo-grid,
+.core-mode .image-gallery {
+    background: transparent !important;
+    padding: 15px !important;
+}
+
+/* Individuele foto items */
+.core-mode .photo-item,
+.core-mode .gallery-item,
+.core-mode .profile-photo {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+/* Profiel posts sectie */
+.core-mode .profile-posts,
+.core-mode .user-timeline,
+.core-mode .recent-posts {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+/* Profiel posts individueel */
+.core-mode .profile-post,
+.core-mode .user-post {
+    background: rgba(248, 250, 252, 0.9) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+    color: #333 !important;
+}
+
+/* ================================
+   EXTRA CONTRAST VERBETERINGEN
+   ================================ */
+
+/* Zorg dat alle tekst op donkere achtergronden wit is */
+.core-mode .timeline-header,
+.core-mode .post-header {
+    color: white !important;
+}
+
+.core-mode .timeline-header h1,
+.core-mode .timeline-header h2,
+.core-mode .timeline-title {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Breadcrumbs en navigatie elementen */
+.core-mode .breadcrumb,
+.core-mode .page-nav {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+}
+
+.core-mode .breadcrumb a {
+    color: #00b4d8 !important;
+}
+
+/* ================================
+   POST CONTENT STYLING VERBETERINGEN
+   ================================ */
+
+/* Post tekst beter leesbaar maken */
+.core-mode .post-text,
+.core-mode .post-content p,
+.core-mode .timeline-post .content {
+    color: #333 !important;
+    line-height: 1.6 !important;
+    font-size: 16px !important;
+}
+
+/* Post metadata (tijd, auteur, etc.) */
+.core-mode .post-meta,
+.core-mode .post-time,
+.core-mode .author-info {
+    color: rgba(51, 51, 51, 0.7) !important;
+}
+
+/* ================================
+   INTERACTIE ELEMENTEN
+   ================================ */
+
+/* Like buttons en acties */
+.core-mode .post-actions .action-btn {
+    background: rgba(248, 250, 252, 0.9) !important;
+    color: rgba(51, 51, 51, 0.8) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+.core-mode .post-actions .action-btn:hover {
+    background: rgba(0, 180, 216, 0.1) !important;
+    color: #00b4d8 !important;
+    border-color: #00b4d8 !important;
+}
+
+.core-mode .like-btn.liked {
+    background: rgba(0, 180, 216, 0.15) !important;
+    color: #00b4d8 !important;
+    border-color: #00b4d8 !important;
+}
+
+/* ================================
+   FORM STYLING VERBETERINGEN
+   ================================ */
+
+/* Post formulier beter zichtbaar */
+.core-mode .post-form,
+.core-mode .compose-form {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+}
+
+.core-mode .post-form h2,
+.core-mode .post-form h3 {
+    color: #333 !important;
+}
+
+/* Textarea en inputs in post form */
+.core-mode .post-form textarea,
+.core-mode .post-form input {
+    background: rgba(255, 255, 255, 1) !important;
+    border: 2px solid rgba(0, 180, 216, 0.3) !important;
+    color: #333 !important;
+}
+
+/* ================================
+   TOOLTIP EN HOVER EFFECTEN
+   ================================ */
+
+/* Tooltip styling */
+.core-mode .tooltip,
+.core-mode [title]:hover::after {
+    background: rgba(51, 51, 51, 0.9) !important;
+    color: white !important;
+    border-radius: 6px !important;
+}
+
+/* Hover effecten voor kaarten */
+.core-mode .timeline-post:hover,
+.core-mode .post:hover,
+.core-mode .card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 180, 216, 0.15) !important;
+}
+
+/* ================================
+   AFBEELDING MODAL STYLING
+   ================================ */
+
+/* Als er een lightbox/modal is voor afbeeldingen */
+.core-mode .image-modal,
+.core-mode .lightbox {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+.core-mode .modal-content img {
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    border-radius: 8px !important;
+}
+
+/* ================================
+   LOADING STATES
+   ================================ */
+
+.core-mode .loading,
+.core-mode .spinner {
+    color: #00b4d8 !important;
+}
+
+.core-mode .loading-text {
+    color: rgba(51, 51, 51, 0.7) !important;
+}
+
+/* ================================
+   SCROLL BAR STYLING (WebKit)
+   ================================ */
+
+.core-mode ::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+.core-mode ::-webkit-scrollbar-track {
+    background: rgba(248, 250, 252, 0.5) !important;
+}
+
+.core-mode ::-webkit-scrollbar-thumb {
+    background: rgba(0, 180, 216, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+.core-mode ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 180, 216, 0.5) !important;
+}
+
+/* ================================
+   NAVIGATIE ZICHTBAARHEID FIX
+   ================================ */
+
+/* Navigatie tekst donker maken tegen lichte achtergrond */
+.core-mode .navbar,
+.core-mode .navigation,
+.core-mode .top-nav {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-bottom: 1px solid rgba(0, 180, 216, 0.2) !important;
+}
+
+.core-mode .nav-link,
+.core-mode .navbar-nav .nav-link,
+.core-mode .navigation a,
+.core-mode .nav-item a,
+.core-mode .menu-item {
+    color: #333 !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+    transition: all 0.3s ease !important;
+}
+
+.core-mode .nav-link:hover,
+.core-mode .navbar-nav .nav-link:hover,
+.core-mode .navigation a:hover {
+    color: #00b4d8 !important;
+    background: rgba(0, 180, 216, 0.1) !important;
+    border-radius: 6px !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Navigatie iconen ook donker */
+.core-mode .nav-link i,
+.core-mode .nav-item i,
+.core-mode .navbar-nav i {
+    color: #333 !important;
+    filter: none !important;
+}
+
+/* Actieve navigatie item */
+.core-mode .nav-link.active,
+.core-mode .nav-item.active a {
+    color: #00b4d8 !important;
+    background: rgba(0, 180, 216, 0.15) !important;
+    border-radius: 6px !important;
+    font-weight: 700 !important;
+}
+
+/* SocialCore logo */
+.core-mode .navbar-brand,
+.core-mode .logo {
+    color: #00b4d8 !important;
+    font-weight: 700 !important;
+}
+
+/* User dropdown knop */
+.core-mode .user-menu-btn,
+.core-mode .user-dropdown-toggle {
+    background: rgba(0, 180, 216, 0.1) !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+    color: #333 !important;
+}
+
+.core-mode .user-menu-btn:hover {
+    background: rgba(0, 180, 216, 0.2) !important;
+    border-color: #00b4d8 !important;
+}
+
+/* ================================
+   LIGHTBOX/MODAL UITZONDERINGEN
+   ================================ */
+
+/* Als er een lightbox of modal is, daar geen beperkingen */
+body.core-mode .modal img,
+body.core-mode .lightbox img,
+body.core-mode .image-modal img {
+    max-height: 90vh !important;
+    max-width: 90vw !important;
+    object-fit: contain !important;
+}
+
+/* ================================
+   POST LAYOUT OPTIMALISATIES
+   ================================ */
+
+/* Zorg dat posts zich aanpassen aan content */
+body.core-mode .timeline-post,
+body.core-mode .post,
+body.core-mode .feed-post {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+body.core-mode .post-content {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+/* Image containers flexibel maken */
+body.core-mode .post-content,
+body.core-mode .post-text {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+/* Reset van eerdere fallback regels */
+body.core-mode img {
+    max-height: none !important;
+}
+
+/* Alleen voor content afbeeldingen */
+body.core-mode .post-content img:not(.avatar):not(.emoji):not(.icon),
+body.core-mode .post-text img:not(.avatar):not(.emoji):not(.icon),
+body.core-mode .timeline-post img:not(.avatar):not(.emoji):not(.icon) {
+    max-height: 40vh !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    border-radius: 12px !important;
+    background: #f8f9fa !important;
+}
+
+/* ================================
+   AVATAR UITZONDERINGEN
+   ================================ */
+
+/* Zorg dat avatars NIET worden beïnvloed door de afbeelding regels */
+.core-mode .author-avatar,
+.core-mode .user-avatar,
+.core-mode .profile-avatar,
+.core-mode .comment-avatar,
+.core-mode .avatar {
+    max-height: none !important;
+    width: auto !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+}
+
+/* Timeline avatars specifieke grootte */
+.core-mode .timeline-post .author-avatar {
+    width: 50px !important;
+    height: 50px !important;
+}
+
+.core-mode .post-header .author-avatar {
+    width: 45px !important;
+    height: 45px !important;
+}
+
+/* ================================
+   POST LAYOUT VERBETERINGEN
+   ================================ */
+
+/* Post container styling */
+.core-mode .timeline-post,
+.core-mode .feed-post {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+    border-radius: 12px !important;
+    margin-bottom: 20px !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 8px rgba(0, 180, 216, 0.1) !important;
+}
+
+/* Post header */
+.core-mode .post-header {
+    background: rgba(248, 250, 252, 0.9) !important;
+    padding: 15px 20px !important;
+    border-bottom: 1px solid rgba(0, 180, 216, 0.1) !important;
+}
+
+/* Post content */
+.core-mode .post-content {
+    padding: 20px !important;
+    background: transparent !important;
+}
+
+/* Post actions (likes, comments) */
+.core-mode .post-footer,
+.core-mode .post-actions {
+    background: rgba(248, 250, 252, 0.9) !important;
+    padding: 12px 20px !important;
+    border-top: 1px solid rgba(0, 180, 216, 0.1) !important;
+}
+
+/* ================================
+   FORM STYLING VERBETERINGEN
+   ================================ */
+
+/* Post formulier */
+.core-mode .post-form-container {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 180, 216, 0.2) !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    margin-bottom: 20px !important;
+}
+
+.core-mode .post-form-container h2 {
+    color: #333 !important;
+    margin-bottom: 15px !important;
+}
+
+/* Textarea in post form */
+.core-mode #post-content,
+.core-mode .post-textarea {
+    background: rgba(255, 255, 255, 1) !important;
+    border: 2px solid rgba(0, 180, 216, 0.3) !important;
+    color: #333 !important;
+    padding: 15px !important;
+    border-radius: 8px !important;
+    resize: vertical !important;
+    min-height: 100px !important;
+}
+
+.core-mode #post-content:focus {
+    border-color: #00b4d8 !important;
+    box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1) !important;
+    outline: none !important;
+}
+
+/* ================================
+   BUTTON STYLING VERBETERINGEN
+   ================================ */
+
+.core-mode .btn-primary,
+.core-mode .post-submit,
+.core-mode button[type="submit"] {
+    background: linear-gradient(135deg, #00b4d8, #0077b6) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.core-mode .btn-primary:hover {
+    background: linear-gradient(135deg, #0077b6, #005577) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 119, 182, 0.3) !important;
+}
+
+/* ================================
+   INTELLIGENTE AFBEELDING SIZING
+   ================================ */
+
+/* Verwijder de harde max-height limiet en gebruik slimmere regels */
+body.core-mode img:not(.avatar):not(.user-avatar):not(.author-avatar):not(.profile-avatar):not(.comment-avatar):not(.emoji):not(.icon):not(.logo) {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important; /* Contain in plaats van cover */
+    border-radius: 12px !important;
+    margin: 10px 0 !important;
+    display: block !important;
+}
+
+/* Voor post afbeeldingen - slimme maximale hoogte gebaseerd op viewport */
+body.core-mode .timeline-post img:not(.avatar):not(.user-avatar):not(.author-avatar):not(.emoji):not(.icon),
+body.core-mode .post img:not(.avatar):not(.user-avatar):not(.author-avatar):not(.emoji):not(.icon),
+body.core-mode .feed-post img:not(.avatar):not(.user-avatar):not(.author-avatar):not(.emoji):not(.icon) {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 40vh !important; /* 40% van de viewport hoogte */
+    object-fit: contain !important;
+    border-radius: 12px !important;
+    background: #f8f9fa !important; /* Lichte achtergrond voor letterboxing */
+}
+
+/* Post media containers - geen height restrictions */
+body.core-mode .post-media,
+body.core-mode .media-content,
+body.core-mode .post-attachment {
+    width: 100% !important;
+    max-height: 40vh !important;
+    overflow: hidden !important;
+    border-radius: 12px !important;
+    margin: 10px 0 !important;
+    background: #f8f9fa !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.core-mode .post-media img,
+body.core-mode .media-content img,
+body.core-mode .post-attachment img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 40vh !important;
+    object-fit: contain !important;
+    border-radius: 12px !important;
+    margin: 0 !important;
+}
+
+/* Responsive aanpassingen */
+@media (max-width: 768px) {
+    body.core-mode .timeline-post img:not(.avatar):not(.user-avatar):not(.author-avatar):not(.emoji):not(.icon),
+    body.core-mode .post-media img,
+    body.core-mode .post-media {
+        max-height: 35vh !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body.core-mode .timeline-post img:not(.avatar):not(.user-avatar):not(.author-avatar):not(.emoji):not(.icon),
+    body.core-mode .post-media img,
+    body.core-mode .post-media {
+        max-height: 30vh !important;
+    }
+}
+
+/* Voor zeer hoge afbeeldingen - extra beperking */
+body.core-mode img[style*="height"]:not(.avatar):not(.user-avatar):not(.author-avatar):not(.emoji):not(.icon) {
+    max-height: 40vh !important;
+    width: auto !important;
+    object-fit: contain !important;
+}
+
+/* ================================
+   AVATAR BESCHERMING - EXPLICIET
+   ================================ */
+
+/* Zorg dat avatars hun normale grootte behouden */
+body.core-mode .avatar,
+body.core-mode .user-avatar,
+body.core-mode .author-avatar,
+body.core-mode .profile-avatar,
+body.core-mode .comment-avatar {
+    max-height: none !important;
+    height: auto !important;
+    width: auto !important;
+    border-radius: 50% !important;
+    margin: 0 !important;
+    object-fit: cover !important;
+}
+
+/* Specifieke avatar groottes */
+body.core-mode .timeline-post .author-avatar,
+body.core-mode .post-header .author-avatar {
+    width: 50px !important;
+    height: 50px !important;
+    max-height: 50px !important;
+}
+
+body.core-mode .comment-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    max-height: 32px !important;
+}
+
+body.core-mode .profile-avatar {
+    width: 120px !important;
+    height: 120px !important;
+    max-height: 120px !important;
+}
+
+/* ================================
+   ICONEN EN EMOJI BESCHERMING
+   ================================ */
+
+body.core-mode .emoji {
+    max-height: 20px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 2px !important;
+    display: inline !important;
+}
+
+body.core-mode .icon,
+body.core-mode .fa,
+body.core-mode [class*="icon-"] {
+    max-height: 24px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+}
+
+body.core-mode .logo {
+    max-height: 40px !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* ================================
+   FALLBACK REGEL - LAATSTE REDMIDDEL
+   ================================ */
+
+/* Als alles faalt, forceer alle grote afbeeldingen klein */
+body.core-mode * {
+    max-height: none;
+}
+
+body.core-mode img {
+    max-height: 250px !important;
+}
+
+/* Maar sta avatars en kleine elementen toe */
+body.core-mode img[src*="avatar"],
+body.core-mode img[class*="avatar"],
+body.core-mode img[alt*="avatar"],
+body.core-mode img[width="50"],
+body.core-mode img[height="50"],
+body.core-mode img[width="32"],
+body.core-mode img[height="32"] {
+    max-height: none !important;
+}
+
+/* ================================
+   POST LAYOUT AANPASSINGEN
+   ================================ */
+
+/* Zorg dat de post containers niet te hoog worden */
+body.core-mode .timeline-post,
+body.core-mode .post,
+body.core-mode .feed-post {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* Post content area */
+body.core-mode .post-content {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* Maar beperk wel de afbeeldingen binnen posts */
+body.core-mode .post-content > img,
+body.core-mode .post-text img,
+body.core-mode .post-body img {
+    max-height: 250px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    border-radius: 12px !important;
+    margin: 10px 0 !important;
+}

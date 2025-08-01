@@ -13,7 +13,6 @@ class PrivacyHandler extends Controller
 
     public function __construct()
     {
-        // SKIP parent::__construct() - veroorzaakt problemen
         $this->db = Database::getInstance()->getPdo();
     }
 
@@ -46,10 +45,53 @@ class PrivacyHandler extends Controller
             'error' => $_SESSION['error'] ?? null
         ];
 
+        // Clear messages
         unset($_SESSION['success'], $_SESSION['error']);
 
-        // Use inherited view() method
-        $this->view('privacy/index', $data);
+        extract($data);
+       include __DIR__ . '/../Views/privacy/index.php';
+    }
+
+    /**
+     * Detecteer of we in core mode zitten
+     */
+    private function isCoreMode()
+    {
+        // Detectie methodes (kies wat het beste past):
+        
+        // Optie 1: Via GET parameter
+        if (isset($_GET['core']) && $_GET['core'] == '1') {
+            return true;
+        }
+        
+        // Optie 2: Via sessie
+        if (isset($_SESSION['interface_mode']) && $_SESSION['interface_mode'] === 'core') {
+            return true;
+        }
+        
+        // Optie 3: Via database setting (als je dat hebt)
+        // return $this->getUserSetting('use_core_interface', false);
+        
+        // Default: theme mode
+        return false;
+    }
+
+    /**
+     * Laad core privacy view (zonder theme navigatie)
+     */
+    private function loadCorePrivacyView($data)
+    {
+        // Extract data voor direct gebruik
+        extract($data);
+        
+        // Core header (donkere navigatie)
+        include __DIR__ . '/../Views/layout/header.php';
+        
+        // Privacy content
+        include __DIR__ . '/../Views/privacy/core-content.php';
+        
+        // Core footer
+        include __DIR__ . '/../Views/layout/footer.php';
     }
 
     /**

@@ -435,4 +435,352 @@ class PostHandler extends Controller
         // Basic formatting voor comments
         return nl2br(htmlspecialchars($content));
     }
+
+    // ========================================
+    // 📝 POSTHANDLER API METHODS
+    // ========================================
+
+    /**
+     * API: Get single post by ID
+     */
+    public function apiGetPost()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $postId = $_GET['id'] ?? null;
+        if (!$postId) {
+            echo json_encode(['success' => false, 'message' => 'Post ID required']);
+            exit;
+        }
+        
+        // Gebruik TimelineHelper functie (WordPress-style)
+        $post = get_single_post($postId, $_SESSION['user_id']);
+        
+        echo json_encode([
+            'success' => $post !== null,
+            'post' => $post,
+            'message' => $post ? 'Post loaded successfully' : 'Post not found'
+        ]);
+        exit;
+    }
+
+    /**
+     * API: Create new post
+     */
+    public function apiCreatePost()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $content = trim($_POST['content'] ?? '');
+        $userId = $_SESSION['user_id'];
+        
+        // Validation
+        $hasContent = !empty($content);
+        $hasImage = !empty($_FILES['image']['name']);
+        
+        if (!$hasContent && !$hasImage) {
+            echo json_encode(['success' => false, 'message' => 'Content or image required']);
+            exit;
+        }
+        
+        try {
+            // Use PostService for creation
+            $postService = new \App\Services\PostService();
+            
+            $options = [
+                'content_type' => $hasImage ? 'photo' : 'text',
+                'post_type' => 'timeline',
+                'privacy' => 'public'
+            ];
+            
+            $result = $postService->createPost($content, $userId, $options, $_FILES);
+            echo json_encode($result);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Error creating post: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Update existing post
+     */
+    public function apiUpdatePost()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $postId = $_POST['post_id'] ?? null;
+        $content = trim($_POST['content'] ?? '');
+        $userId = $_SESSION['user_id'];
+        
+        if (!$postId || !$content) {
+            echo json_encode(['success' => false, 'message' => 'Post ID and content required']);
+            exit;
+        }
+        
+        try {
+            // Check if user owns the post
+            $db = \App\Database\Database::getInstance()->getPdo();
+            $stmt = $db->prepare("SELECT user_id FROM posts WHERE id = ?");
+            $stmt->execute([$postId]);
+            $post = $stmt->fetch();
+            
+            if (!$post || $post['user_id'] != $userId) {
+                echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+                exit;
+            }
+            
+            // Update post
+            $stmt = $db->prepare("UPDATE posts SET content = ?, updated_at = NOW() WHERE id = ?");
+            $success = $stmt->execute([$content, $postId]);
+            
+            echo json_encode([
+                'success' => $success,
+                'message' => $success ? 'Post updated successfully' : 'Failed to update post'
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error updating post: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Delete post (soft delete)
+     */
+    public function apiDeletePost()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $postId = $_POST['post_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        $userRole = $_SESSION['role'] ?? 'user';
+        
+        if (!$postId) {
+            echo json_encode(['success' => false, 'message' => 'Post ID required']);
+            exit;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            // Check ownership or admin rights
+            $stmt = $db->prepare("SELECT user_id FROM posts WHERE id = ?");
+            $stmt->execute([$postId]);
+            $post = $stmt->fetch();
+            
+            if (!$post) {
+                echo json_encode(['success' => false, 'message' => 'Post not found']);
+                exit;
+            }
+            
+            $isOwner = ($post['user_id'] == $userId);
+            $isAdmin = ($userRole === 'admin');
+            
+            if (!$isOwner && !$isAdmin) {
+                echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+                exit;
+            }
+            
+            // Soft delete
+            $stmt = $db->prepare("UPDATE posts SET is_deleted = 1 WHERE id = ?");
+            $success = $stmt->execute([$postId]);
+            
+            echo json_encode([
+                'success' => $success,
+                'message' => $success ? 'Post deleted successfully' : 'Failed to delete post'
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error deleting post: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Toggle like on post
+     */
+    public function apiToggleLike()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $postId = $_POST['post_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        
+        if (!$postId) {
+            echo json_encode(['success' => false, 'message' => 'Post ID required']);
+            exit;
+        }
+        
+        try {
+            // Use LikeService
+            $likeService = new \App\Services\LikeService();
+            $result = $likeService->togglePostLike($postId, $userId);
+            
+            echo json_encode($result);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error toggling like: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Get user's posts (for profile page)
+     */
+    public function apiGetUserPosts()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $targetUserId = $_GET['user_id'] ?? $_SESSION['user_id'];
+        $limit = intval($_GET['limit'] ?? 10);
+        $offset = intval($_GET['offset'] ?? 0);
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                SELECT p.*, u.username, 
+                    COALESCE(up.display_name, u.username) as user_name
+                FROM posts p
+                JOIN users u ON p.user_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE p.user_id = ? AND p.is_deleted = 0
+                ORDER BY p.created_at DESC
+                LIMIT ? OFFSET ?
+            ");
+            
+            $stmt->execute([$targetUserId, $limit, $offset]);
+            $posts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Format posts (add avatar, time formatting, etc.)
+            foreach ($posts as &$post) {
+                $post['avatar'] = get_avatar_url($post['user_id']);
+                $post['time_ago'] = format_time_ago($post['created_at']);
+                $post['is_liked'] = $this->hasUserLikedPost($post['id'], $_SESSION['user_id']);
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'posts' => $posts,
+                'has_more' => count($posts) >= $limit
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error fetching posts: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Get timeline posts (for feed)
+     */
+    public function apiGetTimeline()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $limit = intval($_GET['limit'] ?? 20);
+        $offset = intval($_GET['offset'] ?? 0);
+        $userId = $_SESSION['user_id'];
+        
+        try {
+            // Use TimelineHelpers for consistent data
+            $options = [
+                'limit' => $limit,
+                'offset' => $offset,
+                'user_id' => $userId
+            ];
+            
+            $posts = get_timeline_posts($options);
+            
+            echo json_encode([
+                'success' => true,
+                'posts' => $posts,
+                'has_more' => count($posts) >= $limit
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error fetching timeline: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
 }

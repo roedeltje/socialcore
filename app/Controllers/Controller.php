@@ -193,33 +193,25 @@ class Controller
     protected function getTrendingHashtags($limit = 5)
     {
         try {
-            $db = Database::getInstance()->getPdo();
+            $db = Database::getInstance()->getPdo();  // 🔧 Zonder \App\ prefix
             
-            // Query hashtags table ordered by usage_count
             $stmt = $db->prepare("
-                SELECT tag, usage_count as count
-                FROM hashtags 
-                WHERE usage_count > 0
-                ORDER BY usage_count DESC, updated_at DESC
+                SELECT 
+                    h.tag,
+                    COUNT(p.id) as count
+                FROM hashtags h
+                LEFT JOIN post_hashtags ph ON h.id = ph.hashtag_id
+                LEFT JOIN posts p ON ph.post_id = p.id AND p.is_deleted = 0
+                GROUP BY h.id, h.tag
+                HAVING count > 0
+                ORDER BY count DESC, h.created_at DESC
                 LIMIT ?
             ");
-            
             $stmt->execute([$limit]);
-            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Format for timeline.php compatibility
-            $hashtags = [];
-            foreach ($results as $result) {
-                $hashtags[] = [
-                    'tag' => $result['tag'],
-                    'count' => $result['count']
-                ];
-            }
-            
-            return $hashtags;
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
         } catch (Exception $e) {
-            error_log("Failed to get trending hashtags: " . $e->getMessage());
+            error_log('getTrendingHashtags error: ' . $e->getMessage());
             return [];
         }
     }
@@ -295,14 +287,12 @@ class Controller
      */
     protected function view($view, $data = [], $forceNewSystem = false)
     {
-        echo "<!-- DEBUG: Loading view: $view -->";
         
         // Detecteer of dit een admin view is
         $isAdminView = strpos($view, 'admin/') === 0;
         
         // Voor admin views, altijd het oude directe systeem gebruiken
         if ($isAdminView) {
-            echo "<!-- DEBUG: Using admin view system -->";
             $this->loadAdminView($view, $data);
             return;
         }
@@ -311,11 +301,9 @@ class Controller
         $useNewSystem = $forceNewSystem || $this->useNewThemeSystem;
 
         if ($useNewSystem) {
-            echo "<!-- DEBUG: Using NEW theme system -->";
             // === NIEUW GESTANDAARDISEERD SYSTEEM ===
             $this->loadViewWithNewSystem($view, $data);
         } else {
-            echo "<!-- DEBUG: Using CURRENT theme system -->";
             // === BESTAAND WERKEND SYSTEEM ===
             $this->loadViewWithCurrentSystem($view, $data);
         }
@@ -431,9 +419,9 @@ class Controller
                 $themeFile = $themePageMap[$viewKey];
             }
             // VOEG DEZE DEBUG TOE:
-            echo "<!-- DEBUG: viewKey = '$viewKey' -->";
-            echo "<!-- DEBUG: themeFile = '$themeFile' -->";
-            echo "<!-- DEBUG: controller = '$controller', action = '$action' -->";
+            // echo "<!-- DEBUG: viewKey = '$viewKey' -->";
+            // echo "<!-- DEBUG: themeFile = '$themeFile' -->";
+            // echo "<!-- DEBUG: controller = '$controller', action = '$action' -->";
         }
         
         // Bepaal de mogelijke bestandslocaties in volgorde van prioriteit
@@ -455,36 +443,36 @@ class Controller
         // Probeer elk pad totdat er een bestand wordt gevonden
         $foundViewPath = null;
         // Net voor de foreach loop:
-        echo "<!-- DEBUG: Generated theme path: " . ($rootDir . $themesDir . '/' . $activeTheme . '/' . $themeFile) . " -->";
-        echo "<!-- DEBUG: \$rootDir = " . $rootDir . " -->";
-        echo "<!-- DEBUG: \$themesDir = " . $themesDir . " -->";
-        echo "<!-- DEBUG: \$activeTheme = " . $activeTheme . " -->";
-        echo "<!-- DEBUG: \$themeFile = " . $themeFile . " -->";
+        // echo "<!-- DEBUG: Generated theme path: " . ($rootDir . $themesDir . '/' . $activeTheme . '/' . $themeFile) . " -->";
+        // echo "<!-- DEBUG: \$rootDir = " . $rootDir . " -->";
+        // echo "<!-- DEBUG: \$themesDir = " . $themesDir . " -->";
+        // echo "<!-- DEBUG: \$activeTheme = " . $activeTheme . " -->";
+        // echo "<!-- DEBUG: \$themeFile = " . $themeFile . " -->";
         // Test of het pad echt bestaat:
-$testPath = "/var/www/socialcore.local/themes/default/pages/messages/index.php";
-echo "<!-- DEBUG: Manual test - file_exists('$testPath'): " . (file_exists($testPath) ? "TRUE" : "FALSE") . " -->";
-echo "<!-- DEBUG: Manual test - is_readable('$testPath'): " . (is_readable($testPath) ? "TRUE" : "FALSE") . " -->";
+// $testPath = "/var/www/socialcore.local/themes/default/pages/messages/index.php";
+// echo "<!-- DEBUG: Manual test - file_exists('$testPath'): " . (file_exists($testPath) ? "TRUE" : "FALSE") . " -->";
+// echo "<!-- DEBUG: Manual test - is_readable('$testPath'): " . (is_readable($testPath) ? "TRUE" : "FALSE") . " -->";
         foreach ($viewPaths as $path) {
-            echo "<!-- DEBUG: Trying path: " . $path . " -->";
+            // echo "<!-- DEBUG: Trying path: " . $path . " -->";
             if (file_exists($path)) {
-                echo "<!-- DEBUG: FOUND: " . $path . " -->";
+                // echo "<!-- DEBUG: FOUND: " . $path . " -->";
                 $foundViewPath = $path;
-                echo "<!-- DEBUG: ACTUALLY LOADING FILE: " . $foundViewPath . " -->";
+                // echo "<!-- DEBUG: ACTUALLY LOADING FILE: " . $foundViewPath . " -->";
                 break;
             }else {
-                echo "<!-- DEBUG: NOT FOUND: " . $path . " -->";
+                // echo "<!-- DEBUG: NOT FOUND: " . $path . " -->";
             }
         }
         
         // Als geen enkel pad een bestand bevat, toon een fout
         if ($foundViewPath === null) {
-            echo "<div style='color: red; padding: 20px; border: 1px solid red;'>";
-            echo "View niet gevonden: " . htmlspecialchars($view) . ".php";
-            echo "<br>Geprobeerde paden:<br>";
+            // echo "<div style='color: red; padding: 20px; border: 1px solid red;'>";
+            // echo "View niet gevonden: " . htmlspecialchars($view) . ".php";
+            // echo "<br>Geprobeerde paden:<br>";
             foreach ($viewPaths as $path) {
-                echo "- " . htmlspecialchars($path) . "<br>";
+                // echo "- " . htmlspecialchars($path) . "<br>";
             }
-            echo "</div>";
+            // echo "</div>";
             return;
         }
         

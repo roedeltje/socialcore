@@ -2,6 +2,11 @@
 
 namespace App\Handlers;
 
+// 🚨 FORCE ERROR DISPLAY
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
 use App\Controllers\Controller;
 use App\Database\Database;
 use App\Services\PostService;
@@ -55,7 +60,7 @@ class ChatHandler extends Controller
         if ($this->shouldUseThemeChat()) {
             include BASE_PATH . '/themes/default/pages/chatservice/index.php';
         } else {
-            return $this->view('chatservice/index', $data);
+            $this->loadCoreView('chat/index', $data);
         }
     }
 
@@ -64,6 +69,21 @@ class ChatHandler extends Controller
      */
     public function conversation()
     {
+        // 🚨 EERSTE REGEL VAN DE METHODE
+    // echo "CONVERSATION METHOD STARTED<br>";
+    // flush(); // Force output
+    
+    // $chatMode = $this->shouldUseThemeChat() ? 'theme' : 'core';
+    // echo "CHAT MODE DETERMINED: " . $chatMode . "<br>";
+    // flush();
+
+    // echo '<script>
+    //     window.SOCIALCORE_CHAT_MODE = "' . $chatMode . '"; 
+    //     console.log("🎯 Chat mode set to: ' . $chatMode . '");
+    // </script>';
+    // echo "JS SCRIPT ADDED<br>";
+    // flush();
+
         $chatMode = $this->shouldUseThemeChat() ? 'theme' : 'core';
 
         // Set chat mode en laad juiste JavaScript
@@ -123,12 +143,14 @@ class ChatHandler extends Controller
             
             // Bepaal welke chat interface te gebruiken
             if ($this->shouldUseThemeChat()) {
-                $title = 'Chat met ' . htmlspecialchars($friend['display_name'] ?: $friend['username']);
-                $pageTitle = $title;
-                include BASE_PATH . '/themes/default/pages/chatservice/conversation.php';
-            } else {
-                $this->view('chatservice/conversation', $data);
-            }
+    $title = 'Chat met ' . htmlspecialchars($friend['display_name'] ?: $friend['username']);
+    $pageTitle = $title;
+    include BASE_PATH . '/themes/default/pages/chatservice/conversation.php';
+} else {
+    // echo "DEBUG: About to call loadCoreView for conversation<br>";
+    // echo "DEBUG: Data keys: " . implode(', ', array_keys($data)) . "<br>";
+    $this->loadCoreView('chat/conversation', $data);
+}
             
         } catch (Exception $e) {
             error_log("Conversation error: " . $e->getMessage());
@@ -165,7 +187,7 @@ class ChatHandler extends Controller
                 $pageTitle = $title;
                 include BASE_PATH . '/themes/default/pages/chatservice/compose.php';
             } else {
-                $this->view('chatservice/compose', $data);
+                $this->loadCoreView('chat/compose', $data);
             }
             
         } catch (Exception $e) {
@@ -336,21 +358,12 @@ class ChatHandler extends Controller
     /**
      * Bepaal of thema chat gebruikt moet worden
      */
+    // 
+    
     private function shouldUseThemeChat()
     {
-        $chatSettings = $this->getChatSettings();
-        $chatMode = $chatSettings['chat_mode'] ?? 'auto';
-
-        switch ($chatMode) {
-            case 'force_core':
-                return false;
-            case 'force_theme':
-                return true;
-            case 'auto':
-            default:
-                // Check of thema chat bestanden bestaan
-                return file_exists(BASE_PATH . '/themes/default/pages/chatservice/index.php');
-        }
+        // Simpel: volg de algemene platform mode
+        return !is_core_mode();
     }
 
     /**
@@ -764,5 +777,463 @@ class ChatHandler extends Controller
         // Dan het bericht
         $stmt = $this->db->prepare("DELETE FROM chat_messages WHERE id = ?");
         $stmt->execute([$messageId]);
+    }
+
+    // ========================================
+    // 💬 CHATHANDLER API METHODS
+    // ========================================
+
+    /**
+     * API: Get all conversations for user
+     */
+    public function apiGetConversations()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                SELECT DISTINCT
+                    CASE 
+                        WHEN c.user1_id = ? THEN c.user2_id 
+                        ELSE c.user1_id 
+                    END as other_user_id,
+                    u.username as other_username,
+                    COALESCE(up.display_name, u.username) as other_display_name,
+                    up.avatar as other_avatar,
+                    c.last_message_at,
+                    c.last_message_preview,
+                    COUNT(CASE WHEN cm.is_read = 0 AND cm.sender_id != ? THEN 1 END) as unread_count
+                FROM chat_conversations c
+                JOIN users u ON (
+                    CASE 
+                        WHEN c.user1_id = ? THEN c.user2_id 
+                        ELSE c.user1_id 
+                    END = u.id
+                )
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                LEFT JOIN chat_messages cm ON c.id = cm.conversation_id
+                WHERE c.user1_id = ? OR c.user2_id = ?
+                GROUP BY c.id, other_user_id, u.username, up.display_name, up.avatar, c.last_message_at, c.last_message_preview
+                ORDER BY c.last_message_at DESC
+            ");
+            
+            $stmt->execute([$userId, $userId, $userId, $userId, $userId]);
+            $conversations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Format conversations
+            foreach ($conversations as &$conversation) {
+                $conversation['other_avatar_url'] = get_avatar_url($conversation['other_avatar']);
+                $conversation['time_ago'] = format_time_ago($conversation['last_message_at']);
+                $conversation['unread_count'] = intval($conversation['unread_count']);
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'conversations' => $conversations
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error fetching conversations: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Get messages in a conversation
+     */
+    public function apiGetConversation()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $conversationId = $_GET['conversation_id'] ?? null;
+        $otherUserId = $_GET['user_id'] ?? null;
+        $limit = intval($_GET['limit'] ?? 50);
+        $offset = intval($_GET['offset'] ?? 0);
+        $userId = $_SESSION['user_id'];
+        
+        if (!$conversationId && !$otherUserId) {
+            echo json_encode(['success' => false, 'message' => 'Conversation ID or User ID required']);
+            exit;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            // Get conversation ID if only user ID provided
+            if (!$conversationId && $otherUserId) {
+                $stmt = $db->prepare("
+                    SELECT id FROM chat_conversations 
+                    WHERE (user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)
+                ");
+                $stmt->execute([$userId, $otherUserId, $otherUserId, $userId]);
+                $conv = $stmt->fetch();
+                $conversationId = $conv ? $conv['id'] : null;
+            }
+            
+            if (!$conversationId) {
+                echo json_encode(['success' => false, 'message' => 'Conversation not found']);
+                exit;
+            }
+            
+            // Get messages
+            $stmt = $db->prepare("
+                SELECT cm.*, u.username, 
+                    COALESCE(up.display_name, u.username) as sender_name,
+                    up.avatar as sender_avatar
+                FROM chat_messages cm
+                JOIN users u ON cm.sender_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE cm.conversation_id = ?
+                ORDER BY cm.created_at DESC
+                LIMIT ? OFFSET ?
+            ");
+            
+            $stmt->execute([$conversationId, $limit, $offset]);
+            $messages = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Format messages
+            foreach ($messages as &$message) {
+                $message['sender_avatar_url'] = get_avatar_url($message['sender_avatar']);
+                $message['time_ago'] = format_time_ago($message['created_at']);
+                $message['is_own'] = ($message['sender_id'] == $userId);
+                
+                // Handle attachments
+                if (!empty($message['attachment_path'])) {
+                    $message['attachment_url'] = base_url('uploads/' . $message['attachment_path']);
+                }
+            }
+            
+            // Reverse array to show oldest first
+            $messages = array_reverse($messages);
+            
+            echo json_encode([
+                'success' => true,
+                'conversation_id' => $conversationId,
+                'messages' => $messages,
+                'has_more' => count($messages) >= $limit
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error fetching conversation: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Send new message
+     */
+    public function apiSendMessage()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $recipientId = $_POST['recipient_id'] ?? null;
+        $message = trim($_POST['message'] ?? '');
+        $conversationId = $_POST['conversation_id'] ?? null;
+        $senderId = $_SESSION['user_id'];
+        
+        // Validation
+        if (!$recipientId && !$conversationId) {
+            echo json_encode(['success' => false, 'message' => 'Recipient ID or Conversation ID required']);
+            exit;
+        }
+        
+        $hasMessage = !empty($message);
+        $hasAttachment = !empty($_FILES['attachment']['name']);
+        
+        if (!$hasMessage && !$hasAttachment) {
+            echo json_encode(['success' => false, 'message' => 'Message content or attachment required']);
+            exit;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            $db->beginTransaction();
+            
+            // Get or create conversation
+            if (!$conversationId) {
+                // Check if conversation exists
+                $stmt = $db->prepare("
+                    SELECT id FROM chat_conversations 
+                    WHERE (user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)
+                ");
+                $stmt->execute([$senderId, $recipientId, $recipientId, $senderId]);
+                $conv = $stmt->fetch();
+                
+                if ($conv) {
+                    $conversationId = $conv['id'];
+                } else {
+                    // Create new conversation
+                    $stmt = $db->prepare("
+                        INSERT INTO chat_conversations (user1_id, user2_id, created_at, last_message_at) 
+                        VALUES (?, ?, NOW(), NOW())
+                    ");
+                    $stmt->execute([$senderId, $recipientId]);
+                    $conversationId = $db->lastInsertId();
+                }
+            }
+            
+            // Handle file attachment
+            $attachmentPath = null;
+            $attachmentType = null;
+            
+            if ($hasAttachment) {
+                $uploadResult = $this->handleAttachmentUpload($_FILES['attachment']);
+                if ($uploadResult['success']) {
+                    $attachmentPath = $uploadResult['path'];
+                    $attachmentType = $uploadResult['type'];
+                } else {
+                    $db->rollBack();
+                    echo json_encode(['success' => false, 'message' => $uploadResult['message']]);
+                    exit;
+                }
+            }
+            
+            // Insert message
+            $stmt = $db->prepare("
+                INSERT INTO chat_messages (
+                    conversation_id, sender_id, message, attachment_path, attachment_type, created_at
+                ) VALUES (?, ?, ?, ?, ?, NOW())
+            ");
+            
+            $stmt->execute([
+                $conversationId, 
+                $senderId, 
+                $message, 
+                $attachmentPath, 
+                $attachmentType
+            ]);
+            
+            $messageId = $db->lastInsertId();
+            
+            // Update conversation last message
+            $preview = $hasMessage ? substr($message, 0, 100) : '[Attachment]';
+            $stmt = $db->prepare("
+                UPDATE chat_conversations 
+                SET last_message_at = NOW(), last_message_preview = ? 
+                WHERE id = ?
+            ");
+            $stmt->execute([$preview, $conversationId]);
+            
+            $db->commit();
+            
+            echo json_encode([
+                'success' => true,
+                'message_id' => $messageId,
+                'conversation_id' => $conversationId,
+                'message' => 'Message sent successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            $db->rollBack();
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error sending message: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Mark messages as read
+     */
+    public function apiMarkAsRead()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $conversationId = $_POST['conversation_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        
+        if (!$conversationId) {
+            echo json_encode(['success' => false, 'message' => 'Conversation ID required']);
+            exit;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            // Mark all messages in conversation as read for current user
+            $stmt = $db->prepare("
+                UPDATE chat_messages 
+                SET is_read = 1, read_at = NOW() 
+                WHERE conversation_id = ? AND sender_id != ? AND is_read = 0
+            ");
+            
+            $stmt->execute([$conversationId, $userId]);
+            $affectedRows = $stmt->rowCount();
+            
+            echo json_encode([
+                'success' => true,
+                'marked_read' => $affectedRows,
+                'message' => 'Messages marked as read'
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error marking messages as read: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Get unread message count
+     */
+    public function apiGetUnreadCount()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                SELECT COUNT(*) as unread_count
+                FROM chat_messages cm
+                JOIN chat_conversations cc ON cm.conversation_id = cc.id
+                WHERE (cc.user1_id = ? OR cc.user2_id = ?) 
+                AND cm.sender_id != ? 
+                AND cm.is_read = 0
+            ");
+            
+            $stmt->execute([$userId, $userId, $userId]);
+            $result = $stmt->fetch();
+            
+            echo json_encode([
+                'success' => true,
+                'unread_count' => intval($result['unread_count'])
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error getting unread count: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * Helper: Handle attachment upload
+     */
+    private function handleAttachmentUpload($file)
+    {
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'message' => 'Upload error: ' . $file['error']];
+        }
+        
+        if ($file['size'] > $maxSize) {
+            return ['success' => false, 'message' => 'File too large (max 5MB)'];
+        }
+        
+        if (!in_array($file['type'], $allowedTypes)) {
+            return ['success' => false, 'message' => 'Invalid file type'];
+        }
+        
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'chat_' . uniqid() . '.' . $extension;
+        
+        // Create upload directory
+        $uploadDir = BASE_PATH . '/public/uploads/chats/' . date('Y/m');
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $uploadPath = $uploadDir . '/' . $filename;
+        $relativePath = 'chats/' . date('Y/m') . '/' . $filename;
+        
+        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            return [
+                'success' => true,
+                'path' => $relativePath,
+                'type' => $file['type']
+            ];
+        } else {
+            return ['success' => false, 'message' => 'Failed to save file'];
+        }
+    }
+
+    private function loadCoreView($viewPath, $data = [])
+    {
+        // Check BASE_PATH constant
+        if (!defined('BASE_PATH')) {
+            throw new Exception('BASE_PATH constant not defined');
+        }
+        
+        // Build path to Core view
+        $coreViewPath = BASE_PATH . '/app/Views/core/' . $viewPath . '.php';
+        
+        // Check if Core view exists
+        if (!file_exists($coreViewPath)) {
+            // Fallback to regular chatservice view if Core view doesn't exist
+            $fallbackPath = BASE_PATH . '/app/Views/chatservice/' . basename($viewPath) . '.php';
+            
+            if (file_exists($fallbackPath)) {
+                extract($data);
+                include $fallbackPath;
+                return;
+            }
+            
+            throw new Exception("Neither Core view nor fallback view found for: {$viewPath}");
+        }
+        
+        // Extract data for view and include Core view
+        extract($data);
+        include $coreViewPath;
     }
 }

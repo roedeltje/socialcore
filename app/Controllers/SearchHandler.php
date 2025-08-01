@@ -192,6 +192,60 @@ class SearchHandler extends Controller
             ]);
         }
     }
+
+    public function apiSearchHashtags()
+    {
+        header('Content-Type: application/json');
+        
+        try {
+            if (!isset($_SESSION['user_id'])) {
+                echo json_encode(['success' => false, 'message' => 'Authentication required']);
+                exit;
+            }
+            
+            $tag = $_GET['tag'] ?? '';
+            
+            if (empty($tag)) {
+                echo json_encode(['success' => false, 'message' => 'Tag parameter required']);
+                exit;
+            }
+            
+            // Remove # if present (hergebruik logic)
+            $tag = ltrim($tag, '#');
+            
+            // Get hashtag info (hergebruik bestaande query)
+            $stmt = $this->db->prepare("SELECT * FROM hashtags WHERE tag = ?");
+            $stmt->execute([$tag]);
+            $hashtag = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$hashtag) {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Hashtag not found',
+                    'tag' => $tag,
+                    'posts' => []
+                ]);
+                exit;
+            }
+            
+            // Gebruik bestaande methode (heeft al privacy + limit)
+            $posts = $this->getHashtagPosts($hashtag['id']);
+            
+            echo json_encode([
+                'success' => true,
+                'hashtag' => $hashtag,
+                'posts' => $posts,
+                'tag' => $tag,
+                'count' => count($posts)
+            ]);
+            
+        } catch (Exception $e) {
+            error_log('apiSearchHashtags error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Server error']);
+        }
+        
+        exit;
+    }
     
     /**
      * Get posts for a specific hashtag with privacy filtering

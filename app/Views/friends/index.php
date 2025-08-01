@@ -8,7 +8,7 @@ if (isset($friends) && !empty($friends)) {
     foreach ($friends as $friend) {
         echo "<div class='bg-white p-4 rounded-lg shadow-sm border text-center'>";
         
-        $avatar = $friend['avatar'] ? "/uploads/avatars/{$friend['avatar']}" : "/themes/default/assets/images/default-avatar.png";
+        $avatar = get_avatar_url($friend['avatar']);
         echo "<img src='{$avatar}' alt='Avatar' class='w-16 h-16 rounded-full mx-auto mb-2'>";
         
         echo "<h3 class='font-semibold text-sm'>{$friend['display_name']}</h3>";

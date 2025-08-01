@@ -10,58 +10,497 @@ use App\Controllers\PrivacyController;
 use App\Helpers\SecuritySettings;
 use App\Services\PostService;
 use App\Services\CommentService;
+use App\Services\TimelineService;
 use App\Services\LikeService;
+use App\Handlers\CoreViewHandler;
 
 require_once __DIR__ . '/../../core/helpers/upload.php';
 
 class FeedController extends Controller
 {
+    
     private $db;
     
-    public function __construct()
+    public function __construct() 
     {
-        $this->db = Database::getInstance()->getPdo();
+        
+        // Initialiseer database als dat nodig is
+        try {
+            $this->db = Database::getInstance()->getPdo();
+        } catch (Exception $e) {
+            echo "<!-- Database fout: " . $e->getMessage() . " -->\n";
+        }
     }
 
     /**
-     * Toon de Hyves-stijl homepage/nieuwsfeed
+     * Index method met Core Timeline support
+     * Kiest tussen core timeline en theme timeline op basis van configuratie
      */
     public function index()
     {
-        // Controleer of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /auth/login');
-            exit;
-        }
-
+        //echo '<h1 style="color: red;">DEBUG: FeedController index() gestart</h1>';
+        
         try {
-            // Haal echte posts op uit de database
-            $posts = $this->getAllPosts();
+            // Check of gebruiker is ingelogd
+            if (!isset($_SESSION['user_id'])) {
+                echo '<h2>Redirect naar login</h2>';
+                header('Location: /?route=auth/login');
+                exit;
+            }
             
-            // Haal gebruikersinfo op
-            $currentUser = $this->getCurrentUser($_SESSION['user_id']);
+            //echo '<h2>Gebruiker ingelogd, data ophalen...</h2>';
             
-            // Haal real-time widget data op
-            $onlineFriends = $this->getOnlineFriends();
-            $trendingHashtags = $this->getTrendingHashtags();
-            $suggestedUsers = $this->getSuggestedUsers();
+            // Haal data op
+            $posts = $this->getAllPosts(20);
+            $currentUser = $this->getCurrentUser();
+            $totalPosts = count($posts);
             
-            // Data doorsturen naar de view
+            //echo '<h2>Data opgehaald, CoreViewHandler aanroepen...</h2>';
+            
             $data = [
                 'posts' => $posts,
                 'current_user' => $currentUser,
-                'online_friends' => $onlineFriends,
-                'trending_hashtags' => $trendingHashtags,
-                'suggested_users' => $suggestedUsers,
+                'currentUser' => $currentUser,
+                'totalPosts' => $totalPosts,
+                'page_title' => 'Timeline - SocialCore',
+                'trending_hashtags' => parent::getTrendingHashtags(5)
+            ];
+            
+            //echo '<h2>Voor CoreViewHandler::timeline() call</h2>';
+            
+            // Laat CoreViewHandler beslissen: core of theme
+            CoreViewHandler::timeline($data, $this);
+            
+            //echo '<h2>Na CoreViewHandler::timeline() call</h2>';
+            
+        } catch (Exception $e) {
+            echo "<h1>Timeline Error</h1>";
+            echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
+        }
+    }
+
+    // private function loadCoreTimeline($data)
+    // {
+    //     // Extract data
+    //     extract($data);
+    //     $isCore = true;
+        
+    //     // Core header
+    //     include __DIR__ . '/../Views/layout/header.php';
+        
+    //     // Timeline content
+    //     include __DIR__ . '/../Views/timeline/index.php';
+        
+    //     // Core footer (als je die hebt)
+    //     // include __DIR__ . '/../Views/layout/footer.php';
+    // }
+
+    // private function getCoreTimelineData()
+    // {
+    //     try {
+    //         // Gebruik bestaande methodes
+    //         $rawPosts = $this->getAllPosts(20);
+    //         $currentUser = $this->getCurrentUser();
+            
+    //         // MAP de data naar de veldnamen die Core Timeline verwacht
+    //         $posts = [];
+    //         foreach ($rawPosts as $post) {
+    //             $mappedPost = [
+    //                 'id' => $post['id'],
+    //                 'content' => $post['content'] ?? '',
+    //                 'created_at' => $post['created_at'],
+    //                 'user_id' => $post['user_id'],
+    //                 'likes_count' => $post['likes'] ?? 0,
+    //                 'comments_count' => $post['comments'] ?? 0,
+                    
+    //                 // MAP gebruikersvelden naar wat Core Timeline verwacht
+    //                 'author_username' => $post['username'] ?? $post['author_username'] ?? 'onbekend',
+    //                 'author_name' => $post['user_name'] ?? $post['author_name'] ?? $post['username'] ?? 'Onbekende Gebruiker',
+    //                 'author_avatar_url' => $post['avatar'] ?? $this->getDefaultAvatar(),
+                    
+    //                 // Media
+    //                 'image_url' => !empty($post['media_path']) ? base_url('uploads/' . $post['media_path']) : null,
+                    
+    //                 // Time ago formatting
+    //                 'time_ago' => $this->formatTimeAgo($post['created_at']),
+                    
+    //                 // Comments
+    //                 'comments_list' => $post['comments_list'] ?? [],
+                    
+    //                 // 🆕 LINK PREVIEW DATA - TOEVOEGEN:
+    //                 'link_preview_id' => $post['link_preview_id'] ?? null,
+    //                 'preview_url' => $post['preview_url'] ?? null,
+    //                 'preview_title' => $post['preview_title'] ?? null,
+    //                 'preview_description' => $post['preview_description'] ?? null,
+    //                 'preview_image' => $post['preview_image'] ?? null,
+    //                 'preview_domain' => $post['preview_domain'] ?? null,
+    //                 'type' => $post['type'] ?? null
+    //             ];
+                
+    //             $posts[] = $mappedPost;
+    //         }
+            
+    //         // MAP currentUser velden
+    //         $mappedCurrentUser = [
+    //             'id' => $currentUser['id'] ?? 0,
+    //             'username' => $currentUser['username'] ?? 'gebruiker',
+    //             'display_name' => $currentUser['display_name'] ?? $currentUser['name'] ?? $currentUser['username'] ?? 'Gebruiker',
+    //             'avatar_url' => $currentUser['avatar_url'] ?? $this->getDefaultAvatar()
+    //         ];
+            
+    //         return [
+    //             'posts' => $posts,
+    //             'currentUser' => $mappedCurrentUser,
+    //             'totalPosts' => count($posts)
+    //         ];
+            
+    //     } catch (Exception $e) {
+    //         error_log("getCoreTimelineData error: " . $e->getMessage());
+    //         return [
+    //             'posts' => [],
+    //             'currentUser' => [
+    //                 'id' => $_SESSION['user_id'] ?? 0,
+    //                 'username' => $_SESSION['username'] ?? 'gebruiker',
+    //                 'display_name' => $_SESSION['display_name'] ?? 'Gebruiker',
+    //                 'avatar_url' => $this->getDefaultAvatar()
+    //             ],
+    //             'totalPosts' => 0
+    //         ];
+    //     }
+    // }
+
+    // private function renderCoreTimelineDirect($data)
+    // {
+    //     // Zet juiste headers
+    //     header('Content-Type: text/html; charset=UTF-8');
+        
+    //     // Extract data voor de view
+    //     extract($data);
+        
+    //     // DIRECT include van core timeline view
+    //     $coreTimelinePath = __DIR__ . '/../Views/timeline/index.php';
+        
+    //     if (file_exists($coreTimelinePath)) {
+            
+    //         include $coreTimelinePath;
+    //     } else {
+    //         throw new Exception("Core timeline view niet gevonden: {$coreTimelinePath}");
+    //     }
+    // }
+
+    /**
+     * 🛡️ Fallback method (oude implementatie als backup)
+     */
+    public function indexFallback()
+    {
+        try {
+            // Gebruik je bestaande getAllPosts methode
+            $posts = $this->getAllPosts(20);
+            $currentUser = $this->getCurrentUser();
+            
+            $data = [
+                'posts' => $posts,
+                'current_user' => $currentUser,
                 'page_title' => 'Nieuwsfeed - SocialCore'
             ];
             
+            // Gebruik normale theme view
             $this->view('feed/index', $data);
             
         } catch (Exception $e) {
-            error_log("Feed index error: " . $e->getMessage());
-            // Redirect to error page or show default content
+            echo "<h1>Feed tijdelijk niet beschikbaar</h1>";
+            echo "<p>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
+            echo "<p><a href='/?route=admin/settings/general'>Admin Settings</a></p>";
         }
+    }
+
+    /**
+     * Render Core Timeline (theme-independent)
+     */
+    private function renderCoreTimeline($data)
+    {
+        // Zet juiste headers
+        header('Content-Type: text/html; charset=UTF-8');
+        
+        // Extract data voor de view
+        extract($data);
+        
+        // DIRECT include van core timeline view (GEEN theme system!)
+        $coreTimelinePath = __DIR__ . '/../Views/timeline/index.php';
+        
+        if (file_exists($coreTimelinePath)) {
+            
+            include $coreTimelinePath;
+        } else {
+            throw new Exception("Core timeline view niet gevonden: {$coreTimelinePath}");
+        }
+    }
+
+     /**
+     * Render Theme Timeline (huidige implementatie)
+     */
+    private function renderThemeTimeline($data)
+    {
+        // Gebruik bestaande theme-based rendering
+        $this->view('feed/index', $data);
+    }
+
+    /**
+     * Haal timeline data op via TimelineService
+     */
+    private function getTimelineData($options = [])
+    {
+        try {
+            // Maak direct een nieuwe TimelineService instantie (gebruik use statement)
+            $timelineService = new TimelineService();
+            
+            // Haal posts op
+            $posts = $timelineService->getTimelinePosts(
+                $options['user_id'],
+                $options['limit'] ?? 20,
+                $options['offset'] ?? 0
+            );
+            
+            // Haal huidige gebruiker op
+            $currentUser = $this->getCurrentUserForTimeline();
+            
+            // Tel totaal aantal posts
+            $totalPosts = $this->countTotalPosts($options['user_id']);
+            
+            return [
+                'posts' => $posts,
+                'currentUser' => $currentUser,
+                'totalPosts' => $totalPosts
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Timeline data error: " . $e->getMessage());
+            
+            return [
+                'posts' => [],
+                'currentUser' => $this->getCurrentUser(),
+                'totalPosts' => 0
+            ];
+        }
+    }
+
+    /**
+     * Haal huidige gebruiker op met alle benodigde velden voor timeline
+     */
+    private function getCurrentUserForTimeline()
+    {
+        try {
+            if (!isset($_SESSION['user_id'])) {
+                return [];
+            }
+            
+            $db = Database::getInstance()->getPdo();
+            $stmt = $db->prepare("
+                SELECT 
+                    u.id,
+                    u.username,
+                    u.email,
+                    u.role,
+                    COALESCE(up.display_name, u.username) as display_name,
+                    CASE 
+                        WHEN up.avatar IS NOT NULL AND up.avatar != '' 
+                        THEN CONCAT(?, up.avatar)
+                        ELSE CONCAT(?, 'default-avatar.png')
+                    END as avatar_url
+                FROM users u
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                WHERE u.id = ?
+            ");
+            
+            $uploadsUrl = rtrim($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'], '/') . '/uploads/';
+            $defaultUrl = rtrim($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'], '/') . '/public/theme-assets/default/images/';
+            
+            $stmt->execute([$uploadsUrl, $defaultUrl, $_SESSION['user_id']]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            return $user ?: [];
+            
+        } catch (Exception $e) {
+            error_log("getCurrentUserForTimeline error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Tel totaal aantal posts voor gebruiker
+     */
+    private function countTotalPosts($userId)
+    {
+        try {
+            $db = Database::getInstance()->getPdo();
+            $stmt = $db->prepare("
+                SELECT COUNT(*) as total
+                FROM posts p
+                JOIN users u ON p.user_id = u.id
+                LEFT JOIN friendships f1 ON (f1.user_id = ? AND f1.friend_id = p.user_id AND f1.status = 'accepted')
+                LEFT JOIN friendships f2 ON (f2.friend_id = ? AND f2.user_id = p.user_id AND f2.status = 'accepted')
+                WHERE (p.user_id = ? OR f1.id IS NOT NULL OR f2.id IS NOT NULL)
+                AND p.is_deleted = 0
+            ");
+            
+            $stmt->execute([$userId, $userId, $userId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            return (int)($result['total'] ?? 0);
+            
+        } catch (Exception $e) {
+            error_log("countTotalPosts error: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Haal timeline configuratie op
+     */
+    private function getTimelineConfig($key, $default = null)
+    {
+        try {
+            // Haal setting op uit site_settings tabel
+            $db = Database::getInstance()->getPdo();
+            $stmt = $db->prepare("SELECT setting_value FROM site_settings WHERE setting_name = ?");
+            $stmt->execute(["timeline_{$key}"]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result) {
+                // Convert string naar boolean voor use_core
+                if ($key === 'use_core') {
+                    return $result['setting_value'] === '1';
+                }
+                return $result['setting_value'];
+            }
+            
+        } catch (Exception $e) {
+            error_log("getTimelineConfig error: " . $e->getMessage());
+        }
+        
+        return $default;
+    }
+
+    /**
+     * API endpoint voor het ophalen van meer posts (AJAX)
+     */
+    public function getMorePosts()
+    {
+        try {
+            if (!isset($_SESSION['user_id'])) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Niet ingelogd']);
+                return;
+            }
+            
+            $offset = (int)($_GET['offset'] ?? 0);
+            $limit = min((int)($_GET['limit'] ?? 20), 50); // Max 50 posts per request
+            
+            $timelineData = $this->getTimelineData([
+                'user_id' => $_SESSION['user_id'],
+                'limit' => $limit,
+                'offset' => $offset
+            ]);
+            
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'posts' => $timelineData['posts'],
+                'hasMore' => count($timelineData['posts']) === $limit
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("getMorePosts error: " . $e->getMessage());
+            
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Server error']);
+        }
+    }
+
+    // ========================================
+    // 🚀 NIEUWE API ENDPOINTS
+    // ========================================
+
+    /**
+     * 📡 API: Timeline AJAX endpoints
+     */
+    public function apiTimeline()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $action = $_GET['action'] ?? '';
+        $timelineService = new TimelineService();
+        
+        switch($action) {
+            case 'get_posts':
+                $config = [
+                    'user_id' => $_SESSION['user_id'],
+                    'limit' => intval($_GET['limit'] ?? 20),
+                    'offset' => intval($_GET['offset'] ?? 0)
+                ];
+                
+                try {
+                    $posts = $timelineService->getPosts($config);
+                    echo json_encode([
+                        'success' => true,
+                        'posts' => $posts,
+                        'has_more' => count($posts) >= $config['limit']
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Error loading posts: ' . $e->getMessage()
+                    ]);
+                }
+                break;
+                
+            case 'load_more':
+                $lastPostId = intval($_GET['last_id'] ?? 0);
+                $limit = intval($_GET['limit'] ?? 10);
+                
+                try {
+                    $timelineService->loadMorePosts($lastPostId, $limit);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Error loading more posts: ' . $e->getMessage()
+                    ]);
+                }
+                break;
+                
+            case 'refresh':
+                $config = [
+                    'user_id' => $_SESSION['user_id'],
+                    'limit' => intval($_GET['limit'] ?? 20)
+                ];
+                
+                try {
+                    $posts = $timelineService->getPosts($config);
+                    echo json_encode([
+                        'success' => true,
+                        'posts' => $posts
+                    ]);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Error refreshing timeline: ' . $e->getMessage()
+                    ]);
+                }
+                break;
+                
+            default:
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Unknown action: ' . $action
+                ]);
+        }
+        
+        exit;
     }
 
     /**
@@ -374,105 +813,110 @@ class FeedController extends Controller
     /**
      * Post creation - GEBRUIKT POSTSERVICE
      */
-    public function create()
+    public function create() 
     {
-        if (!isset($_SESSION['user_id'])) {
-            $this->jsonResponse(['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te plaatsen.']);
-        }
-
-        $userId = $_SESSION['user_id'];
-        $userIP = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $content = trim($_POST['content'] ?? '');
-
-        // Security: Media upload rate limiting
-        if (!empty($_FILES['image']['name'])) {
-            $mediaLimit = SecuritySettings::get('max_media_uploads_per_hour', 5);
-            if (!$this->checkRateLimit($userId, 'media_upload', $mediaLimit)) {
-                $this->logSecurityEvent($userId, 'media_rate_limit_exceeded', $userIP);
-                $this->handleSecurityBlock($userId, $userIP, 'media_rate_limit_exceeded', "Je kunt maximaal {$mediaLimit} afbeeldingen per uur uploaden. Probeer het later opnieuw.");
+        // Start output buffering om alle ongewenste output te vangen
+        ob_start();
+        
+        try {
+            // Clear any existing output (inclusief HTML comments)
+            ob_clean();
+            
+            // Set JSON header
+            header('Content-Type: application/json');
+            
+            // Basic validation
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                ob_end_clean();
+                echo json_encode(['success' => false, 'message' => 'Alleen POST toegestaan']);
+                exit;
             }
-        }
-
-        // Gebruik PostService
-        $postService = new PostService();
-        $result = $postService->createPost(
-            $content,
-            $userId,   
-            [
-                'content_type' => 'text',      
-                'post_type' => 'timeline',     
-                'privacy' => $_POST['privacy'] ?? 'public'
-            ],
-            $_FILES
-        );
-
-        if ($result['success']) {
-            $this->logActivity($userId, 'post_create', $userIP, ['post_id' => $result['post_id'] ?? null]);
-        }
-
-        if ($this->isJsonRequest()) {
-            if ($result['success'] && isset($result['post_id'])) {
-                $post = $this->getPostById($result['post_id']);
-                if ($post) {
-                    $result['post'] = $this->formatPostForHyves($post);
-                }
+            
+            if (!isset($_SESSION['user_id'])) {
+                ob_end_clean();
+                echo json_encode(['success' => false, 'message' => 'Niet ingelogd']);
+                exit;
             }
-            $this->jsonResponse($result);
-        } else {
-            $_SESSION[$result['success'] ? 'success' : 'error'] = $result['message'];
-            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+            
+            // Get data
+            $content = trim($_POST['content'] ?? '');
+            $userId = $_SESSION['user_id'];
+            
+            // Validation
+            $hasContent = !empty($content);
+            $hasImage = !empty($_FILES['image']['name']);
+            
+            if (!$hasContent && !$hasImage) {
+                ob_end_clean();
+                echo json_encode(['success' => false, 'message' => 'Voeg tekst of afbeelding toe']);
+                exit;
+            }
+            
+            // Use PostService (jouw PostService werkt perfect!)
+            $postService = new \App\Services\PostService();
+            
+            $options = [
+                'content_type' => $hasImage ? 'photo' : 'text',
+                'post_type' => 'timeline',
+                'privacy' => 'public'
+            ];
+            
+            $result = $postService->createPost($content, $userId, $options, $_FILES);
+            
+            // Clear output buffer om HTML comments te verwijderen
+            ob_end_clean();
+            
+            // Echo ONLY JSON
+            echo json_encode($result);
+            exit;
+            
+        } catch (Exception $e) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Server fout: ' . $e->getMessage()]);
             exit;
         }
     }
+
 
     /**
      * Post deletion
      */
     public function delete()
     {
-        if (!isset($_SESSION['user_id'])) {
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        // Start output buffering om alle ongewenste output te vangen (zoals create)
+        ob_start();
+        
+        try {
+            // Clear any existing output (inclusief HTML comments)
+            ob_clean();
+            
+            // Set JSON header - ALTIJD
+            header('Content-Type: application/json');
+            
+            // Basic validation
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                ob_end_clean();
+                echo json_encode(['success' => false, 'message' => 'Alleen POST toegestaan']);
+                exit;
+            }
+            
+            // Check login
+            if (!isset($_SESSION['user_id'])) {
                 echo json_encode(['success' => false, 'message' => 'Je moet ingelogd zijn om een bericht te verwijderen']);
                 exit;
             }
-            
-            set_flash_message('error', 'Je moet ingelogd zijn om een bericht te verwijderen');
-            redirect('login');
-            return;
-        }
 
-        $userId = $_SESSION['user_id'];
-        $userRole = $_SESSION['role'] ?? 'user';
-        $userIP = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $postId = isset($_POST['post_id']) ? (int)$_POST['post_id'] : 0;
-
-        // Security: Rate limiting
-        $deleteLimit = SecuritySettings::get('max_post_deletes_per_hour', 5);
-        if (!$this->checkRateLimit($userId, 'post_delete', $deleteLimit)) {
-            $this->logSecurityEvent($userId, 'post_delete_rate_limit_exceeded', $userIP);
+            $userId = $_SESSION['user_id'];
+            $userRole = $_SESSION['role'] ?? 'user';
+            $postId = isset($_POST['post_id']) ? (int)$_POST['post_id'] : 0;
             
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                echo json_encode(['success' => false, 'message' => "Je kunt maximaal {$deleteLimit} berichten per uur verwijderen. Probeer het later opnieuw."]);
-                exit;
-            } else {
-                $_SESSION['error'] = "Je kunt maximaal {$deleteLimit} berichten per uur verwijderen. Probeer het later opnieuw.";
-                header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
-                exit;
-            }
-        }
-        
-        if (!$postId) {
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            // Check post ID
+            if (!$postId) {
                 echo json_encode(['success' => false, 'message' => 'Ongeldig bericht ID']);
                 exit;
             }
             
-            set_flash_message('error', 'Ongeldig bericht ID');
-            redirect('feed');
-            return;
-        }
-        
-        try {
+            // Database logic
             $isAdmin = ($userRole === 'admin');
             
             $stmt = $this->db->prepare("SELECT user_id FROM posts WHERE id = ?");
@@ -480,81 +924,42 @@ class FeedController extends Controller
             $post = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$post) {
-                throw new \Exception('Bericht niet gevonden');
+                echo json_encode(['success' => false, 'message' => 'Bericht niet gevonden']);
+                exit;
             }
             
             $isOwner = ($post['user_id'] == $userId);
             
             if (!$isOwner && !$isAdmin) {
-                throw new \Exception('Je hebt geen toestemming om dit bericht te verwijderen');
+                echo json_encode(['success' => false, 'message' => 'Je hebt geen toestemming om dit bericht te verwijderen']);
+                exit;
             }
 
-            $this->logActivity($userId, 'post_delete_attempt', $userIP, [
-                'post_id' => $postId,
-                'post_owner' => $post['user_id'],
-                'is_admin_action' => $isAdmin,
-                'timestamp' => date('Y-m-d H:i:s')
-            ]);
-
-            if ($this->detectBulkPostDeleteActivity($userId, $userIP)) {
-                $this->logSecurityEvent($userId, 'suspicious_bulk_post_delete_pattern', $userIP, [
-                    'post_id' => $postId,
-                    'recent_post_deletes' => $this->getRecentPostDeleteCount($userId)
-                ]);
-                
-                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                    echo json_encode(['success' => false, 'message' => 'Verdachte activiteit gedetecteerd. Neem contact op met support.']);
-                    exit;
-                } else {
-                    $_SESSION['error'] = 'Verdachte activiteit gedetecteerd. Neem contact op met support.';
-                    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
-                    exit;
-                }
-            }
-
+            // Delete post
             $this->db->beginTransaction();
             
             $stmt = $this->db->prepare("UPDATE posts SET is_deleted = 1 WHERE id = ?");
             $success = $stmt->execute([$postId]);
             
             if (!$success) {
-                throw new \Exception('Fout bij het verwijderen van het bericht');
+                $this->db->rollBack();
+                echo json_encode(['success' => false, 'message' => 'Fout bij het verwijderen van het bericht']);
+                exit;
             }
             
             $this->db->commit();
 
-            $this->logActivity($userId, 'post_delete_success', $userIP, [
-                'post_id' => $postId,
-                'was_admin_action' => $isAdmin,
-                'deletion_timestamp' => date('Y-m-d H:i:s')
-            ]);
-
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                echo json_encode(['success' => true, 'message' => 'Bericht succesvol verwijderd']);
-                exit;
-            }
-            
-            set_flash_message('success', 'Bericht succesvol verwijderd');
-            
-            $referer = $_SERVER['HTTP_REFERER'] ?? '';
-            if ($referer && strpos($referer, $_SERVER['HTTP_HOST']) !== false) {
-                redirect($referer);
-            } else {
-                redirect('feed');
-            }
+            // Success response
+            echo json_encode(['success' => true, 'message' => 'Bericht succesvol verwijderd']);
+            exit;
             
         } catch (\Exception $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
             
-            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-                exit;
-            }
-            
-            set_flash_message('error', $e->getMessage());
-            redirect('feed');
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            exit;
         }
     }
 
@@ -651,6 +1056,32 @@ class FeedController extends Controller
         exit;
     }
 
+    private function getComments()
+    {
+        $postId = $_GET['post_id'] ?? null;
+        
+        if (!$postId) {
+            echo json_encode(['success' => false, 'message' => 'Post ID required']);
+            exit;
+        }
+        
+        try {
+            $commentService = new CommentService();
+            $viewerId = $_SESSION['user_id'] ?? null;
+            $comments = $commentService->getCommentsForPost($postId, $viewerId);
+            
+            echo json_encode([
+                'success' => true,
+                'comments' => $comments
+            ]);
+            
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error loading comments']);
+        }
+        
+        exit;
+    }
+
     /**
      * Haal comments op voor posts
      */
@@ -710,6 +1141,22 @@ class FeedController extends Controller
             }
             
             return $posts;
+        }
+    }
+
+    public function handleComment()
+    {
+        header('Content-Type: application/json');
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Comment toevoegen
+            $this->addComment();
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // Comments ophalen
+            $this->getComments();
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+            exit;
         }
     }
 
@@ -1079,5 +1526,38 @@ class FeedController extends Controller
         ");
         $stmt->execute([$userId]);
         return $stmt->fetchColumn();
+    }
+
+    private function formatTimeAgo($datetime)
+    {
+        if (empty($datetime)) {
+            return 'onbekende tijd';
+        }
+        
+        try {
+            $time = strtotime($datetime);
+            $now = time();
+            $diff = $now - $time;
+            
+            if ($diff < 60) {
+                return 'zojuist';
+            } elseif ($diff < 3600) {
+                $minutes = floor($diff / 60);
+                return $minutes . ' minuten geleden';
+            } elseif ($diff < 86400) {
+                $hours = floor($diff / 3600);
+                return $hours . ' uur geleden';
+            } else {
+                $days = floor($diff / 86400);
+                return $days . ' dagen geleden';
+            }
+        } catch (Exception $e) {
+            return 'onbekende tijd';
+        }
+    }
+
+    private function getDefaultAvatar()
+    {
+        return base_url('public/theme-assets/default/images/default-avatar.png');
     }
 }

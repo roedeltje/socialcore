@@ -139,7 +139,7 @@ class DebugController extends Controller
         extract($data);
         
         // Simple HTML output voor debug
-        echo "<!DOCTYPE html>";
+        
         echo "<html><head>";
         echo "<title>Component Debug</title>";
         echo "<style>body{font-family:Arial;margin:20px;} .debug-section{margin:20px 0;padding:15px;border:1px solid #ccc;} pre{background:#f5f5f5;padding:10px;}</style>";

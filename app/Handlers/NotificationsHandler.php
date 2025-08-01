@@ -467,4 +467,475 @@ class NotificationsHandler extends Controller
         echo json_encode($data);
         exit;
     }
+
+    // ========================================
+    // 🔔 NOTIFICATIONSHANDLER API METHODS
+    // ========================================
+
+    /**
+     * API: Get all notifications for user
+     */
+    public function apiGetNotifications()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        $limit = intval($_GET['limit'] ?? 20);
+        $offset = intval($_GET['offset'] ?? 0);
+        $type = $_GET['type'] ?? null; // friend_request, like, comment, message
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $whereClause = "WHERE n.user_id = ?";
+            $params = [$userId];
+            
+            if ($type) {
+                $whereClause .= " AND n.type = ?";
+                $params[] = $type;
+            }
+            
+            $stmt = $db->prepare("
+                SELECT n.*, 
+                    u.username as from_username,
+                    COALESCE(up.display_name, u.username) as from_display_name,
+                    up.avatar as from_avatar
+                FROM notifications n
+                LEFT JOIN users u ON n.from_user_id = u.id
+                LEFT JOIN user_profiles up ON u.id = up.user_id
+                {$whereClause}
+                ORDER BY n.created_at DESC
+                LIMIT ? OFFSET ?
+            ");
+            
+            $params[] = $limit;
+            $params[] = $offset;
+            $stmt->execute($params);
+            $notifications = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Format notifications
+            foreach ($notifications as &$notification) {
+                $notification['from_avatar_url'] = get_avatar_url($notification['from_avatar']);
+                $notification['time_ago'] = format_time_ago($notification['created_at']);
+                $notification['is_read'] = (bool)$notification['is_read'];
+                
+                // Format notification message
+                $notification['formatted_message'] = $this->formatNotificationMessage($notification);
+                
+                // Add action URL
+                $notification['action_url'] = $this->getNotificationActionUrl($notification);
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'notifications' => $notifications,
+                'has_more' => count($notifications) >= $limit
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error fetching notifications: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Get unread notification count
+     */
+    public function apiGetUnreadCount()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                SELECT COUNT(*) as unread_count 
+                FROM notifications 
+                WHERE user_id = ? AND is_read = 0
+            ");
+            
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch();
+            
+            echo json_encode([
+                'success' => true,
+                'unread_count' => intval($result['unread_count'])
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error getting unread count: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Mark specific notification as read
+     */
+    public function apiMarkAsRead()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $notificationId = $_POST['notification_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        
+        if (!$notificationId) {
+            echo json_encode(['success' => false, 'message' => 'Notification ID required']);
+            exit;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                UPDATE notifications 
+                SET is_read = 1, read_at = NOW() 
+                WHERE id = ? AND user_id = ?
+            ");
+            
+            $stmt->execute([$notificationId, $userId]);
+            $affectedRows = $stmt->rowCount();
+            
+            echo json_encode([
+                'success' => $affectedRows > 0,
+                'message' => $affectedRows > 0 ? 'Notification marked as read' : 'Notification not found'
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error marking notification as read: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Mark all notifications as read
+     */
+    public function apiMarkAllAsRead()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        $type = $_POST['type'] ?? null; // Optional: mark only specific type as read
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $whereClause = "WHERE user_id = ? AND is_read = 0";
+            $params = [$userId];
+            
+            if ($type) {
+                $whereClause .= " AND type = ?";
+                $params[] = $type;
+            }
+            
+            $stmt = $db->prepare("
+                UPDATE notifications 
+                SET is_read = 1, read_at = NOW() 
+                {$whereClause}
+            ");
+            
+            $stmt->execute($params);
+            $affectedRows = $stmt->rowCount();
+            
+            echo json_encode([
+                'success' => true,
+                'marked_read' => $affectedRows,
+                'message' => "{$affectedRows} notifications marked as read"
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error marking notifications as read: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Delete notification
+     */
+    public function apiDeleteNotification()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $notificationId = $_POST['notification_id'] ?? null;
+        $userId = $_SESSION['user_id'];
+        
+        if (!$notificationId) {
+            echo json_encode(['success' => false, 'message' => 'Notification ID required']);
+            exit;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                DELETE FROM notifications 
+                WHERE id = ? AND user_id = ?
+            ");
+            
+            $stmt->execute([$notificationId, $userId]);
+            $affectedRows = $stmt->rowCount();
+            
+            echo json_encode([
+                'success' => $affectedRows > 0,
+                'message' => $affectedRows > 0 ? 'Notification deleted' : 'Notification not found'
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error deleting notification: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Get notification statistics
+     */
+    public function apiGetStats()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        $userId = $_SESSION['user_id'];
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            // Get counts by type
+            $stmt = $db->prepare("
+                SELECT 
+                    type,
+                    COUNT(*) as total,
+                    SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread
+                FROM notifications 
+                WHERE user_id = ?
+                GROUP BY type
+            ");
+            
+            $stmt->execute([$userId]);
+            $typeStats = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Get total counts
+            $stmt = $db->prepare("
+                SELECT 
+                    COUNT(*) as total_notifications,
+                    SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as total_unread,
+                    COUNT(CASE WHEN created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 END) as today_notifications
+                FROM notifications 
+                WHERE user_id = ?
+            ");
+            
+            $stmt->execute([$userId]);
+            $totalStats = $stmt->fetch();
+            
+            echo json_encode([
+                'success' => true,
+                'stats' => [
+                    'by_type' => $typeStats,
+                    'totals' => $totalStats
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error getting notification stats: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    /**
+     * API: Create new notification (for system use)
+     */
+    public function apiCreateNotification()
+    {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Authentication required']);
+            exit;
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'POST method required']);
+            exit;
+        }
+        
+        $targetUserId = $_POST['target_user_id'] ?? null;
+        $type = $_POST['type'] ?? null;
+        $message = $_POST['message'] ?? null;
+        $fromUserId = $_SESSION['user_id'];
+        $relatedId = $_POST['related_id'] ?? null; // post_id, comment_id, etc.
+        
+        if (!$targetUserId || !$type || !$message) {
+            echo json_encode(['success' => false, 'message' => 'Target user, type and message required']);
+            exit;
+        }
+        
+        try {
+            $db = \App\Database\Database::getInstance()->getPdo();
+            
+            $stmt = $db->prepare("
+                INSERT INTO notifications (
+                    user_id, from_user_id, type, message, related_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, NOW())
+            ");
+            
+            $stmt->execute([$targetUserId, $fromUserId, $type, $message, $relatedId]);
+            $notificationId = $db->lastInsertId();
+            
+            echo json_encode([
+                'success' => true,
+                'notification_id' => $notificationId,
+                'message' => 'Notification created successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error creating notification: ' . $e->getMessage()
+            ]);
+        }
+        
+        exit;
+    }
+
+    // ========================================
+    // 🔧 HELPER METHODS
+    // ========================================
+
+    /**
+     * Format notification message based on type
+     */
+    private function formatNotificationMessage($notification)
+    {
+        $fromName = $notification['from_display_name'] ?? $notification['from_username'] ?? 'Someone';
+        
+        switch ($notification['type']) {
+            case 'friend_request':
+                return "{$fromName} heeft je een vriendschapsverzoek gestuurd";
+                
+            case 'friend_accept':
+                return "{$fromName} heeft je vriendschapsverzoek geaccepteerd";
+                
+            case 'like':
+                return "{$fromName} vindt je bericht leuk";
+                
+            case 'comment':
+                return "{$fromName} heeft gereageerd op je bericht";
+                
+            case 'comment_like':
+                return "{$fromName} vindt je reactie leuk";
+                
+            case 'message':
+                return "{$fromName} heeft je een bericht gestuurd";
+                
+            case 'mention':
+                return "{$fromName} heeft je genoemd in een bericht";
+                
+            case 'follow':
+                return "{$fromName} volgt je nu";
+                
+            default:
+                return $notification['message'] ?? 'Nieuwe notificatie';
+        }
+    }
+
+    /**
+     * Get action URL for notification
+     */
+    private function getNotificationActionUrl($notification)
+    {
+        switch ($notification['type']) {
+            case 'friend_request':
+                return base_url('?route=friends/requests');
+                
+            case 'friend_accept':
+                return base_url('?route=profile&user=' . $notification['from_username']);
+                
+            case 'like':
+            case 'comment':
+                if ($notification['related_id']) {
+                    return base_url('?route=post&id=' . $notification['related_id']);
+                }
+                return base_url('?route=feed');
+                
+            case 'message':
+                return base_url('?route=messages&user=' . $notification['from_username']);
+                
+            case 'mention':
+                if ($notification['related_id']) {
+                    return base_url('?route=post&id=' . $notification['related_id']);
+                }
+                return base_url('?route=feed');
+                
+            default:
+                return base_url('?route=notifications');
+        }
+    }
 }

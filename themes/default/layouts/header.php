@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="<?= theme_css_url('style.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('theme-assets/default/css/style.css') ?>">
     <!-- Feed CSS -->
     <link rel="stylesheet" href="<?= theme_css_url('feed.css') ?>">
     <!-- Profile CSS -->

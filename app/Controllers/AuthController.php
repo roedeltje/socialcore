@@ -10,6 +10,7 @@ use App\Auth\Auth;
 use App\Helpers\SecuritySettings;
 use App\Database\Database;
 use PDO;
+use Exception;
 
 class AuthController extends Controller
 {
@@ -211,7 +212,25 @@ class AuthController extends Controller
     {
         Auth::logout();
         $_SESSION['success'] = 'Je bent succesvol uitgelogd';
-        redirect('login');
+        
+        // Check database setting
+        try {
+            $db = Database::getInstance()->getPdo();
+            $stmt = $db->prepare("SELECT setting_value FROM site_settings WHERE setting_name = 'use_core'");
+            $stmt->execute();
+            $useCore = $stmt->fetchColumn();
+            
+            if ($useCore === '1') {
+                redirect('login');  // Core login
+            } else {
+                header('Location: /');  // Theme homepage
+                exit;
+            }
+        } catch (Exception $e) {
+            // Fallback naar homepage
+            header('Location: /');
+            exit;
+        }
     }
 
     /**

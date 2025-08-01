@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initImageUpload();
     initPostMenus();
     initLinkPreviewDetection();
+    initLoadMorePosts();
     console.log('✅ Post menus initialized');
 
     initAvatarUpload();
@@ -105,10 +106,10 @@ function initNavigation() {
 function initPostForm() {
     // Feed pagina elements - GEFIXTE IDs
     const feedElements = {
-        content: document.getElementById('postFormContent'),     // ✅ CORRECT
-        counter: document.getElementById('postFormCharCounter'), // ✅ CORRECT
-        button: document.getElementById('postFormSubmitBtn'),    // ✅ CORRECT
-        form: document.getElementById('postForm')
+    content: document.getElementById('timelinePostFormContent'),     // ✅ CORRECT
+    counter: document.getElementById('timelinePostFormCharCounter'), // ✅ CORRECT
+    button: document.getElementById('timelinePostFormSubmitBtn'),    // ✅ CORRECT
+    form: document.getElementById('timelinePostForm')                // ✅ CORRECT
     };
     
     // Profiel pagina elements - GEFIXTE IDs
@@ -175,36 +176,92 @@ function setupPostForm(elements, type) {
     updateCharCounter();
     
     if (elements.form) {
-        elements.form.addEventListener('submit', function(e) {
-            const content = elements.content.value.trim();
-            const imageUploadId = type === 'profile' ? 
-                'profilePostFormImageUpload' : 
-                'postFormImageUpload';
-            const imageUpload = document.getElementById(imageUploadId);
-            const hasImage = imageUpload && imageUpload.files && imageUpload.files.length > 0;
+            elements.form.addEventListener('submit', function(e) {
+        e.preventDefault(); // ✅ Stop normale form submit
+        
+        const content = elements.content.value.trim();
+        const imageUploadId = type === 'profile' ? 
+            'profilePostFormImageUpload' : 
+            'timelinePostFormImageUpload';
+        const imageUpload = document.getElementById(imageUploadId);
+        const hasImage = imageUpload && imageUpload.files && imageUpload.files.length > 0;
+        
+        // Validatie
+        if (!content && !hasImage) {
+            alert('Voeg tekst of een afbeelding toe aan je bericht.');
+            return;
+        }
+        
+        if (content.length > 1000) {
+            alert('Bericht mag maximaal 1000 karakters bevatten');
+            return;
+        }
+        
+        // Button state wijzigen
+        elements.button.disabled = true;
+        const originalText = elements.button.innerHTML;
+        elements.button.innerHTML = '<span class="submit-icon">⏳</span><span class="submit-text">Bezig...</span>';
+        
+        // FormData maken voor AJAX
+        const formData = new FormData(elements.form);
+        
+        // AJAX POST request
+        fetch('/?route=feed/create', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 🔧 GEWIJZIGD: WordPress-stijl API endpoint
+            return fetch(`/?route=posts/get&id=${data.post_id}`)
+                .then(r => r.json());
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .then(postData => {
+        if (postData && postData.success) {
+            // ✅ Success - reset form (bestaande code blijft)
+            elements.content.value = '';
+            if (imageUpload) imageUpload.value = '';
             
-            if (!content && !hasImage) {
-                e.preventDefault();
-                alert('Voeg tekst of een afbeelding toe aan je bericht.');
-                return;
+            // Hide image preview als het bestaat
+            const previewContainer = document.getElementById(imageUploadId.replace('Upload', 'Preview'));
+            if (previewContainer) {
+                previewContainer.style.display = 'none';
             }
             
-            if (content.length > 1000) {
-                e.preventDefault();
-                alert('Bericht mag maximaal 1000 karakters bevatten');
-                return;
+            // Update character counter
+            const counter = elements.counter;
+            if (counter) {
+                counter.textContent = '0/1000';
+                counter.classList.remove('danger');
+                counter.classList.add('text-gray-500');
             }
             
-            elements.button.disabled = true;
-            const originalText = elements.button.textContent;
-            elements.button.innerHTML = '<span class="submit-icon">⏳</span><span class="submit-text">Bezig...</span>';
+            // 🆕 NIEUW: Voeg post toe aan timeline
+            console.log('🎉 Post data received:', postData.post);
+            addPostToTimeline(postData.post); // Voor volgende stap
             
-            // Restore button after 5 seconds as fallback
-            setTimeout(() => {
-                elements.button.disabled = false;
-                elements.button.innerHTML = originalText;
-            }, 5000);
-        });
+            showNotification('✅ Bericht geplaatst!', 'success');
+        } else {
+            throw new Error(postData.message || 'Kon post data niet ophalen');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('❌ Er ging iets mis: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Restore button
+        elements.button.disabled = false;
+        elements.button.innerHTML = originalText;
+    });
+    });
         
         console.log(`✅ ${type} post form setup complete!`);
     }
@@ -282,7 +339,7 @@ function handlePostLike(button) {
  */
 function initImageUpload() {
     // Feed pagina
-    setupImageUpload('postFormImageUpload', 'postFormImagePreview', 'postFormRemoveImage');
+    setupImageUpload('timelinePostFormImageUpload', 'timelinePostFormImagePreview', 'timelinePostFormRemoveImage');
     
     // Profiel pagina
     setupImageUpload('profilePostFormImageUpload', 'profilePostFormImagePreview', 'profilePostFormRemoveImage');
@@ -418,10 +475,17 @@ function handlePostDelete(button) {
         return;
     }
     
-    const form = button.closest('.delete-post-form');
-    const postId = form.querySelector('input[name="post_id"]').value;
+    // 🔧 FIX: Haal post ID direct van button (geen form!)
+    const postId = button.getAttribute('data-post-id');
     
-    fetch('/feed/delete', {
+    if (!postId) {
+        console.error('No post ID found on delete button');
+        alert('Fout: Kan bericht ID niet vinden');
+        return;
+    }
+    
+    // 🔧 FIX: Correcte SocialCore URL
+    fetch('/?route=feed/delete', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -432,7 +496,8 @@ function handlePostDelete(button) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const postElement = findPostElement(form);
+            // 🔧 FIX: Zoek post element vanaf button
+            const postElement = button.closest('article') || button.closest('.post') || button.closest('[data-post-id]');
             if (postElement) {
                 postElement.remove();
             } else {
@@ -1127,7 +1192,7 @@ function initAvatarUpload() {
 function initLinkPreviewDetection() {
     console.log('🔧 Initializing link preview detection...');
     
-    const postTextareas = document.querySelectorAll('#postFormContent, #profilePostFormContent');
+    const postTextareas = document.querySelectorAll('#timelinePostFormContent, #profilePostFormContent');
     
     postTextareas.forEach(function(textarea, index) {
         if (!textarea) return;
@@ -1504,6 +1569,217 @@ if (!document.querySelector('#link-preview-styles')) {
     styleElement.id = 'link-preview-styles';
     styleElement.innerHTML = linkPreviewStyles;
     document.head.appendChild(styleElement);
+}
+
+/**
+ * 🎯 Voeg nieuw bericht toe aan timeline (geen reload meer)
+ */
+function addPostToTimeline(postData) {
+    console.log('🎉 New post received:', postData);
+    
+    // Zoek timeline container
+    const timeline = document.getElementById('timelinePosts');
+    if (!timeline) {
+        console.log('Timeline container not found, reloading page...');
+        window.location.reload();
+        return;
+    }
+    
+    // Genereer simpele post HTML (gebruik bestaande structuur van timeline)
+    const postHTML = createSimplePostHTML(postData);
+    
+    // Voeg toe bovenaan timeline
+    timeline.insertAdjacentHTML('afterbegin', postHTML);
+    
+    console.log('✅ Post added to timeline without reload!');
+}
+
+/**
+ * 🎨 Maak simpele post HTML (gebaseerd op bestaande timeline structuur)
+ */
+function createSimplePostHTML(post) {
+    const userName = post.user_name || 'Onbekende gebruiker';
+    const content = post.content || '';
+    const likes = post.likes || 0;
+    const comments = post.comments || 0;
+    
+    // 🔧 CHECK: Is deze post van de huidige gebruiker of is gebruiker admin?
+    const currentUserId = parseInt(window.currentUser?.id || 0);
+    const postUserId = parseInt(post.user_id || 0);
+    const userRole = window.currentUser?.role || '';
+    const canDelete = (currentUserId === postUserId) || (userRole === 'admin');
+    
+    // 🆕 POST MENU HTML - alleen tonen als gebruiker mag verwijderen
+    const postMenuHTML = canDelete ? `
+        <div class="post-menu">
+            <button type="button" class="post-menu-button" data-post-id="${post.id}">
+                <span class="menu-dots">⋯</span>
+            </button>
+            <div class="post-menu-dropdown hidden" data-post-id="${post.id}">
+                <button type="button" class="delete-post-button" data-post-id="${post.id}">
+                    🗑️ Bericht verwijderen
+                </button>
+            </div>
+        </div>
+    ` : '';
+    
+    // Complete post HTML met menu
+    return `
+        <article class="hyves-post-card" data-post-id="${post.id}">
+            <div class="post-header">
+                <div class="post-author">
+                    <img src="${getPostAvatarUrl(post)}" 
+                        alt="${userName}" 
+                        class="author-avatar">
+                    <div class="author-info">
+                        <span class="author-name">${userName}</span>
+                        <div class="post-type">plaatste een bericht</div>
+                        <div class="post-time">Net geplaatst</div>
+                    </div>
+                </div>
+                
+                <!-- 🆕 POST MENU TOEGEVOEGD -->
+                ${postMenuHTML}
+            </div>
+            
+            <div class="post-content">
+                <div class="post-text">${content}</div>
+                ${post.media_path ? `
+                    <div class="post-media">
+                        <img src="/uploads/${post.media_path}" 
+                            alt="Post afbeelding" 
+                            class="media-image">
+                    </div>
+                ` : ''}
+                ${post.type === 'link' && post.preview_title ? `
+                    <div class="link-preview">
+                        <div class="link-preview-card">
+                            <div class="link-preview-layout">
+                                <div class="link-preview-content">
+                                    <div class="link-preview-domain">📌 ${post.preview_domain}</div>
+                                    <div class="link-preview-title">${post.preview_title}</div>
+                                    <div class="link-preview-description">${post.preview_description}</div>
+                                </div>
+                                ${post.preview_image ? `
+                                    <div class="link-preview-image">
+                                        <img src="${post.preview_image}" alt="Preview">
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+            
+            <div class="post-footer">
+                <div class="post-stats">
+                    <span class="stats-likes">${likes} respect</span>
+                    <span class="stats-separator">•</span>
+                    <span class="stats-comments">${comments} reacties</span>
+                </div>
+                
+                <div class="post-actions">
+                    <button class="hyves-action-btn like-button" data-post-id="${post.id}">
+                        <span class="action-icon">👍</span>
+                        <span class="action-text">${likes} Respect!</span>
+                    </button>
+                    <button class="hyves-action-btn comment-button">
+                        <span class="action-icon">💬</span>
+                        <span class="action-text">Reageren</span>
+                    </button>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+/**
+ * 🎯 WordPress-stijl Load More Posts functionaliteit
+ */
+function initLoadMorePosts() {
+    const loadMoreBtn = document.getElementById('loadMorePosts');
+    if (!loadMoreBtn) return;
+    
+    let currentOffset = 20; // Start na de eerste 20 posts
+    let isLoading = false;
+    
+    loadMoreBtn.addEventListener('click', function() {
+        if (isLoading) return;
+        
+        isLoading = true;
+        
+        // Button state wijzigen
+        const originalHTML = this.innerHTML;
+        this.innerHTML = `
+            <span class="submit-icon" style="animation: spin 1s linear infinite;">⏳</span>
+            <span class="submit-text">Laden...</span>
+        `;
+        this.disabled = true;
+        
+        // AJAX call naar timeline API
+        fetch(`/?route=timeline/posts&limit=10&offset=${currentOffset}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.posts && data.posts.length > 0) {
+                    // Voeg nieuwe posts toe aan timeline
+                    addPostsToTimeline(data.posts);
+                    currentOffset += data.posts.length;
+                    
+                    // Verberg button als er geen meer zijn
+                    if (!data.has_more || data.posts.length < 10) {
+                        loadMoreBtn.style.display = 'none';
+                    }
+                } else {
+                    // Geen meer posts
+                    loadMoreBtn.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Load more error:', error);
+                showNotification('❌ Fout bij laden van berichten', 'error');
+            })
+            .finally(() => {
+                // Reset button
+                this.innerHTML = originalHTML;
+                this.disabled = false;
+                isLoading = false;
+            });
+    });
+}
+
+/**
+ * 🎨 Voeg meerdere posts toe aan timeline
+ */
+function addPostsToTimeline(posts) {
+    const timeline = document.getElementById('timelinePosts');
+    if (!timeline) return;
+    
+    posts.forEach(post => {
+        const postHTML = createSimplePostHTML(post);
+        timeline.insertAdjacentHTML('beforeend', postHTML);
+    });
+    
+    console.log(`✅ Added ${posts.length} more posts to timeline`);
+}
+
+/**
+ * 🎨 Helper functie voor avatar URL
+ */
+function getPostAvatarUrl(post) {
+    if (post.avatar && post.avatar !== '') {
+        // Check if it's already a full URL
+        if (post.avatar.startsWith('http')) {
+            return post.avatar;
+        }
+        // Otherwise add base URL
+        return '/uploads/' + post.avatar;
+    }
+    
+    if (post.avatar_url) {
+        return post.avatar_url;
+    }
+    
+    return '/theme-assets/default/images/default-avatar.png';
 }
 
 console.log("🎨 theme.js active");

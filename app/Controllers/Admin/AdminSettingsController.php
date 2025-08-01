@@ -6,6 +6,8 @@ use App\Controllers\Controller;
 use App\Helpers\SecuritySettings;
 use App\Database\Database;
 use PDO;
+use Exception;
+use Error;
 
 /**
  * AdminSettingsController - Beheer van site instellingen, configuratie en system settings
@@ -362,6 +364,12 @@ class AdminSettingsController extends Controller
      */
     private function updateGeneralSettings()
     {
+        // Toon debug in browser
+        echo "<div style='background: yellow; padding: 10px; margin: 10px; border: 2px solid orange;'>";
+        echo "<h3>DEBUG: updateGeneralSettings called</h3>";
+        echo "<p><strong>timeline_use_core POST value:</strong> " . ($_POST['timeline_use_core'] ?? 'NOT SET') . "</p>";
+        echo "</div>";
+        
         try {
             $settings = [
                 'site_name' => trim($_POST['site_name'] ?? ''),
@@ -374,8 +382,15 @@ class AdminSettingsController extends Controller
                 'default_language' => $_POST['default_language'] ?? 'nl',
                 'registration_open' => isset($_POST['registration_open']) ? '1' : '0',
                 'email_verification_required' => isset($_POST['email_verification_required']) ? '1' : '0',
-                'user_registration_role' => $_POST['user_registration_role'] ?? 'member'
+                'user_registration_role' => $_POST['user_registration_role'] ?? 'member',
+                'timeline_use_core' => $_POST['timeline_use_core'] ?? '0'
             ];
+            
+            // Toon wat er opgeslagen wordt
+            echo "<div style='background: lightblue; padding: 10px; margin: 10px; border: 2px solid blue;'>";
+            echo "<h3>Settings to save:</h3>";
+            echo "<p><strong>timeline_use_core value:</strong> " . $settings['timeline_use_core'] . "</p>";
+            echo "</div>";
             
             // Validatie
             $errors = [];
@@ -389,16 +404,32 @@ class AdminSettingsController extends Controller
             if (!empty($errors)) {
                 $_SESSION['error_message'] = implode('<br>', $errors);
             } else {
+                // Probeer op te slaan
+                echo "<div style='background: lightgreen; padding: 10px; margin: 10px; border: 2px solid green;'>";
+                echo "<h3>Calling saveSettings()...</h3>";
+                echo "</div>";
+                
                 $this->saveSettings($settings);
+                
+                echo "<div style='background: lime; padding: 10px; margin: 10px; border: 2px solid darkgreen;'>";
+                echo "<h3>saveSettings() completed!</h3>";
+                echo "</div>";
+                
                 $_SESSION['success_message'] = "Algemene instellingen succesvol bijgewerkt.";
             }
             
         } catch (\Exception $e) {
+            echo "<div style='background: red; color: white; padding: 10px; margin: 10px; border: 2px solid darkred;'>";
+            echo "<h3>Exception in updateGeneralSettings:</h3>";
+            echo "<p>" . htmlspecialchars($e->getMessage()) . "</p>";
+            echo "</div>";
+            
             $_SESSION['error_message'] = "Fout bij opslaan: " . $e->getMessage();
         }
         
-        header('Location: ' . base_url('?route=admin/settings/general'));
-        exit;
+        // Wacht 3 seconden zodat je de debug output kunt lezen
+        echo "<p>Redirecting in 3 seconds...</p>";
+        echo "<script>setTimeout(function(){ window.location.href = '" . base_url('?route=admin/settings/general') . "'; }, 3000);</script>";
     }
     
     /**
@@ -611,28 +642,60 @@ class AdminSettingsController extends Controller
     /**
      * Haal instellingen op uit database
      */
-    private function getSettings($keys)
+    private function getSettings()
     {
-        $placeholders = str_repeat('?,', count($keys) - 1) . '?';
-        $query = "SELECT setting_name, setting_value FROM site_settings WHERE setting_name IN ($placeholders)";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->execute($keys);
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Converteer naar associatieve array met defaults
-        $settings = [];
-        $defaults = $this->getDefaultSettings();
-        
-        foreach ($keys as $key) {
-            $settings[$key] = $defaults[$key] ?? '';
+        try {
+            // Haal ALLE settings op uit database (niet alleen specifieke ones)
+            $stmt = $this->db->prepare("SELECT setting_name, setting_value FROM site_settings");
+            $stmt->execute();
+            $dbSettings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+            
+            // Debug: log wat er uit database komt
+            error_log("All database settings loaded: " . print_r($dbSettings, true));
+            
+            // Standaard waardes
+            $defaultSettings = [
+                'site_name' => 'SocialCore',
+                'site_description' => '',
+                'site_tagline' => '',
+                'admin_email' => '',
+                'timezone' => 'Europe/Amsterdam',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'default_language' => 'nl',
+                'registration_open' => '0',
+                'email_verification_required' => '0',
+                'user_registration_role' => 'member',
+                'timeline_use_core' => '0'  // <-- Belangrijk: standaard waarde
+            ];
+            
+            // Merge: database overschrijft defaults
+            $finalSettings = array_merge($defaultSettings, $dbSettings);
+            
+            error_log("Final merged settings: " . print_r($finalSettings, true));
+            error_log("Timeline setting value: " . ($finalSettings['timeline_use_core'] ?? 'STILL NOT SET'));
+            
+            return $finalSettings;
+            
+        } catch (Exception $e) {
+            error_log("getSettings error: " . $e->getMessage());
+            
+            // Fallback naar defaults
+            return [
+                'site_name' => 'SocialCore',
+                'site_description' => '',
+                'site_tagline' => '',
+                'admin_email' => '',
+                'timezone' => 'Europe/Amsterdam',
+                'date_format' => 'Y-m-d',
+                'time_format' => 'H:i',
+                'default_language' => 'nl',
+                'registration_open' => '0',
+                'email_verification_required' => '0',
+                'user_registration_role' => 'member',
+                'timeline_use_core' => '0'
+            ];
         }
-        
-        foreach ($results as $row) {
-            $settings[$row['setting_name']] = $row['setting_value'];
-        }
-        
-        return $settings;
     }
     
     /**

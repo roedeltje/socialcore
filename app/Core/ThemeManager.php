@@ -109,6 +109,225 @@ class ThemeManager
     }
     
     /**
+     * 🆕 INSTALLEER EEN NIEUW THEMA VAN ZIP BESTAND
+     */
+    public function installTheme($zipFilePath)
+    {
+        if (!file_exists($zipFilePath)) {
+            throw new \Exception('ZIP bestand niet gevonden.');
+        }
+        
+        $zip = new \ZipArchive();
+        $result = $zip->open($zipFilePath);
+        
+        if ($result !== TRUE) {
+            throw new \Exception('Kon ZIP bestand niet openen. Error code: ' . $result);
+        }
+        
+        // Controleer of ZIP een geldig thema bevat
+        $themeName = null;
+        $hasThemeJson = false;
+        
+        // Zoek naar theme.json in de root van de ZIP
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $fileName = $zip->getNameIndex($i);
+            
+            // Check voor theme.json in root of in een hoofdmap
+            if (basename($fileName) === 'theme.json') {
+                $hasThemeJson = true;
+                
+                // Lees theme.json om theme naam te krijgen
+                $themeJsonContent = $zip->getFromIndex($i);
+                $themeData = json_decode($themeJsonContent, true);
+                
+                if ($themeData && isset($themeData['slug'])) {
+                    $themeName = $themeData['slug'];
+                } elseif ($themeData && isset($themeData['name'])) {
+                    $themeName = sanitize_title($themeData['name']);
+                } else {
+                    // Als geen slug/name, gebruik directory naam of generate een naam
+                    $pathParts = explode('/', $fileName);
+                    if (count($pathParts) > 1) {
+                        $themeName = $pathParts[0];
+                    } else {
+                        $themeName = 'imported-theme-' . date('Y-m-d-H-i-s');
+                    }
+                }
+                break;
+            }
+        }
+        
+        if (!$hasThemeJson) {
+            $zip->close();
+            throw new \Exception('Geen geldig thema gevonden. theme.json ontbreekt.');
+        }
+        
+        // Controleer of thema al bestaat
+        if ($this->themeExists($themeName)) {
+            $zip->close();
+            throw new \Exception("Thema '{$themeName}' bestaat al. Verwijder het eerst of hernoem het nieuwe thema.");
+        }
+        
+        // Extract thema naar themes directory
+        $extractPath = $this->themesDirectory . '/' . $themeName;
+        
+        try {
+            // Maak thema directory aan
+            if (!is_dir($extractPath)) {
+                mkdir($extractPath, 0755, true);
+            }
+            
+            // Extract ZIP naar thema directory
+            $zip->extractTo($extractPath);
+            $zip->close();
+            
+            // Als bestanden in een subdirectory zitten, verplaats ze naar root
+            $this->normalizeThemeStructure($extractPath, $themeName);
+            
+            // Controleer of thema nu geldig is
+            if (!$this->themeExists($themeName)) {
+                // Opruimen als installatie faalde
+                $this->deleteThemeDirectory($extractPath);
+                throw new \Exception('Thema installatie mislukt. Controleer de thema structuur.');
+            }
+            
+            // Maak assets directory aan als deze niet bestaat
+            $this->createThemeAssetsDirectory($themeName);
+            
+            return $themeName;
+            
+        } catch (\Exception $e) {
+            // Opruimen bij fout
+            if (is_dir($extractPath)) {
+                $this->deleteThemeDirectory($extractPath);
+            }
+            throw new \Exception('Fout bij installeren thema: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * 🆕 VERWIJDER EEN THEMA
+     */
+    public function deleteTheme($themeName)
+    {
+        // Bescherm core thema's tegen verwijdering
+        if (in_array($themeName, ['default', 'core'])) {
+            throw new \Exception("Het '{$themeName}' thema kan niet worden verwijderd.");
+        }
+        
+        if (!$this->themeExists($themeName)) {
+            throw new \Exception("Thema '{$themeName}' bestaat niet.");
+        }
+        
+        // Controleer of dit het actieve thema is
+        if ($this->activeTheme === $themeName) {
+            throw new \Exception("Het actieve thema kan niet worden verwijderd. Activeer eerst een ander thema.");
+        }
+        
+        $themePath = $this->themesDirectory . '/' . $themeName;
+        
+        try {
+            // Verwijder thema directory en alle inhoud
+            $this->deleteThemeDirectory($themePath);
+            
+            // Verwijder thema instellingen uit database
+            $this->cleanupThemeSettings($themeName);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            throw new \Exception("Fout bij verwijderen thema: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Helper: Normaliseer thema structuur na extractie
+     */
+    private function normalizeThemeStructure($extractPath, $themeName)
+    {
+        $themeJsonPath = $extractPath . '/theme.json';
+        
+        // Als theme.json niet direct in root staat, zoek naar subdirectory
+        if (!file_exists($themeJsonPath)) {
+            $subdirs = glob($extractPath . '/*/theme.json');
+            
+            if (!empty($subdirs)) {
+                $sourceDir = dirname($subdirs[0]);
+                
+                // Verplaats alle bestanden van subdirectory naar root
+                $files = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($sourceDir, \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST
+                );
+                
+                foreach ($files as $file) {
+                    $relativePath = str_replace($sourceDir . '/', '', $file->getPathname());
+                    $destPath = $extractPath . '/' . $relativePath;
+                    
+                    if ($file->isDir()) {
+                        if (!is_dir($destPath)) {
+                            mkdir($destPath, 0755, true);
+                        }
+                    } else {
+                        $destDir = dirname($destPath);
+                        if (!is_dir($destDir)) {
+                            mkdir($destDir, 0755, true);
+                        }
+                        copy($file->getPathname(), $destPath);
+                    }
+                }
+                
+                // Verwijder originele subdirectory
+                $this->deleteThemeDirectory($sourceDir);
+            }
+        }
+    }
+    
+    /**
+     * Helper: Verwijder directory recursief
+     */
+    private function deleteThemeDirectory($dirPath)
+    {
+        if (!is_dir($dirPath)) {
+            return false;
+        }
+        
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dirPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                rmdir($file->getPathname());
+            } else {
+                unlink($file->getPathname());
+            }
+        }
+        
+        return rmdir($dirPath);
+    }
+    
+    /**
+     * Helper: Ruim thema gerelateerde database settings op
+     */
+    private function cleanupThemeSettings($themeName)
+    {
+        try {
+            // Verwijder thema opties
+            $stmt = $this->pdo->prepare("DELETE FROM site_settings WHERE setting_name LIKE ?");
+            $stmt->execute(["theme_options_{$themeName}%"]);
+            
+            // Verwijder andere thema gerelateerde settings
+            $stmt = $this->pdo->prepare("DELETE FROM site_settings WHERE setting_name LIKE ?");
+            $stmt->execute(["{$themeName}_%"]);
+            
+        } catch (\Exception $e) {
+            error_log("Fout bij opruimen thema settings: " . $e->getMessage());
+        }
+    }
+    
+    /**
      * Krijg alle beschikbare thema's
      */
     public function getAllThemes()
@@ -644,5 +863,26 @@ class ThemeManager
                 copy($sourcePath, $destPath);
             }
         }
+    }
+}
+
+/**
+ * Helper function voor veilige titel sanitisatie
+ */
+if (!function_exists('sanitize_title')) {
+    function sanitize_title($title) {
+        // Convert naar lowercase
+        $title = strtolower($title);
+        
+        // Vervang spaties en speciale karakters door koppeltekens
+        $title = preg_replace('/[^a-z0-9]+/', '-', $title);
+        
+        // Verwijder leading/trailing koppeltekens
+        $title = trim($title, '-');
+        
+        // Vervang meerdere opeenvolgende koppeltekens door één
+        $title = preg_replace('/-+/', '-', $title);
+        
+        return $title;
     }
 }

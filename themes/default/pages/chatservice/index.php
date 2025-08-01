@@ -70,6 +70,26 @@ include BASE_PATH . '/themes/default/layouts/header.php';
                 </div>
             </div>
 
+             <?php
+                // Fallback voor chat settings
+                if (!isset($chat_settings)) {
+                    $chat_settings = [
+                        'max_file_size' => '10MB',
+                        'allowed_file_types' => ['jpg', 'png', 'gif', 'pdf'],
+                        'enable_emoji' => true,
+                        'enable_file_upload' => true,
+                        
+                        // ✅ Ontbrekende keys toevoegen:
+                        'chat_features_emoji' => true,
+                        'chat_features_file_upload' => true,
+                        'chat_max_message_length' => 1000,
+                        'chat_enable_notifications' => true,
+                        'chat_auto_scroll' => true,
+                        'chat_show_typing_indicator' => true
+                    ];
+                }
+                ?>
+
             <?php if ($chat_settings['chat_features_emoji'] === '1' || $chat_settings['chat_features_file_upload'] === '1'): ?>
             <div class="hyves-widget">
                 <div class="hyves-widget-header">

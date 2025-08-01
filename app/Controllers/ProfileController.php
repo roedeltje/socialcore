@@ -22,38 +22,204 @@ class ProfileController extends Controller
     /**
      * 🔒 BIJGEWERKT: Toon de profielpagina MET privacy checks
      */
+    // public function index($userIdFromRoute = null, $usernameFromRoute = null)
+    // {
+    //     // Controleer eerst of gebruiker is ingelogd
+    //     if (!isset($_SESSION['user_id'])) {
+    //         redirect('login');
+    //         return;
+    //     }
+        
+    //     $viewerUserId = $_SESSION['user_id'];
+        
+    //     // Bepaal welke tab actief is
+    //     $activeTab = $_GET['tab'] ?? 'over';
+        
+    //     // Bepaal de gebruiker wiens profiel wordt bekeken
+    //     $targetUserId = null;
+    //     $targetUsername = null;
+        
+    //     // Prioriteit: Route parameters > GET parameters > eigen profiel
+    //     if ($userIdFromRoute !== null) {
+    //         $targetUserId = $userIdFromRoute;
+    //     } elseif ($usernameFromRoute !== null) {
+    //         $targetUsername = $usernameFromRoute;
+    //     } elseif (isset($_GET['username'])) {
+    //         $targetUsername = $_GET['username'];
+    //     } else {
+    //         // Geen specifieke gebruiker, toon eigen profiel
+    //         $targetUserId = $_SESSION['user_id'];
+    //     }
+        
+    //     // Haal gebruikersgegevens op
+    //     $profileService = new ProfileService();
+    //     $user = $profileService->getTargetUser($targetUserId, $targetUsername);
+        
+    //     if (!$user) {
+    //         $_SESSION['error_message'] = 'Gebruiker niet gevonden.';
+    //         redirect('profile');
+    //         return;
+    //     }
+        
+    //     // 🔒 PRIVACY CHECK: Mag viewer dit profiel bekijken?
+    //     if (!$this->canViewProfile($user['id'], $viewerUserId)) {
+    //         $_SESSION['error_message'] = 'Je hebt geen toestemming om dit profiel te bekijken.';
+    //         redirect('profile');
+    //         return;
+    //     }
+        
+    //     // Bepaal of de kijker de eigenaar is
+    //     $viewerIsOwner = $viewerUserId == $user['id'];
+
+    //     // 🔒 PRIVACY: Filter contactgegevens
+    //     $user = $this->filterContactInfo($user, $viewerUserId);
+
+    //     // Haal vriendschapsstatus op als het niet je eigen profiel is
+    //     $friendshipStatus = null;
+    //     $friendshipData = null;
+
+    //     if (!$viewerIsOwner) {
+    //         $friendsController = new \App\Controllers\FriendsController();
+    //         $friendshipData = $friendsController->getFriendshipStatus($viewerUserId, $user['id']);
+            
+    //         if ($friendshipData) {
+    //             $friendshipStatus = $friendshipData['status'];
+    //             $friendshipDirection = ($friendshipData['user_id'] == $viewerUserId) ? 'sent' : 'received';
+    //         } else {
+    //             $friendshipStatus = 'none';
+    //             $friendshipDirection = null;
+    //         }
+    //     }
+        
+    //     // 🔒 PRIVACY: Check wat viewer mag zien en doen
+    //     $canViewPhotos = $this->canViewPhotos($user['id'], $viewerUserId);
+    //     $canSendMessage = $this->canSendMessage($user['id'], $viewerUserId);
+        
+    //     // Laad vrienden (altijd - privacy wordt niet toegepast op vriendenlijst voor nu)
+    //     $friends = $this->getFriends($user['id']);
+        
+    //     // Laad posts (altijd - privacy wordt later toegepast op posts zelf)
+    //     $posts = $this->getUserPosts($user['id']);
+    //     $posts = $this->getCommentsForPosts($posts);
+        
+    //     // 🔒 PRIVACY: Laad foto's alleen als toegestaan
+    //     $fotos = [];
+    //     if ($activeTab === 'fotos' && $canViewPhotos) {
+    //         $fotos = $this->getFotos($user['id']);
+    //     } elseif ($activeTab === 'fotos' && !$canViewPhotos) {
+    //         // Zet een bericht dat foto's niet zichtbaar zijn
+    //         $_SESSION['info_message'] = 'Foto\'s zijn alleen zichtbaar voor vrienden.';
+    //     }
+        
+    //     $data = [
+    //         'title' => $user['name'] . ' - Profiel',
+    //         'user' => $user,
+    //         'friends' => $friends,
+    //         'posts' => $posts,
+    //         'krabbels' => [],
+    //         'fotos' => $fotos,
+    //         'viewer_is_owner' => $viewerIsOwner,
+    //         'active_tab' => $activeTab,
+    //         'friendship_status' => $friendshipStatus,
+    //         'friendship_direction' => $friendshipDirection ?? null,
+    //         'friendship_data' => $friendshipData,
+    //         // 🔒 NIEUWE PRIVACY DATA
+    //         'can_view_photos' => $canViewPhotos,
+    //         'can_send_message' => $canSendMessage,
+    //         'privacy_blocked_photos' => !$canViewPhotos && $activeTab === 'fotos'
+    //     ];
+        
+    //     $this->view('profile/index', $data);
+    // }
+    
+    /**
+     * Haal de doelgebruiker op (door ID of username)
+     */
+    // private function getTargetUser($userId = null, $username = null)
+    // {
+    //     try {
+    //         if ($userId !== null) {
+    //             // Zoek op user ID
+    //             $stmt = $this->db->prepare("SELECT id, username FROM users WHERE id = ?");
+    //             $stmt->execute([$userId]);
+    //             $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+    //             if ($userBasic) {
+    //                 return $this->getUserData($userBasic['id'], $userBasic['username']);
+    //             }
+    //         } elseif ($username !== null) {
+    //             // Zoek op username
+    //             $stmt = $this->db->prepare("SELECT id, username FROM users WHERE username = ?");
+    //             $stmt->execute([$username]);
+    //             $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+    //             if ($userBasic) {
+    //                 return $this->getUserData($userBasic['id'], $userBasic['username']);
+    //             }
+    //         } else {
+    //             // Geen specifieke gebruiker, gebruik ingelogde gebruiker
+    //             $userId = $_SESSION['user_id'];
+    //             $username = $_SESSION['username'] ?? 'gebruiker';
+    //             return $this->getUserData($userId, $username);
+    //         }
+    //     } catch (\Exception $e) {
+    //         error_log("Error fetching target user: " . $e->getMessage());
+    //     }
+        
+    //     return null;
+    // }
+
     public function index($userIdFromRoute = null, $usernameFromRoute = null)
-    {
-        // Controleer eerst of gebruiker is ingelogd
-        if (!isset($_SESSION['user_id'])) {
-            redirect('login');
-            return;
-        }
-        
-        $viewerUserId = $_SESSION['user_id'];
-        
-        // Bepaal welke tab actief is
-        $activeTab = $_GET['tab'] ?? 'over';
-        
-        // Bepaal de gebruiker wiens profiel wordt bekeken
-        $targetUserId = null;
-        $targetUsername = null;
-        
-        // Prioriteit: Route parameters > GET parameters > eigen profiel
-        if ($userIdFromRoute !== null) {
-            $targetUserId = $userIdFromRoute;
-        } elseif ($usernameFromRoute !== null) {
-            $targetUsername = $usernameFromRoute;
-        } elseif (isset($_GET['username'])) {
-            $targetUsername = $_GET['username'];
-        } else {
-            // Geen specifieke gebruiker, toon eigen profiel
-            $targetUserId = $_SESSION['user_id'];
-        }
-        
-        // Haal gebruikersgegevens op
-        $profileService = new ProfileService();
-        $user = $profileService->getTargetUser($targetUserId, $targetUsername);
+{
+    // Controleer eerst of gebruiker is ingelogd
+    if (!isset($_SESSION['user_id'])) {
+        redirect('login');
+        return;
+    }
+    
+    $viewerUserId = $_SESSION['user_id'];
+    
+    // 🆕 TIJDELIJK VOOR TESTEN - forceer core profile
+    $configValue = get_system_config('use_core', 0);
+    $useCore = ($configValue == 1);
+
+    if ($useCore) {
+        // DIRECT Core Profile laden
+        $this->renderCoreProfile($userIdFromRoute, $usernameFromRoute, $viewerUserId);
+        return;
+    }
+    
+    // === QUICK FIX: Check voor $_GET['user'] parameter ===
+    if (empty($usernameFromRoute) && isset($_GET['user'])) {
+        $usernameFromRoute = $_GET['user'];
+    }
+    
+    // === ORIGINELE THEME CODE HIERONDER ===
+    
+    // Bepaal welke tab actief is
+    $activeTab = $_GET['tab'] ?? 'over';
+    
+    // Bepaal de gebruiker wiens profiel wordt bekeken
+    $targetUserId = null;
+    $targetUsername = null;
+    
+    // Prioriteit: Route parameters > GET parameters > eigen profiel
+    if ($userIdFromRoute !== null) {
+        $targetUserId = $userIdFromRoute;
+    } elseif ($usernameFromRoute !== null) {
+        $targetUsername = $usernameFromRoute;
+    } elseif (isset($_GET['username'])) {
+        $targetUsername = $_GET['username'];
+    } elseif (isset($_GET['user'])) {  // 🆕 EXTRA CHECK
+        $targetUsername = $_GET['user'];
+    } else {
+        // Geen specifieke gebruiker, toon eigen profiel
+        $targetUserId = $_SESSION['user_id'];
+    }
+    
+    // Haal gebruikersgegevens op
+    $profileService = new ProfileService();
+    $user = $profileService->getTargetUser($targetUserId, $targetUsername);
         
         if (!$user) {
             $_SESSION['error_message'] = 'Gebruiker niet gevonden.';
@@ -131,43 +297,258 @@ class ProfileController extends Controller
         
         $this->view('profile/index', $data);
     }
-    
+
     /**
-     * Haal de doelgebruiker op (door ID of username)
+     * Render Core Profile (bypass theme system)
      */
-    // private function getTargetUser($userId = null, $username = null)
-    // {
-    //     try {
-    //         if ($userId !== null) {
-    //             // Zoek op user ID
-    //             $stmt = $this->db->prepare("SELECT id, username FROM users WHERE id = ?");
-    //             $stmt->execute([$userId]);
-    //             $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-    //             if ($userBasic) {
-    //                 return $this->getUserData($userBasic['id'], $userBasic['username']);
-    //             }
-    //         } elseif ($username !== null) {
-    //             // Zoek op username
-    //             $stmt = $this->db->prepare("SELECT id, username FROM users WHERE username = ?");
-    //             $stmt->execute([$username]);
-    //             $userBasic = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-    //             if ($userBasic) {
-    //                 return $this->getUserData($userBasic['id'], $userBasic['username']);
-    //             }
-    //         } else {
-    //             // Geen specifieke gebruiker, gebruik ingelogde gebruiker
-    //             $userId = $_SESSION['user_id'];
-    //             $username = $_SESSION['username'] ?? 'gebruiker';
-    //             return $this->getUserData($userId, $username);
-    //         }
-    //     } catch (\Exception $e) {
-    //         error_log("Error fetching target user: " . $e->getMessage());
-    //     }
+    private function renderCoreProfile($userIdFromRoute, $usernameFromRoute, $viewerUserId)
+    {
+        // Bepaal de gebruiker wiens profiel wordt bekeken
+        $targetUserId = null;
+        $targetUsername = null;
         
-    //     return null;
+        if ($userIdFromRoute !== null) {
+            $targetUserId = $userIdFromRoute;
+        } elseif ($usernameFromRoute !== null) {
+            $targetUsername = $usernameFromRoute;
+        } elseif (isset($_GET['username'])) {
+            $targetUsername = $_GET['username'];
+        } else {
+            // Geen specifieke gebruiker, toon eigen profiel
+            $targetUserId = $_SESSION['user_id'];
+        }
+        
+        // Haal gebruikersgegevens op
+        $profileService = new ProfileService();
+        $user = $profileService->getTargetUser($targetUserId, $targetUsername);
+        
+        if (!$user) {
+            echo "<h1>Gebruiker niet gevonden</h1>";
+            exit;
+        }
+        
+        // Privacy check (simpel voor core)
+        if (!$this->canViewProfile($user['id'], $viewerUserId)) {
+            echo "<h1>Geen toegang tot dit profiel</h1>";
+            exit;
+        }
+        
+        // Bepaal of viewer de eigenaar is
+        $isOwnProfile = $viewerUserId == $user['id'];
+        
+        // Haal vriendschapsstatus op
+        $friendshipStatus = 'none';
+        if (!$isOwnProfile) {
+            $friendsController = new \App\Controllers\FriendsController();
+            $friendshipData = $friendsController->getFriendshipStatus($viewerUserId, $user['id']);
+            
+            if ($friendshipData) {
+                $status = $friendshipData['status'];
+                $direction = ($friendshipData['user_id'] == $viewerUserId) ? 'sent' : 'received';
+                
+                if ($status === 'accepted') {
+                    $friendshipStatus = 'friends';
+                } elseif ($status === 'pending' && $direction === 'sent') {
+                    $friendshipStatus = 'pending_sent';
+                } elseif ($status === 'pending' && $direction === 'received') {
+                    $friendshipStatus = 'pending_received';
+                }
+            }
+        }
+        
+        // Haal posts op (laatste 5 voor core)
+        $posts = $this->getUserPosts($user['id'], 5);
+
+        // Fix duplicaten
+        $uniquePosts = [];
+        $seenIds = [];
+        foreach ($posts as $post) {
+            if (!in_array($post['id'], $seenIds)) {
+                $uniquePosts[] = $post;
+                $seenIds[] = $post['id'];
+            }
+        }
+        $posts = $uniquePosts;
+        
+        // Haal foto's op (laatste 6 voor core)
+        $photos = [];
+        if ($this->canViewPhotos($user['id'], $viewerUserId)) {
+            $photos = $this->getFotos($user['id'], 5);
+        }
+        
+        // Stats ophalen
+        $stats = [
+            'posts' => count($this->getUserPosts($user['id'])),
+            'friends' => count($this->getFriends($user['id'])),
+            'photos' => count($this->getFotos($user['id']))
+        ];
+
+        // Avatar URL genereren
+        if (!empty($user['avatar'])) {
+            if (strpos($user['avatar'], 'http') === 0) {
+                $user['avatar_url'] = $user['avatar'];
+            } else {
+                $user['avatar_url'] = base_url('uploads/' . $user['avatar']);
+            }
+        } else {
+            $user['avatar_url'] = base_url('public/assets/images/avatars/default-avatar.png');
+        }
+
+        // Update sessie met avatar_url
+        $_SESSION['avatar_url'] = $user['avatar_url'];
+        
+        // Process posts voor weergave - EENMALIG EN SIMPEL
+        foreach ($posts as $post) {
+            // getUserPosts() heeft al veel data klaar gezet:
+            // - created_at is al geformatteerd
+            // - avatar is al aanwezig
+            // - preview_url, preview_title, etc. zijn al aanwezig
+            // - media_path is al aanwezig
+            
+            // Alleen nog time_ago toevoegen
+            $post['time_ago'] = $this->timeAgo($post['created_at']);
+            
+            // Content klikbaar maken (alleen als content_formatted nog niet bestaat)
+            if (!empty($post['content']) && empty($post['content_formatted'])) {
+                $post['content_formatted'] = preg_replace(
+                    '/https?:\/\/[^\s<>"{}|\\^`\[\]]+/i',
+                    '<a href="$0" target="_blank" style="color: #4A90E2; text-decoration: underline;">$0</a>',
+                    nl2br(htmlspecialchars($post['content']))
+                );
+            }
+        }
+        unset($post);
+        
+        // Process photos voor weergave
+        foreach ($photos as &$photo) {
+        // Gebruik de juiste veldnamen uit de database
+        if (!empty($photo['filename'])) {
+            $photo['url'] = base_url('uploads/' . $photo['filename']);
+            $photo['thumbnail_url'] = base_url('uploads/' . $photo['filename']);
+        } elseif (!empty($photo['full_url'])) {
+            // Als full_url al beschikbaar is, gebruik die
+            $photo['url'] = $photo['full_url'];
+            $photo['thumbnail_url'] = $photo['full_url'];
+        }
+    }
+    unset($photo);
+        
+        // Data voor core view
+        $coreData = [
+            'user' => $user,
+            'posts' => $posts,
+            'photos' => $photos,
+            'stats' => $stats,
+            'isOwnProfile' => $isOwnProfile,
+            'friendshipStatus' => $friendshipStatus
+        ];
+        
+        // Extract data voor de view
+        extract($coreData);
+        
+        // Load core profile direct
+        include __DIR__ . '/../Views/core/profile.php';
+        exit;
+    }
+
+    // private function getLinkPreview($url) {
+    //     // Eenvoudige link preview functie
+    //     try {
+    //         // Basis URL validatie
+    //         if (!filter_var($url, FILTER_VALIDATE_URL)) {
+    //             return null;
+    //         }
+            
+    //         // Bekende services
+    //         if (strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
+    //             return $this->getYouTubePreview($url);
+    //         }
+            
+    //         // Voor andere URLs, probeer basis metadata op te halen
+    //         $context = stream_context_create([
+    //             'http' => [
+    //                 'timeout' => 5,
+    //                 'user_agent' => 'SocialCore/1.0'
+    //             ]
+    //         ]);
+            
+    //         $html = @file_get_contents($url, false, $context);
+    //         if (!$html) {
+    //             return null;
+    //         }
+            
+    //         // Extraheer basic metadata
+    //         $title = '';
+    //         $description = '';
+    //         $image = '';
+    //         $domain = parse_url($url, PHP_URL_HOST);
+            
+    //         // Title
+    //         if (preg_match('/<title[^>]*>([^<]+)<\/title>/i', $html, $matches)) {
+    //             $title = trim($matches[1]);
+    //         }
+            
+    //         // Description (meta description)
+    //         if (preg_match('/<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']*)["\'][^>]*>/i', $html, $matches)) {
+    //             $description = trim($matches[1]);
+    //         }
+            
+    //         // Open Graph image
+    //         if (preg_match('/<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']*)["\'][^>]*>/i', $html, $matches)) {
+    //             $image = trim($matches[1]);
+    //         }
+            
+    //         if (empty($title)) {
+    //             return null;
+    //         }
+            
+    //         return [
+    //             'url' => $url,
+    //             'title' => $title,
+    //             'description' => $description,
+    //             'image' => $image,
+    //             'domain' => $domain
+    //         ];
+            
+    //     } catch (Exception $e) {
+    //         return null;
+    //     }
     // }
+
+    private function getYouTubePreview($url) {
+        // Extract YouTube video ID
+        $pattern = '/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/';
+        if (preg_match($pattern, $url, $matches)) {
+            $videoId = $matches[1];
+            
+            return [
+                'url' => $url,
+                'title' => 'YouTube Video',
+                'description' => 'Bekijk deze video op YouTube',
+                'image' => "https://img.youtube.com/vi/{$videoId}/mqdefault.jpg",
+                'domain' => 'youtube.com',
+                'type' => 'video',
+                'video_id' => $videoId
+            ];
+        }
+        
+        return null;
+    }
+
+    /**
+     * Helper functie voor tijd berekening
+     */
+    private function timeAgo($datetime)
+    {
+        $time = time() - strtotime($datetime);
+        
+        if ($time < 60) return 'net nu';
+        if ($time < 3600) return floor($time/60) . ' minuten geleden';
+        if ($time < 86400) return floor($time/3600) . ' uur geleden';
+        if ($time < 2592000) return floor($time/86400) . ' dagen geleden';
+        
+        return date('d M Y', strtotime($datetime));
+    }
     
     /**
      * Haal gebruikersgegevens op
@@ -364,7 +745,7 @@ class ProfileController extends Controller
     {
         try {
             $query = "
-                SELECT 
+                SELECT DISTINCT 
                     p.id,
                     p.content,
                     p.type,
@@ -380,7 +761,6 @@ class ProfileController extends Controller
                     target_user.username as target_username,
                     COALESCE(target_profile.display_name, target_user.username) as target_name,
                     (SELECT file_path FROM post_media WHERE post_id = p.id LIMIT 1) as media_path,
-                    -- ✨ TOEGEVOEGD: Link preview data (net als FeedController)
                     lp.url as preview_url,
                     lp.title as preview_title,
                     lp.description as preview_description,
@@ -392,14 +772,15 @@ class ProfileController extends Controller
                 LEFT JOIN users target_user ON p.target_user_id = target_user.id
                 LEFT JOIN user_profiles target_profile ON target_user.id = target_profile.user_id
                 LEFT JOIN link_previews lp ON p.link_preview_id = lp.id
-                WHERE (p.user_id = ? OR p.target_user_id = ?) 
+                WHERE (p.user_id = ? OR (p.target_user_id = ? AND p.user_id != ?))
                 AND p.is_deleted = 0
+                GROUP BY p.id                 -- ✨ TOEGEVOEGD: Dit voorkomt duplicaten
                 ORDER BY p.created_at DESC
                 LIMIT ?
             ";
             
             $stmt = $this->db->prepare($query);
-            $stmt->execute([$userId, $userId, $limit]);
+            $stmt->execute([$userId, $userId, $userId, $limit]);
             $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             // Format de data voor de view
